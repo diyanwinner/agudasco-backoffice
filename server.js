@@ -74,6 +74,17 @@ app.set("views", path.join(__dirname, "views"));
 
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(express.json({ limit: "10mb" }));
+// Sanitize global untuk semua form admin (CREATE/EDIT artikel, dsb)
+app.use((req, _res, next) => {
+  // Method override biasanya bikin EDIT jadi POST + _method=PUT, jadi cek broad aja:
+  const isFormSubmit = req.method !== "GET";
+  const isAdminPath  = req.path && req.path.startsWith("/admin");
+  if (isFormSubmit && isAdminPath && req.body && typeof req.body.content === "string") {
+    req.body.content = sanitizeContent(req.body.content);
+  }
+  next();
+});
+
 app.use(methodOverride("_method"));
 app.use(
   session({
