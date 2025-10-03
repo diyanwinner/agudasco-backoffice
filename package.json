@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=20.x"
+  },
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js"
@@ -17,7 +20,7 @@
     "method-override": "^3.0.0",
     "multer": "^1.4.5-lts.2",
     "multer-storage-cloudinary": "^4.0.0",
-    "sanitize-html": "^2.13.0",             ← tambah ini
+    "sanitize-html": "^2.13.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   }
