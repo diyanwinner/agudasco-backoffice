@@ -22,38 +22,7 @@ input,textarea,select{width:100%;padding:8px;border-radius:8px;border:1px solid 
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .muted{color:var(--muted);font-size:12px}
 .max-480{max-width:480px}
-/* ==== RAPETIN SPASI BANNER vs KONTEN ==== */
-
-/* pastikan gambar nggak nyisain ruang baseline */
-#heroSlider img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* ini wrapper bawaan tiny-slider yang suka ngasih margin */
-.card.hero .tns-outer,
-.card.hero .tns-ovh,
-.card.hero .tns-inner {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* kurangi jarak kartu hero dengan konten berikutnya */
-.card.hero {
-  margin-bottom: 4px;   /* dari 8px -> 4px */
-  padding: 0;           /* biar benar-benar nempel ke gambar */
-}
-
-/* kartu daftar artikel mulai tanpa jarak tambahan di atas */
-.cards {
-  margin-top: 4px;      /* dari 8px -> 4px (boleh jadi 0 kalau mau super rapat) */
-  gap: 10px;            /* sedikit dirapatkan (opsional) */
-}
-
-/* kalau masih terasa renggang, boleh rapetin global card */
-.card { 
-  margin: 6px 0;        /* dari 8px -> 6px */
-  padding: 12px;        /* dari 16px -> 12px */
-}
+h1 { margin: 8px 0 12px; }
+.card.hero { margin-bottom: 8px; }
+.cards { margin-top: 8px; gap: 12px; }
+.tns-outer { margin-bottom: 0 !important; }
