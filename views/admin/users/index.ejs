@@ -1,0 +1,13 @@
+<% layout('layout', { title: 'Pengguna – AGUDASCO', user }) %>
+<div class="flex-row">
+  <h1>Pengguna</h1>
+  <a class="btn" href="/admin/users/new">+ Tambah</a>
+</div>
+<table>
+  <thead><tr><th>Nama</th><th>Email</th><th>Role</th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr><td><%= r.name %></td><td><%= r.email %></td><td><%= r.role %></td></tr>
+  <% }) %>
+  </tbody>
+</table>
