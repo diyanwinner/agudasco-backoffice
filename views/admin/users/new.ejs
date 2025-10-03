@@ -1,0 +1,14 @@
+<% layout('layout', { title: 'Tambah Pengguna – AGUDASCO', user }) %>
+<h1>Tambah Pengguna</h1>
+<form method="post" action="/admin/users" class="card max-480">
+  <label>Nama <input name="name" required></label>
+  <label>Email <input name="email" type="email" required></label>
+  <label>Password <input name="password" type="password" required></label>
+  <label>Role
+    <select name="role">
+      <option value="ADMIN">ADMIN</option>
+      <option value="EDITOR">EDITOR</option>
+    </select>
+  </label>
+  <button class="btn">Simpan</button>
+</form>
