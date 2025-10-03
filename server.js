@@ -1,3 +1,4 @@
+import { sanitizeContent } from "./lib/sanitizer.js";
 import express from "express";
 import session from "express-session";
 import path from "path";
