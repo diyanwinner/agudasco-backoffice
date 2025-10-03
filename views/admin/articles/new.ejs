@@ -1,0 +1,10 @@
+<% layout('layout', { title: 'Artikel Baru – AGUDASCO', user }) %>
+<h1>Artikel Baru</h1>
+<form method="post" action="/admin/articles" class="card">
+  <label>Judul <input name="title" required></label>
+  <label>Konten (HTML diperbolehkan)
+    <textarea name="content" rows="12" placeholder="<p>Isi artikel…</p>"></textarea>
+  </label>
+  <label><input type="checkbox" name="published" value="1"> Terbitkan</label>
+  <button class="btn">Simpan</button>
+</form>
