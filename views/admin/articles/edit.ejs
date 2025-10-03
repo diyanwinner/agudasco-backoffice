@@ -1,0 +1,8 @@
+<% layout('layout', { title: 'Edit Artikel – AGUDASCO', user }) %>
+<h1>Edit Artikel</h1>
+<form method="post" action="/admin/articles/<%= art.id %>" class="card">
+  <label>Judul <input name="title" value="<%= art.title %>" required></label>
+  <label>Konten <textarea name="content" rows="12"><%= art.content %></textarea></label>
+  <label><input type="checkbox" name="published" value="1" <%= art.published ? 'checked' : '' %>> Terbitkan</label>
+  <button class="btn">Update</button>
+</form>
