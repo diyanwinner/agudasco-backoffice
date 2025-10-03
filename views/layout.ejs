@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title><%= title || "AGUDASCO" %></title>
+  <link rel="stylesheet" href="/public/style.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">AGUDASCO</a>
+    <nav>
+      <a href="/">Website</a>
+      <% if (typeof user !== "undefined" && user) { %>
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/articles">Artikel</a>
+        <a href="/admin/media">Media</a>
+        <% if (user.role === "ADMIN") { %><a href="/admin/users">Pengguna</a><% } %>
+        <form action="/admin/logout" method="post" style="display:inline"><button class="link">Logout</button></form>
+      <% } else { %>
+        <a href="/admin/login">Login</a>
+      <% } %>
+    </nav>
+  </header>
+  <main class="container">
+    <%- body %>
+  </main>
+  <footer class="footer">© <%= new Date().getFullYear() %> AGUDASCO</footer>
+</body>
+</html>
