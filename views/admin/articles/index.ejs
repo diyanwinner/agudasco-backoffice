@@ -1,0 +1,22 @@
+<% layout('layout', { title: 'Artikel – AGUDASCO', user }) %>
+<div class="flex-row">
+  <h1>Artikel</h1>
+  <a class="btn" href="/admin/articles/new">+ Tambah</a>
+</div>
+<table>
+  <thead><tr><th>Judul</th><th>Slug</th><th>Publik</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(r => { %>
+    <tr>
+      <td><%= r.title %></td><td><%= r.slug %></td>
+      <td><%= r.published ? "Ya" : "Tidak" %></td>
+      <td>
+        <a class="btn small" href="/admin/articles/<%= r.id %>/edit">Edit</a>
+        <form method="post" action="/admin/articles/<%= r.id %>/delete" style="display:inline">
+          <button class="btn small danger">Hapus</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
