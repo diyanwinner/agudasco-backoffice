@@ -1,0 +1,12 @@
+<% layout('layout', { title: 'AGUDASCO – Beranda' }) %>
+<h1>Berita & Kegiatan Terbaru</h1>
+<div class="cards">
+  <% arts.forEach(a => { %>
+    <a class="card" href="/article/<%= a.slug %>">
+      <h3><%= a.title %></h3>
+      <div class="muted"><%= new Date(a.created_at).toLocaleString() %></div>
+      <div><%- (a.content || '').slice(0,180) %>…</div>
+    </a>
+  <% }) %>
+  <% if (!arts.length) { %><div class="muted">Belum ada artikel dipublikasi.</div><% } %>
+</div>
