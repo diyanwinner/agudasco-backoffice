@@ -22,7 +22,9 @@ input,textarea,select{width:100%;padding:8px;border-radius:8px;border:1px solid 
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .muted{color:var(--muted);font-size:12px}
 .max-480{max-width:480px}
-h1 { margin: 8px 0 12px; }
-.card.hero { margin-bottom: 8px; }
-.cards { margin-top: 8px; gap: 12px; }
+/* Rapetin jarak bawah slider */
 .tns-outer { margin-bottom: 0 !important; }
+
+/* Pastikan slider tidak “menggendut” */
+.hero img { display:block; width:100%; height:100%; object-fit:cover; }
+#heroSlider > div { height:100%; }
