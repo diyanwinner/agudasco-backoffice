@@ -1,0 +1,15 @@
+[phases.setup]
+# Pasang Node (sudah termasuk npm)
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+# Kalau tidak ada package-lock, pakai npm i
+cmds = ["npm i --omit=dev"]
+
+[phases.build]
+# app kita tidak perlu build step
+cmds = []
+
+[start]
+# Perintah start
+cmd = "npm start"
