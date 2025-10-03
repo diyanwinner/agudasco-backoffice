@@ -36,3 +36,24 @@
   <% }) %>
   <% if (!arts.length) { %><div class="muted">Belum ada artikel dipublikasi.</div><% } %>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const el = document.getElementById('heroSlider');
+    if (!el || !window.tns) { return; }
+
+    tns({
+      container: el,
+      items: 1,
+      slideBy: 1,
+      autoplay: true,
+      autoplayTimeout: 4000,
+      autoplayButtonOutput: false,
+      controls: true,
+      controlsText: ['‹','›'],
+      nav: true,
+      mouseDrag: true,
+      loop: true,
+      speed: 400
+    });
+  });
+</script>
