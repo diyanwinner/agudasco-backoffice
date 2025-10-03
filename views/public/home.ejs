@@ -1,11 +1,10 @@
 <% layout('layout', { title: 'AGUDASCO – Beranda' }) %>
+
 <h1>AGUDASCO</h1>
+
 <!-- HERO BANNER -->
 <div class="card hero" style="padding:0; overflow:hidden">
   <div id="heroSlider" style="aspect-ratio:16/9">
-    ...
-  </div>
-</div>
     <div>
       <img
         src="https://res.cloudinary.com/dsyo0e3fu/image/upload/v1759492423/agudasco/1759492421911_WhatsApp_Image_2025-10-01_at_11.06.57_170c5fc9.jpg.jpg"
@@ -29,6 +28,7 @@
     </div>
   </div>
 </div>
+
 <div class="cards">
   <% arts.forEach(a => { %>
     <a class="card" href="/article/<%= a.slug %>">
@@ -37,15 +37,19 @@
       <div><%- (a.content || '').slice(0,180) %>…</div>
     </a>
   <% }) %>
-  <% if (!arts.length) { %><div class="muted">Belum ada artikel dipublikasi.</div><% } %>
+  <% if (!arts.length) { %>
+    <div class="muted">Belum ada artikel dipublikasi.</div>
+  <% } %>
 </div>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const el = document.getElementById('heroSlider');
-    if (!el || !window.tns) { return; }
+    var el = document.getElementById('heroSlider');
+    if (!el || !window.tns) return;
+    if (el.dataset.inited === '1') return;
 
     tns({
-      container: el,
+      container: '#heroSlider',   // gunakan selector (lebih aman)
       items: 1,
       slideBy: 1,
       autoplay: true,
@@ -58,5 +62,7 @@
       loop: true,
       speed: 400
     });
+
+    el.dataset.inited = '1';
   });
 </script>
