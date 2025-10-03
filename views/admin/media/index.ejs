@@ -1,0 +1,20 @@
+<% layout('layout', { title: 'Media – AGUDASCO', user }) %>
+<div class="flex-row">
+  <h1>Media</h1>
+  <form class="card" method="post" enctype="multipart/form-data" action="/admin/media/upload">
+    <input type="file" name="file" required>
+    <button class="btn">Upload</button>
+  </form>
+</div>
+<div class="gallery">
+  <% rows.forEach(m => { %>
+    <div class="card">
+      <img src="<%= m.url || ('/uploads/' + m.filename) %>" alt="<%= m.originalname %>" />
+      <div class="muted"><%= m.originalname %> • <%= (m.size/1024).toFixed(1) %> KB</div>
+      <form method="post" action="/admin/media/<%= m.id %>/delete">
+        <button class="btn small danger">Hapus</button>
+      </form>
+      <input type="text" readonly value="<%= m.url || ('/uploads/' + m.filename) %>" onclick="this.select()"/>
+    </div>
+  <% }) %>
+</div>
