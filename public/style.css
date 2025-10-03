@@ -22,3 +22,17 @@ input,textarea,select{width:100%;padding:8px;border-radius:8px;border:1px solid 
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
 .muted{color:var(--muted);font-size:12px}
 .max-480{max-width:480px}
+/* rapetin jarak di beranda */
+h1 { margin: 8px 0 12px; }
+
+.card.hero { 
+  margin-bottom: 8px;   /* default card biasanya lebih besar */
+}
+
+.cards { 
+  margin-top: 8px; 
+  gap: 12px;            /* kalau masih terlalu renggang, turunin jadi 8px */
+}
+
+/* tiny-slider wrapper biar nggak nambah jarak bawah */
+.tns-outer { margin-bottom: 0 !important; }
