@@ -1,33 +1,79 @@
+:root{
+  --bg:#0b1220; --card:#0c1424; --text:#e5e7eb; --muted:#9ca3af; --line:#1f2937;
+  --primary:#22c55e; --ink:#a5b4fc; --danger:#ef4444;
+}
+
+/* base */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+a{color:var(--ink);text-decoration:none}
+img{display:block;max-width:100%}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+
+/* layout */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;background:#0b1020;border-bottom:1px solid var(--line);
+}
+.brand{font-weight:800;letter-spacing:.5px;color:#fff}
+
+.container{max-width:1100px;margin:18px auto;padding:0 16px}
+.footer{padding:28px 0;text-align:center;color:var(--muted);border-top:1px solid var(--line)}
+
 /* ======== TOPBAR NAVIGATION ======== */
-.topbar nav {
-  display: flex;
-  gap: 20px;                /* jarak antar menu */
+.topbar nav{display:flex;gap:20px}
+.topbar nav a{
+  color:var(--text);font-weight:500;text-transform:capitalize;
+  padding:6px 10px;position:relative;transition:color .2s ease;
 }
-
-.topbar nav a {
-  color: var(--text);
-  font-weight: 500;
-  text-transform: capitalize;
-  padding: 6px 10px;
-  position: relative;
-  transition: color 0.2s ease;
+.topbar nav a:hover{color:var(--primary)}
+.topbar nav a::after{
+  content:"";position:absolute;right:-10px;top:50%;transform:translateY(-50%);
+  width:1px;height:16px;background:var(--line);
 }
+.topbar nav a:last-child::after{display:none}
 
-.topbar nav a:hover {
-  color: var(--primary);     /* warna berubah saat hover */
+/* hero / slider */
+.hero{margin:0;padding:0;background:transparent}
+.hero__slider{width:100%;max-height:460px;aspect-ratio:16/9;overflow:hidden;border-radius:12px;border:1px solid var(--line)}
+.hero__slide{position:relative;height:100%}
+.hero__slide img{width:100%;height:100%;object-fit:cover}
+.hero__overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:24px;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,.05));
 }
-
-.topbar nav a::after {
-  content: "";
-  position: absolute;
-  right: -10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 16px;
-  background: var(--line);
+.hero__overlay h2{margin:0 0 6px;font-size:28px}
+.hero__overlay p{margin:0;color:var(--muted)}
+.tns-outer{margin:0!important}
+.tns-controls button{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:36px;height:36px;border-radius:9999px;border:0;color:#fff;
+  background:rgba(0,0,0,.35);cursor:pointer
 }
+.tns-controls [data-controls="prev"]{left:10px}
+.tns-controls [data-controls="next"]{right:10px}
+.tns-controls button:hover{background:rgba(0,0,0,.55)}
+.tns-nav{display:flex;gap:8px;justify-content:center;align-items:center;padding:10px 0 6px}
+.tns-nav>button{width:8px;height:8px;border-radius:9999px;border:0;background:#64748b;cursor:pointer}
+.tns-nav>.tns-nav-active{background:#e5e7eb}
 
-.topbar nav a:last-child::after {
-  display: none;            /* garis hilang di menu terakhir */
+/* cards / grid */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card-title{margin:0 0 6px}
+.card-snippet{line-height:1.5;color:#d6d9df}
+
+.muted{color:var(--muted);font-size:13px}
+.section-title{margin:12px 0}
+
+@media (max-width:640px){
+  .hero__slider{max-height:350px}
+  .hero__overlay h2{font-size:22px}
 }
