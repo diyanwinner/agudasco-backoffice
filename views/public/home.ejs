@@ -1,67 +1,70 @@
 <% layout('layout', { title: 'AGUDASCO – Beranda' }) %>
 
-<h1 class="sr-only">AGUDASCO</h1>
-
-<!-- HERO SLIDER (2 Banner) -->
+<!-- HERO -->
 <section class="hero">
   <div class="hero__slider" id="heroSlider">
     <div class="hero__slide">
-      <img src="https://res.cloudinary.com/dsyo0e3fu/image/upload/v1759492423/agudasco/1759492421911_WhatsApp_Image_2025-10-01_at_11.06.57_170c5fc9.jpg.jpg" alt="Banner 1 AGUDASCO" loading="eager">
+      <img
+        src="https://res.cloudinary.com/dsyo0e3fu/image/upload/v1759492423/agudasco/1759492421911_WhatsApp_Image_2025-10-01_at_11.06.57_170c5fc9.jpg.jpg"
+        alt="Banner AGUDASCO 1"
+        loading="eager">
       <div class="hero__overlay">
         <h2>AGUDASCO</h2>
-        <p>Organisasi yang tumbuh bareng, berkarya bareng.</p>
+        <p>Berkarya bersama, tumbuh bersama.</p>
       </div>
     </div>
     <div class="hero__slide">
-      <img src="https://res.cloudinary.com/dsyo0e3fu/image/upload/v1759492436/agudasco/1759492434470_WhatsApp_Image_2025-09-25_at_16.55.36_38f341d2.jpg.jpg" alt="Banner 2 AGUDASCO" loading="lazy">
+      <img
+        src="https://res.cloudinary.com/dsyo0e3fu/image/upload/v1759492436/agudasco/1759492434470_WhatsApp_Image_2025-09-25_at_16.55.36_38f341d2.jpg.jpg"
+        alt="Banner AGUDASCO 2"
+        loading="lazy">
       <div class="hero__overlay">
         <h2>Kegiatan & Publikasi</h2>
-        <p>Dokumentasi acara & cerita dari lapangan.</p>
+        <p>Dokumentasi acara & cerita lapangan.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- GRID ARTIKEL 3 KOLOM -->
-<section class="container">
+<section>
   <h3 class="section-title">Berita & Kegiatan Terbaru</h3>
   <div class="cards">
-    <% arts.forEach(a => { %>
-      <a class="card" href="/article/<%= a.slug %>">
-        <h3><%= a.title %></h3>
-        <div class="muted">
-          <%= new Date(a.created_at).toLocaleDateString("id-ID", { day:"2-digit", month:"long", year:"numeric" }) %>
-        </div>
-        <div class="snippet"><%- (a.content || '').slice(0,180) %>…</div>
-      </a>
-    <% }) %>
-    <% if (!arts.length) { %>
-      <div class="muted">Belum ada artikel dipublikasi.</div>
-    <% } %>
+    <!-- Contoh placeholder (nanti ganti data artikel asli) -->
+    <a class="card" href="/berita">
+      <h3>Peluncuran Website AGUDASCO</h3>
+      <div class="muted">Oktober 2025</div>
+      <div>Rumah digital untuk dokumentasi kegiatan, publikasi, dan transparansi laporan.</div>
+    </a>
+    <a class="card" href="/kegiatan">
+      <h3>Kegiatan Perdana</h3>
+      <div class="muted">Oktober 2025</div>
+      <div>Kolaborasi internal & kontribusi lintas divisi.</div>
+    </a>
   </div>
 </section>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const el = document.getElementById('heroSlider');
-  if (!el || !window.tns || el.dataset.inited === '1') return;
+  document.addEventListener('DOMContentLoaded', function () {
+    const el = document.getElementById('heroSlider');
+    if (!el || !window.tns) return;
+    if (el.dataset.inited === '1') return;
 
-  tns({
-    container: el,
-    items: 1,
-    slideBy: 1,
-    autoplay: true,
-    autoplayTimeout: 4000,
-    autoplayButtonOutput: false,
-    controls: true,
-    controlsText: ['‹','›'],
-    nav: true,
-    navPosition: 'bottom',
-    mouseDrag: true,
-    loop: true,
-    speed: 500
+    tns({
+      container: el,
+      items: 1,
+      slideBy: 1,
+      autoplay: true,
+      autoplayTimeout: 4500,
+      autoplayButtonOutput: false,
+      controls: true,
+      controlsText: ['‹','›'],
+      nav: true,
+      navPosition: 'bottom',
+      mouseDrag: true,
+      loop: true,
+      speed: 500
+    });
+
+    el.dataset.inited = '1';
   });
-
-  el.dataset.inited = '1';
-});
 </script>
