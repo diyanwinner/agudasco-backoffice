@@ -9,32 +9,34 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// middleware
+// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// static files
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-// ejs + express-ejs-layouts
+// EJS + Layout
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
-app.set("layout", "layout"); // views/layout.ejs
+app.set("layout", "layout"); // default layout.ejs
 
-// healthcheck (optional, biar gampang cek di Railway)
-app.get("/healthz", (_req, res) => res.send("ok"));
-
-// home
+// Routing
 app.get("/", (req, res) => {
   res.render("home", {
     title: "AGUDASCO – Beranda",
     user: null,
-    arts: [], // nanti diisi dari DB
+    arts: [] // nanti ambil dari DB
   });
 });
 
-const PORT = process.env.PORT || 3000;
+app.get("/article/:slug", (req, res) => {
+  res.render("article", {
+    title: "Artikel – AGUDASCO",
+    slug: req.params.slug
+  });
+});
+
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
