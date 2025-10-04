@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=20.x"
-  },
+  "engines": { "node": ">=20.x" },
   "scripts": {
     "start": "node server.js",
     "seed": "node seed.js"
@@ -14,8 +12,8 @@
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.0",
     "ejs": "^3.1.9",
-    "ejs-mate": "^4.0.0",
     "express": "^4.19.2",
+    "express-ejs-layouts": "^2.5.1",
     "express-session": "^1.17.3",
     "method-override": "^3.0.0",
     "multer": "^1.4.5-lts.2",
