@@ -1,3 +1,14 @@
+// ===== Top-menu active helper =====
+app.use((req, res, next) => {
+  res.locals.path = req.path;
+  res.locals.active = (href) => {
+    if (href === '/' && req.path === '/') return 'active';
+    if (href !== '/' && req.path.startsWith(href)) return 'active';
+    return '';
+  };
+  next();
+});
+
 import { sanitizeContent } from "./lib/sanitizer.js";
 import express from "express";
 import session from "express-session";
@@ -274,3 +285,11 @@ app.post("/admin/users", requireAdmin, async (req, res) => {
 app.listen(PORT, () => {
   console.log(`AGUDASCO backoffice running on port ${PORT}`);
 });
+app.get('/galeri',           (req,res)=> res.render('page', {title:'Galeri',            bodyHtml:'<p>Daftar foto & dokumentasi.</p>'}));
+app.get('/kegiatan',         (req,res)=> res.render('page', {title:'Kegiatan',          bodyHtml:'<p>Agenda & kegiatan terbaru.</p>'}));
+app.get('/berita',           (req,res)=> res.render('page', {title:'Berita',            bodyHtml:'<p>Arsip artikel/berita.</p>'}));
+app.get('/anggota',          (req,res)=> res.render('page', {title:'Anggota',           bodyHtml:'<p>Informasi keanggotaan.</p>'}));
+app.get('/pengurus',         (req,res)=> res.render('page', {title:'Pengurus',          bodyHtml:'<p>Struktur organisasi & pengurus.</p>'}));
+app.get('/laporan-keuangan', (req,res)=> res.render('page', {title:'Laporan Keuangan',  bodyHtml:'<p>Publikasi laporan keuangan.</p>'}));
+app.get('/tentang',          (req,res)=> res.render('page', {title:'Tentang',           bodyHtml:'<p>Tentang AGUDASCO.</p>'}));
+app.get('/kontak',           (req,res)=> res.render('page', {title:'Kontak',            bodyHtml:'<p>Kontak & alamat.</p>'}));
