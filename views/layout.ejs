@@ -4,39 +4,31 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title><%= title || "AGUDASCO" %></title>
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="/public/style.css?v=3">
+  <link rel="stylesheet" href="/public/style.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css"/>
-
-  <!-- Meta basic -->
-  <meta name="color-scheme" content="dark light">
 </head>
 <body>
-  <!-- Topbar -->
   <header class="topbar">
     <a class="brand" href="/">AGUDASCO</a>
-    <nav class="nav">
-      <a class="nav__link <%= path==='/' ? 'is-active' : '' %>" href="/">Beranda</a>
-      <a class="nav__link <%= path.startsWith('/galeri')    ? 'is-active' : '' %>" href="/galeri">Galeri</a>
-      <a class="nav__link <%= path.startsWith('/kegiatan')  ? 'is-active' : '' %>" href="/kegiatan">Kegiatan</a>
-      <a class="nav__link <%= path.startsWith('/berita')    ? 'is-active' : '' %>" href="/berita">Berita</a>
-      <a class="nav__link <%= path.startsWith('/anggota')   ? 'is-active' : '' %>" href="/anggota">Anggota</a>
-      <a class="nav__link <%= path.startsWith('/pengurus')  ? 'is-active' : '' %>" href="/pengurus">Pengurus</a>
-      <a class="nav__link <%= path.startsWith('/laporan')   ? 'is-active' : '' %>" href="/laporan">Laporan Keuangan</a>
-      <a class="nav__link <%= path.startsWith('/tentang')   ? 'is-active' : '' %>" href="/tentang">Tentang</a>
-      <a class="nav__link <%= path.startsWith('/kontak')    ? 'is-active' : '' %>" href="/kontak">Kontak</a>
+    <nav>
+      <a href="/">Beranda</a>
+      <a href="/gallery">Galeri</a>
+      <a href="/activities">Kegiatan</a>
+      <a href="/news">Berita</a>
+      <a href="/members">Anggota</a>
+      <a href="/management">Pengurus</a>
+      <a href="/finance">Laporan Keuangan</a>
+      <a href="/about">Tentang</a>
+      <a href="/contact">Kontak</a>
     </nav>
   </header>
 
-  <!-- Page content -->
   <main class="container">
     <%- body %>
   </main>
 
   <footer class="footer">© <%= new Date().getFullYear() %> AGUDASCO</footer>
 
-  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/min/tiny-slider.js"></script>
 </body>
 </html>
