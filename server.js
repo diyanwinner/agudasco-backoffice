@@ -2,37 +2,43 @@
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import expressLayouts from "express-ejs-layouts";
+import ejsMate from "ejs-mate";
+import methodOverride from "method-override";
+import session from "express-session";
 
-// Konversi __dirname (karena di ESM tidak ada langsung)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Init Express
 const app = express();
 
-// Middleware
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// --- Middleware dasar
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "10mb" }));
+app.use(methodOverride("_method"));
+app.use(session({
+  secret: "change-me", // ganti di env nanti
+  resave: false,
+  saveUninitialized: false,
+}));
 
-// Static files (biar /public bisa dipanggil)
+// --- Static
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-// EJS + Layouts
+// --- View engine: EJS + ejs-mate (layout/partials)
+app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-app.use(expressLayouts);
 
-// Routing contoh
+// --- Routes
 app.get("/", (req, res) => {
-  res.render("home", { 
-    title: "AGUDASCO – Beranda", 
-    user: null, 
-    arts: [] // nanti ini ambil dari database 
+  res.render("home", {
+    title: "AGUDASCO – Beranda",
+    user: null,
+    arts: [], // nanti diisi dari DB
   });
 });
 
-// Jalankan server
+// --- Start
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
