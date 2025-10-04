@@ -9,30 +9,42 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Middleware
+// static & body
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-// EJS + Layout
+// ejs + layouts
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
-app.set("layout", "layout"); // default layout.ejs
+app.set("layout", "layout"); // pakai views/layout.ejs
 
-// Routing
+// ---- demo data artikel (nanti ganti ambil dari DB) ----
+const demoArticles = [
+  { slug: "welcome", title: "Welcome", content: "Halo keluarga besar AGUDASCO…" },
+  { slug: "event-sabtu", title: "Kegiatan Sabtu", content: "Rangkuman kegiatan Sabtu…" },
+];
+
+// routes
 app.get("/", (req, res) => {
   res.render("home", {
     title: "AGUDASCO – Beranda",
     user: null,
-    arts: [] // nanti ambil dari DB
+    arts: demoArticles, // tampilkan list
   });
 });
 
 app.get("/article/:slug", (req, res) => {
+  const { slug } = req.params;
+  const found = demoArticles.find(a => a.slug === slug) || {
+    slug,
+    title: "Artikel",
+    content: "Konten artikel ini nanti akan diambil dari database berdasarkan slug.",
+  };
   res.render("article", {
-    title: "Artikel – AGUDASCO",
-    slug: req.params.slug
+    title: `${found.title} – AGUDASCO`,
+    artikel: found,
   });
 });
 
