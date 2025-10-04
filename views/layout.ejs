@@ -32,3 +32,42 @@
 </html>
 <!-- views/layout.ejs -->
 <link rel="stylesheet" href="/public/style.css?v=2"/>
+/* ===== Modern Hero ===== */
+.sr-only { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); border:0; }
+
+.hero {
+  margin: 0;
+  padding: 0;
+  background: #0b1220;
+}
+.hero__slider { 
+  width: 100%;
+  max-height: 460px;            /* kunci tinggi nyaman */
+  aspect-ratio: 16/9;
+  overflow: hidden;
+}
+.hero__slide { position: relative; height: 100%; }
+.hero__slide img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+
+/* overlay teks */
+.hero__overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.45), rgba(0,0,0,.05));
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 24px;
+}
+.hero__overlay h2 { margin: 0 0 6px; font-size: 28px; line-height: 1.2; }
+.hero__overlay p  { margin: 0; color: var(--muted); }
+
+/* rapetin jarak bawah slider */
+.tns-outer { margin-bottom: 8px !important; }
+
+/* responsif kecil */
+@media (max-width: 640px) {
+  .hero__slider { max-height: 360px; }
+  .hero__overlay h2 { font-size: 22px; }
+}
+.section-title { margin: 12px 0; }
