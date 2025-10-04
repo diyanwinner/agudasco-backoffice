@@ -1,6 +1,0 @@
-<% layout('layout', { title: art.title + ' – AGUDASCO' }) %>
-<article class="card">
-  <h1><%= art.title %></h1>
-  <div class="muted"><%= new Date(art.created_at).toLocaleString() %></div>
-  <div><%- art.content %></div>
-</article>
