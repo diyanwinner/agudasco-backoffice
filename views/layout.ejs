@@ -6,44 +6,37 @@
   <title><%= title || "AGUDASCO" %></title>
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/public/style.css"/>
-
-  <!-- Tiny Slider (untuk halaman yang pakai slider) -->
+  <link rel="stylesheet" href="/public/style.css?v=3">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css"/>
+
+  <!-- Meta basic -->
+  <meta name="color-scheme" content="dark light">
 </head>
 <body>
+  <!-- Topbar -->
   <header class="topbar">
     <a class="brand" href="/">AGUDASCO</a>
-
-    <nav class="mainnav">
-      <a class="<%= active('/') %>" href="/">Beranda</a>
-      <a class="<%= active('/galeri') %>" href="/galeri">Galeri</a>
-      <a class="<%= active('/kegiatan') %>" href="/kegiatan">Kegiatan</a>
-      <a class="<%= active('/berita') %>" href="/berita">Berita</a>
-      <a class="<%= active('/anggota') %>" href="/anggota">Anggota</a>
-      <a class="<%= active('/pengurus') %>" href="/pengurus">Pengurus</a>
-      <a class="<%= active('/laporan-keuangan') %>" href="/laporan-keuangan">Laporan Keuangan</a>
-      <a class="<%= active('/tentang') %>" href="/tentang">Tentang</a>
-      <a class="<%= active('/kontak') %>" href="/kontak">Kontak</a>
-
-      <% if (typeof user !== "undefined" && user) { %>
-        <a class="<%= active('/admin') %>" href="/admin">Dashboard</a>
-        <form action="/admin/logout" method="post" style="display:inline">
-          <button class="link">Logout</button>
-        </form>
-      <% } else { %>
-        <a class="<%= active('/admin/login') %>" href="/admin/login">Login</a>
-      <% } %>
+    <nav class="nav">
+      <a class="nav__link <%= path==='/' ? 'is-active' : '' %>" href="/">Beranda</a>
+      <a class="nav__link <%= path.startsWith('/galeri')    ? 'is-active' : '' %>" href="/galeri">Galeri</a>
+      <a class="nav__link <%= path.startsWith('/kegiatan')  ? 'is-active' : '' %>" href="/kegiatan">Kegiatan</a>
+      <a class="nav__link <%= path.startsWith('/berita')    ? 'is-active' : '' %>" href="/berita">Berita</a>
+      <a class="nav__link <%= path.startsWith('/anggota')   ? 'is-active' : '' %>" href="/anggota">Anggota</a>
+      <a class="nav__link <%= path.startsWith('/pengurus')  ? 'is-active' : '' %>" href="/pengurus">Pengurus</a>
+      <a class="nav__link <%= path.startsWith('/laporan')   ? 'is-active' : '' %>" href="/laporan">Laporan Keuangan</a>
+      <a class="nav__link <%= path.startsWith('/tentang')   ? 'is-active' : '' %>" href="/tentang">Tentang</a>
+      <a class="nav__link <%= path.startsWith('/kontak')    ? 'is-active' : '' %>" href="/kontak">Kontak</a>
     </nav>
   </header>
 
+  <!-- Page content -->
   <main class="container">
     <%- body %>
   </main>
 
   <footer class="footer">© <%= new Date().getFullYear() %> AGUDASCO</footer>
 
-  <!-- Tiny Slider JS (dipakai hanya jika halaman panggil tns()) -->
+  <!-- Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/min/tiny-slider.js"></script>
 </body>
 </html>
