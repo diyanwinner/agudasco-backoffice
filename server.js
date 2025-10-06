@@ -78,6 +78,19 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
+// === HOME (/) ===
+app.get("/", (req, res) => {
+  db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
+    db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
+      res.render("home", {
+        title: "AGUDASCO – Beranda",
+        banners,
+        arts
+      });
+    });
+  });
+});
+
 // -------- Public Routes --------
 
 // DAFTAR LAPORAN
