@@ -57,15 +57,14 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-/** Storage DOKUMEN (laporan) – PUBLIC, RAW, paksa ekstensi di URL */
+/** Storage DOKUMEN (laporan) – PUBLIC RAW, paksa ekstensi di URL */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    // nama file tanpa ekstensi dari file yang di-upload
-    const base = path.parse(file.originalname).name;
+    const base = path.parse(file.originalname).name; // nama file tanpa ekstensi
 
-    // mapping mimetype -> ekstensi supaya URL punya .pdf/.docx/.xlsx dll
-    const map = {
+    // mapping mimetype -> ekstensi supaya URL punya .pdf/.docx/.xlsx dst.
+    const extMap = {
       "application/pdf": "pdf",
       "application/msword": "doc",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
@@ -73,17 +72,16 @@ const fileStorage = new CloudinaryStorage({
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
       "application/vnd.ms-powerpoint": "ppt",
       "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
-      // kalau mimetype tak dikenali, biarkan undefined—Cloudinary akan set sendiri
     };
-    const fmt = map[file.mimetype] || undefined;
+    const fmt = extMap[file.mimetype] || undefined;
 
     return {
       folder: "agudasco/reports",
-      resource_type: "raw",        // penting untuk dokumen
+      resource_type: "raw",
       type: "upload",
       access_mode: "public",
-      public_id: base,             // simpan nama tanpa ekstensi
-      format: fmt,                 // paksa ekstensi di URL (contoh .pdf)
+      public_id: base, // simpan nama bersih
+      format: fmt,     // paksa ekstensi di URL (kalau dikenali)
     };
   },
 });
@@ -101,13 +99,13 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// izinkan iframe docs.google.com & res.cloudinary.com
+// Izinkan iframe dari docs.google.com & res.cloudinary.com
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
     [
-      "frame-src 'self' https://docs.google.com https://res.cloudinary.com",
-      "child-src 'self' https://docs.google.com https://res.cloudinary.com",
+      "frame-src 'self' https://docs.google.com https://mozilla.github.io https://res.cloudinary.com",
+      "child-src 'self' https://docs.google.com https://mozilla.github.io https://res.cloudinary.com",
       "object-src 'none'",
     ].join("; ")
   );
@@ -127,6 +125,7 @@ app.get("/", (req, res) => {
 });
 
 /* ---------- Public: Laporan list & preview ---------- */
+// List laporan
 app.get("/laporan", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
@@ -134,20 +133,26 @@ app.get("/laporan", (req, res) => {
   });
 });
 
+// Detail + Preview
 app.get("/laporan/:id", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
     if (err) return res.status(500).send(err.message);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
 
-    const url = report.file || "";
+    const url = (report.file || "").trim();
     const isPDF = url.toLowerCase().endsWith(".pdf");
-    const googleViewer =
-      "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
+
+    // PDF => pakai PDF.js viewer (paling stabil utk Cloudinary RAW)
+    const pdfJsViewer = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
+
+    // Office files => Google Viewer
+    const googleViewer = "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
 
     res.render("report_view", {
       title: report.title,
       report,
       isPDF,
+      pdfJsViewer,
       googleViewer,
     });
   });
