@@ -1,4 +1,5 @@
-<!-- views/report_view.ejs -->
+<% layout('layout') %>
+
 <h1 style="margin:0 0 12px;">Laporan Keuangan</h1>
 
 <style>
@@ -35,17 +36,16 @@
 
 <div class="viewer">
   <% if (isPDF) { %>
-    <!-- Pratinjau PDF native browser (paling stabil) -->
-    <object data="<%= report.file %>#view=FitH" type="application/pdf">
-      <embed src="<%= report.file %>#view=FitH" type="application/pdf" />
-      <!-- Fallback text -->
+    <!-- PDF ditampilkan lewat proxy lokal agar header inline terjamin -->
+    <object data="<%= pdfSrc %>#view=FitH" type="application/pdf">
+      <embed src="<%= pdfSrc %>#view=FitH" type="application/pdf" />
       <div style="padding:16px; color:#e5e7eb;">
         Browser kamu tidak bisa menampilkan PDF. Silakan
         <a href="<%= report.file %>" target="_blank" rel="noopener" style="color:#a5b4fc;">download dokumen</a>.
       </div>
     </object>
   <% } else { %>
-    <!-- Non-PDF coba Google Viewer -->
+    <!-- Non-PDF: pakai Google Viewer -->
     <iframe src="<%= googleViewer %>" allowfullscreen></iframe>
   <% } %>
 </div>
