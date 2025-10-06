@@ -1,53 +1,26 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title><%= title || "AGUDASCO" %></title>
-
-  <!-- Tiny Slider CSS -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css"/>
-
-  <!-- App CSS -->
-  <link rel="stylesheet" href="/public/style.css?v=3"/>
+  <meta charset="UTF-8">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/public/style.css">
 </head>
 <body>
-  <!-- TOPBAR -->
   <header class="topbar">
-    <div class="topbar__inner">
-      <a class="brand" href="/">AGUDASCO</a>
-
-      <nav class="mainnav">
-        <a href="/">Beranda</a>
-        <a href="/galeri">Galeri</a>
-        <a href="/kegiatan">Kegiatan</a>
-        <a href="/berita">Berita</a>
-        <a href="/anggota">Anggota</a>
-        <a href="/pengurus">Pengurus</a>
-        <a href="/laporan">Laporan Keuangan</a>
-        <a href="/tentang">Tentang</a>
-        <a href="/kontak">Kontak</a>
-        <a class="admin-link" href="/admin">Admin</a>
-      </nav>
-    </div>
+    <div class="logo">AGUDASCO</div>
+    <nav>
+      <a href="/">Beranda</a>
+      <a href="/laporan">Laporan Keuangan</a>
+      <a href="/admin">Admin</a>
+    </nav>
   </header>
 
-  <!-- PAGE CONTENT -->
-  <main class="container">
+  <main>
     <%- body %>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    © <%= new Date().getFullYear() %> AGUDASCO
+  <footer>
+    <p>&copy; 2025 AGUDASCO</p>
   </footer>
-
-  <!-- Tiny Slider JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/min/tiny-slider.js"></script>
-
-  <!-- Page-level JS hook (optional) -->
-  <script>
-    // tempat JS halaman (home.ejs akan inject init slider)
-  </script>
 </body>
 </html>
