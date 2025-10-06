@@ -1,74 +1,35 @@
-<% layout('layout') %>
-
 <!-- SLIDER / HERO -->
 <section class="hero">
   <% if (banners && banners.length) { %>
-    <div id="heroSlider" class="hero__slider">
+    <div class="hero__track">
       <% banners.forEach(b => { %>
         <div class="hero__slide">
-          <img src="<%= b.image %>" alt="Banner AGUDASCO">
+          <img src="<%= b.image %>" alt="Banner" class="hero__img">
         </div>
       <% }) %>
     </div>
   <% } else { %>
-    <div class="hero__slider hero__placeholder">
-      <div class="hero__slide">
-        <img src="https://images.unsplash.com/photo-1520975922284-5cbf8b45c7be?q=80&w=1600&auto=format&fit=crop" alt="Placeholder banner">
-      </div>
-    </div>
+    <div class="card"><em>Tidak ada banner.</em></div>
   <% } %>
 </section>
 
-<!-- LIST ARTIKEL -->
-<section>
+<!-- ARTIKEL -->
+<section class="container">
   <h2 class="section-title">Berita & Kegiatan Terbaru</h2>
-  <div class="cards">
-    <% if (arts && arts.length) { %>
+  <% if (arts && arts.length) { %>
+    <div class="cards">
       <% arts.forEach(a => { %>
-        <a class="card card--link" href="/article/<%= a.id %>">
+        <a class="card" href="/article/<%= a.id %>">
           <% if (a.image) { %>
-            <div class="card__thumb">
-              <img src="<%= a.image %>" alt="<%= a.title %>">
-            </div>
+            <img src="<%= a.image %>" alt="<%= a.title %>" class="card__thumb">
           <% } %>
-          <div class="card__body">
-            <h3 class="card__title"><%= a.title %></h3>
-            <div class="muted"><%= new Date(a.created_at).toLocaleString('id-ID') %></div>
-            <% if (a.content) { %>
-              <p class="card__snippet"><%= a.content.slice(0,160) %>…</p>
-            <% } %>
-          </div>
+          <h3 class="card__title"><%= a.title %></h3>
+          <div class="muted"><%= new Date(a.created_at).toLocaleString() %></div>
+          <p class="card__snippet"><%= (a.content || '').slice(0, 160) %>…</p>
         </a>
       <% }) %>
-    <% } else { %>
-      <div class="muted">Belum ada artikel dipublikasi.</div>
-    <% } %>
-  </div>
+    </div>
+  <% } else { %>
+    <div class="card"><em>Belum ada artikel dipublikasi.</em></div>
+  <% } %>
 </section>
-
-<!-- Init slider -->
-<script>
-  (function () {
-    const el = document.getElementById('heroSlider');
-    if (!el || !window.tns) return;
-    if (el.dataset.inited === '1') return;
-
-    tns({
-      container: el,
-      items: 1,
-      slideBy: 1,
-      autoplay: true,
-      autoplayTimeout: 4200,
-      autoplayButtonOutput: false,
-      controls: true,
-      controlsText: ['‹','›'],
-      nav: true,
-      navPosition: 'bottom',
-      mouseDrag: true,
-      loop: true,
-      speed: 500
-    });
-
-    el.dataset.inited = '1';
-  })();
-</script>
