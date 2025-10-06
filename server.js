@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,7 +12,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// -------- DB --------
+// DB setup
 const db = new sqlite3.Database("./db.sqlite");
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS articles (
@@ -36,7 +35,7 @@ db.serialize(() => {
   )`);
 });
 
-// -------- Cloudinary --------
+// Cloudinary setup
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -47,12 +46,12 @@ const storage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "agudasco",
-    allowed_formats: ["jpg", "png", "jpeg", "pdf", "docx", "xlsx"]
-  }
+    allowed_formats: ["jpg", "png", "jpeg", "pdf", "docx", "xlsx"],
+  },
 });
 const upload = multer({ storage });
 
-// -------- Middleware --------
+// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use("/public", express.static(path.join(__dirname, "public")));
@@ -135,6 +134,6 @@ app.post("/admin/reports/:id/delete", (req, res) => {
   db.run("DELETE FROM reports WHERE id = ?", [req.params.id], () => res.redirect("/admin/reports"));
 });
 
-// -------- Start --------
+// Start
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
