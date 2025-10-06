@@ -38,75 +38,33 @@ db.serialize(() => {
   )`);
 });
 
-// --------------------- Cloudinary config ---------------------
+/* --------------------- Cloudinary config --------------------- */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage khusus GAMBAR (banner/artikel)
+/** Storage GAMBAR (banner/artikel) – PUBLIC */
 const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "agudasco/images",
     resource_type: "image",
-    type: "upload",            // pastikan upload biasa
-    access_mode: "public",     // BUKAN authenticated
+    type: "upload",
+    access_mode: "public",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
 
-// --------------------- Cloudinary config ---------------------
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Storage khusus GAMBAR (banner/artikel)
-const imageStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "agudasco/images",
-    resource_type: "image",
-    type: "upload",            // pastikan upload biasa
-    access_mode: "public",     // BUKAN authenticated
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-  },
-});
-
-// Storage khusus DOKUMEN (laporan)
+/** Storage DOKUMEN (laporan) – PUBLIC, pakai RAW */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "agudasco/reports",
-    resource_type: "raw",      // dokumen: pdf/doc/xlsx dlsb
-    type: "upload",            // jangan 'authenticated'
-    access_mode: "public",     // agar bisa dipreview publik
-    // biarkan format mengikuti aslinya
-  },
-});
-
-const uploadImage = multer({ storage: imageStorage });
-const uploadFile  = multer({ storage: fileStorage });
-
-// (opsional) long-ttl untuk viewer PDF
-app.use((req, res, next) => {
-  res.setHeader(
-    "Content-Security-Policy",
-    "frame-src 'self' https://docs.google.com https://res.cloudinary.com; child-src 'self' https://docs.google.com https://res.cloudinary.com; object-src 'none';"
-  );
-  next();
-});
-
-/** Storage khusus DOKUMEN (laporan) */
-const fileStorage = new CloudinaryStorage({
-  cloudinary,
-  // "auto" biar PDF/DOC/DOCX/XLS/XLSX/PPT/PPTX dll aman
-  params: {
-    folder: "agudasco/reports",
-    resource_type: "auto",
+    resource_type: "raw",
+    type: "upload",
+    access_mode: "public",
   },
 });
 
@@ -123,7 +81,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// (opsional) izinkan iframe dari docs.google.com & res.cloudinary.com
+// izinkan iframe docs.google.com & res.cloudinary.com
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -133,24 +91,18 @@ app.use((req, res, next) => {
 });
 
 /* --------------------------- Routes -------------------------- */
-
-// Healthcheck
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
 // HOME
 app.get("/", (req, res) => {
   db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
     db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
-      res.render("home", {
-        title: "AGUDASCO – Beranda",
-        banners,
-        arts,
-      });
+      res.render("home", { title: "AGUDASCO – Beranda", banners, arts });
     });
   });
 });
 
-// ------------------- PUBLIC: Laporan -------------------
+/* ---------- Public: Laporan list & preview ---------- */
 app.get("/laporan", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
@@ -164,11 +116,8 @@ app.get("/laporan/:id", (req, res) => {
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
 
     const url = report.file || "";
-    const lower = url.toLowerCase();
-    const isPDF = lower.endsWith(".pdf");
-
-    const googleViewer =
-      "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
+    const isPDF = url.toLowerCase().endsWith(".pdf");
+    const googleViewer = "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
 
     res.render("report_view", {
       title: report.title,
@@ -177,35 +126,6 @@ app.get("/laporan/:id", (req, res) => {
       googleViewer,
     });
   });
-});
-
-// PROXY PDF: stream dari Cloudinary, paksa header inline supaya <object> tampil
-app.get("/laporan/:id/raw", async (req, res) => {
-  try {
-    db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
-      if (err) return res.status(500).send(err.message);
-      if (!report) return res.status(404).send("Laporan tidak ditemukan");
-
-      const url = report.file || "";
-      if (!url.toLowerCase().endsWith(".pdf")) {
-        // kalau bukan PDF, langsung redirect (biar download/view default)
-        return res.redirect(url);
-      }
-
-      const upstream = await fetch(url);
-      if (!upstream.ok || !upstream.body) {
-        return res.status(502).send("Gagal mengambil file dari Cloudinary");
-      }
-
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", "inline; filename=report.pdf");
-
-      upstream.body.pipe(res);
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal memuat PDF");
-  }
 });
 
 /* --------------------------- Admin --------------------------- */
@@ -223,18 +143,14 @@ app.get("/admin/articles", (req, res) => {
 
 app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
   const { title, content } = req.body;
-  const image = req.file ? req.file.path : null; // URL Cloudinary
-
+  const image = req.file ? req.file.path : null;
   if (!title) return res.status(400).send("Judul wajib diisi");
 
   db.run(
     "INSERT INTO articles (title, content, image) VALUES (?, ?, ?)",
     [title, content || "", image],
     (err) => {
-      if (err) {
-        console.error("Insert article error:", err.message);
-        return res.status(500).send(err.message);
-      }
+      if (err) return res.status(500).send(err.message);
       res.redirect("/admin/articles");
     }
   );
@@ -242,10 +158,7 @@ app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
 
 app.post("/admin/articles/:id/delete", (req, res) => {
   db.run("DELETE FROM articles WHERE id = ?", [req.params.id], (err) => {
-    if (err) {
-      console.error("Delete article error:", err.message);
-      return res.status(500).send(err.message);
-    }
+    if (err) return res.status(500).send(err.message);
     res.redirect("/admin/articles");
   });
 });
@@ -263,53 +176,46 @@ app.post("/admin/banners", uploadImage.single("image"), (req, res) => {
   if (!image) return res.status(400).send("File gambar belum dipilih");
 
   db.run("INSERT INTO banners (image) VALUES (?)", [image], (err) => {
-    if (err) {
-      console.error("Insert banner error:", err.message);
-      return res.status(500).send(err.message);
-    }
+    if (err) return res.status(500).send(err.message);
     res.redirect("/admin/banners");
   });
 });
 
 app.post("/admin/banners/:id/delete", (req, res) => {
   db.run("DELETE FROM banners WHERE id = ?", [req.params.id], (err) => {
-    if (err) {
-      console.error("Delete banner error:", err.message);
-      return res.status(500).send(err.message);
-    }
+    if (err) return res.status(500).send(err.message);
     res.redirect("/admin/banners");
   });
 });
 
-// ------------------- ADMIN: Upload Laporan -------------------
+/* ---- Admin: Laporan ---- */
+app.get("/admin/reports", (req, res) => {
+  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("admin/reports", { title: "Kelola Laporan", reports });
+  });
+});
+
 app.post("/admin/reports", uploadFile.single("file"), (req, res) => {
   const { title } = req.body;
-  const file = req.file ? req.file.path : null;  // URL Cloudinary
-
+  const file = req.file ? req.file.path : null;
   if (!title || !file) return res.status(400).send("Judul dan file wajib diisi");
 
   db.run("INSERT INTO reports (title, file) VALUES (?, ?)", [title, file], (err) => {
-    if (err) {
-      console.error("Insert report error:", err.message);
-      return res.status(500).send(err.message);
-    }
+    if (err) return res.status(500).send(err.message);
     res.redirect("/admin/reports");
   });
 });
 
 app.post("/admin/reports/:id/delete", (req, res) => {
   db.run("DELETE FROM reports WHERE id = ?", [req.params.id], (err) => {
-    if (err) {
-      console.error("Delete report error:", err.message);
-      return res.status(500).send(err.message);
-    }
+    if (err) return res.status(500).send(err.message);
     res.redirect("/admin/reports");
   });
 });
 
 /* ------------------- 404 & Error Handlers ------------------- */
 app.use((req, res) => res.status(404).send("Not Found"));
-
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err?.stack || err);
   res.status(500).send(err?.message || "Server Error");
