@@ -1,29 +1,50 @@
-<!-- views/report_view.ejs -->
-<h1><%= title %></h1>
+<% layout('layout') %>
 
-<div class="preview-bar card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-  <div class="muted">Pratinjau dokumen</div>
-  <div>
+<h1>Laporan Keuangan</h1>
+
+<div class="doc-bar">
+  <span>Pratinjau dokumen</span>
+  <div class="doc-actions">
     <a class="btn" href="<%= report.file %>" download>Download</a>
-    <a class="btn small" href="/laporan">Kembali</a>
+    <a class="btn ghost" href="/laporan">Kembali</a>
   </div>
 </div>
 
-<div class="doc-frame card" style="padding:0; overflow:hidden;">
-  <% if (isPDF) { %>
-    <!-- PDF ditampilkan langsung -->
-    <iframe
-      src="<%= report.file %>#toolbar=1&navpanes=0&scrollbar=1"
-      width="100%" height="720" style="border:0;"></iframe>
-  <% } else { %>
-    <!-- Non-PDF (docx/xlsx) via Google Docs Viewer -->
-    <iframe
-      src="<%= googleViewer %>"
-      width="100%" height="720" style="border:0;"></iframe>
-  <% } %>
+<%
+  const fileUrl = report.file || '';
+  const ext = (fileUrl.split('.').pop() || '').toLowerCase();
+
+  // Tentukan viewer terbaik
+  let viewerSrc = fileUrl; // default (PDF inline / yang didukung browser)
+  if (['doc','docx','xls','xlsx','ppt','pptx'].includes(ext)) {
+    // Viewer Office (paling stabil untuk dokumen Ms Office)
+    viewerSrc = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(fileUrl);
+  } else if (ext !== 'pdf') {
+    // Fallback viewer Google ringan untuk selain PDF
+    viewerSrc = 'https://drive.google.com/viewerng/viewer?embedded=1&url=' + encodeURIComponent(fileUrl);
+  }
+%>
+
+<div class="doc-frame-wrap">
+  <iframe
+    class="doc-frame"
+    src="<%= viewerSrc %>"
+    loading="lazy"
+    allow="fullscreen"
+    referrerpolicy="no-referrer"
+  ></iframe>
 </div>
 
-<div style="margin-top:10px;">
-  <a class="btn" href="<%= report.file %>" download>Download</a>
-  <a class="btn small" href="/laporan">Kembali</a>
-</div>
+<style>
+  .doc-bar{
+    display:flex;justify-content:space-between;align-items:center;
+    background:#0c1424;border:1px solid var(--line);
+    padding:10px 12px;border-radius:10px;margin-bottom:12px
+  }
+  .doc-actions{display:flex;gap:8px}
+  .btn{display:inline-block;background:var(--brand);color:#032010;
+    padding:8px 12px;border-radius:8px;font-weight:700;border:none;cursor:pointer;text-decoration:none}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+  .doc-frame-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#000}
+  .doc-frame{width:100%;height:78vh;border:0;display:block}
+</style>
