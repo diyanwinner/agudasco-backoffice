@@ -1,19 +1,35 @@
-<h1>Kelola Banner</h1>
-<form method="post" enctype="multipart/form-data">
-  <label>Upload Banner</label>
-  <input type="file" name="image" required>
-  <button class="btn">Tambah</button>
+<h1 class="mb-3">Kelola Banner</h1>
+
+<!-- FORM UPLOAD -->
+<form action="/admin/banners" method="post" enctype="multipart/form-data"
+      class="d-flex flex-wrap gap-2 align-items-center mb-4">
+  <label class="form-label mb-0 me-2">Upload Banner</label>
+  <input class="form-control" type="file" name="image" accept="image/*" required style="max-width:360px">
+  <button class="btn btn-success">Upload</button>
 </form>
 
-<hr>
-<h2>Daftar Banner</h2>
-<ul>
-  <% banners.forEach(b => { %>
-    <li>
-      <img src="<%= b.image %>" alt="banner" style="max-width:150px;">
-      <form method="post" action="/admin/banners/<%= b.id %>/delete" style="display:inline">
-        <button class="btn small danger">Hapus</button>
-      </form>
-    </li>
-  <% }) %>
-</ul>
+<hr class="border-secondary"/>
+
+<h4 class="mb-3">Daftar Banner</h4>
+
+<% if (banners && banners.length) { %>
+  <div class="row g-3">
+    <% banners.forEach(b => { %>
+      <div class="col-12 col-sm-6 col-lg-4">
+        <div class="card bg-body-tertiary border-0 h-100 shadow-sm">
+          <img src="<%= b.image %>" alt="Banner <%= b.id %>"
+               class="card-img-top object-cover ratio-16x9">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <small class="text-muted">#<%= b.id %></small>
+            <form action="/admin/banners/<%= b.id %>/delete" method="post"
+                  onsubmit="return confirm('Hapus banner ini?')">
+              <button class="btn btn-sm btn-outline-danger">Hapus</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } else { %>
+  <div class="text-muted">Belum ada banner.</div>
+<% } %>
