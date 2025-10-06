@@ -1,5 +1,3 @@
-<% layout('layout') %>
-
 <h1 style="margin:0 0 12px;">Laporan Keuangan</h1>
 
 <style>
@@ -36,7 +34,7 @@
 
 <div class="viewer">
   <% if (isPDF) { %>
-    <!-- PDF ditampilkan lewat proxy lokal agar header inline terjamin -->
+    <!-- PDF via proxy lokal agar pasti inline -->
     <object data="<%= pdfSrc %>#view=FitH" type="application/pdf">
       <embed src="<%= pdfSrc %>#view=FitH" type="application/pdf" />
       <div style="padding:16px; color:#e5e7eb;">
@@ -45,7 +43,7 @@
       </div>
     </object>
   <% } else { %>
-    <!-- Non-PDF: pakai Google Viewer -->
+    <!-- Non-PDF: Google Viewer -->
     <iframe src="<%= googleViewer %>" allowfullscreen></iframe>
   <% } %>
 </div>
