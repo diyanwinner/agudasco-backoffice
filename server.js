@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// ---------- DB ----------
+/* ------------------------ DB (SQLite) ------------------------ */
 const db = new sqlite3.Database("./db.sqlite");
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS articles (
@@ -23,11 +23,13 @@ db.serialize(() => {
     image TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS banners (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     image TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
   db.run(`CREATE TABLE IF NOT EXISTS reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
@@ -36,64 +38,77 @@ db.serialize(() => {
   )`);
 });
 
-// ---------- Cloudinary ----------
+/* --------------------- Cloudinary config --------------------- */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Storage khusus GAMBAR (banner, artikel)
+/** Storage khusus GAMBAR (banner/artikel) */
 const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "agudasco/images",
-    resource_type: "image",                // penting: image saja
+    resource_type: "image",
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
 
-// Storage khusus DOKUMEN (laporan: pdf/docx/xlsx)
+/** Storage khusus DOKUMEN (laporan) */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
+  // pakai auto → PDF/DOC/DOCX/XLS/XLSX/PPT/PPTX dll aman
   params: {
     folder: "agudasco/reports",
-    resource_type: "raw",                  // penting: dokumen/arsip
-    // allowed_formats tidak wajib untuk raw; biarkan Cloudinary terima file apa adanya
+    resource_type: "auto",
   },
 });
 
-// Dua uploader terpisah
 const uploadImage = multer({ storage: imageStorage });
 const uploadFile  = multer({ storage: fileStorage });
 
-// ---------- Middleware ----------
+/* ------------------------- Middleware ------------------------ */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// === HOME (/) ===
+// optional: tambahkan header agar iframe Google Viewer aman ditampilkan
+app.use((req, res, next) => {
+  // izinkan iframe dari docs.google.com & res.cloudinary.com
+  res.setHeader(
+    "Content-Security-Policy",
+    "frame-src 'self' https://docs.google.com https://res.cloudinary.com; child-src 'self' https://docs.google.com https://res.cloudinary.com; object-src 'none';"
+  );
+  next();
+});
+
+/* --------------------------- Routes -------------------------- */
+
+// Healthcheck
+app.get("/health", (req, res) => res.status(200).send("OK"));
+
+// HOME
 app.get("/", (req, res) => {
   db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
     db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
       res.render("home", {
         title: "AGUDASCO – Beranda",
         banners,
-        arts
+        arts,
       });
     });
   });
 });
 
-// -------- Public Routes --------
+/* ---------- Public: Laporan list & preview ---------- */
 
-// DAFTAR LAPORAN
+// List laporan
 app.get("/laporan", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
@@ -101,39 +116,35 @@ app.get("/laporan", (req, res) => {
   });
 });
 
-// PREVIEW LAPORAN (DETAIL)
+// Detail + Preview
 app.get("/laporan/:id", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
     if (err) return res.status(500).send(err.message);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
 
-    const lower = (report.file || "").toLowerCase();
+    const url = (report.file || "");
+    const lower = url.toLowerCase();
     const isPDF = lower.endsWith(".pdf");
 
+    // Google Viewer untuk Office files
     const googleViewer =
-      "https://docs.google.com/gview?embedded=1&url=" +
-      encodeURIComponent(report.file);
+      "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
 
     res.render("report_view", {
       title: report.title,
       report,
       isPDF,
-      googleViewer
+      googleViewer,
     });
   });
 });
 
-app.get("/laporan", (req, res) => {
-  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
-    if (err) return res.status(500).send(err.message);
-    res.render("reports", { title: "Laporan Keuangan", reports });
-  });
-});
+/* --------------------------- Admin --------------------------- */
+app.get("/admin", (req, res) =>
+  res.render("admin/dashboard", { title: "Dashboard" })
+);
 
-// ---------- Admin Routes ----------
-app.get("/admin", (req, res) => res.render("admin/dashboard", { title: "Dashboard" }));
-
-// Artikel
+/* ---- Admin: Artikel ---- */
 app.get("/admin/articles", (req, res) => {
   db.all("SELECT * FROM articles ORDER BY id DESC", [], (err, articles = []) => {
     if (err) return res.status(500).send(err.message);
@@ -143,8 +154,10 @@ app.get("/admin/articles", (req, res) => {
 
 app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
   const { title, content } = req.body;
-  const image = req.file ? req.file.path : null;
+  const image = req.file ? req.file.path : null; // multer-storage-cloudinary → URL
+
   if (!title) return res.status(400).send("Judul wajib diisi");
+
   db.run(
     "INSERT INTO articles (title, content, image) VALUES (?, ?, ?)",
     [title, content || "", image],
@@ -168,7 +181,7 @@ app.post("/admin/articles/:id/delete", (req, res) => {
   });
 });
 
-// Banner
+/* ---- Admin: Banner ---- */
 app.get("/admin/banners", (req, res) => {
   db.all("SELECT * FROM banners ORDER BY id DESC", [], (err, banners = []) => {
     if (err) return res.status(500).send(err.message);
@@ -179,6 +192,7 @@ app.get("/admin/banners", (req, res) => {
 app.post("/admin/banners", uploadImage.single("image"), (req, res) => {
   const image = req.file ? req.file.path : null;
   if (!image) return res.status(400).send("File gambar belum dipilih");
+
   db.run("INSERT INTO banners (image) VALUES (?)", [image], (err) => {
     if (err) {
       console.error("Insert banner error:", err.message);
@@ -198,7 +212,7 @@ app.post("/admin/banners/:id/delete", (req, res) => {
   });
 });
 
-// Laporan
+/* ---- Admin: Laporan ---- */
 app.get("/admin/reports", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
@@ -208,20 +222,17 @@ app.get("/admin/reports", (req, res) => {
 
 app.post("/admin/reports", uploadFile.single("file"), (req, res) => {
   const { title } = req.body;
-  const file = req.file ? req.file.path : null;
+  const file = req.file ? req.file.path : null; // URL Cloudinary (secure)
 
   if (!title || !file) return res.status(400).send("Judul dan file wajib diisi");
-  db.run(
-    "INSERT INTO reports (title, file) VALUES (?, ?)",
-    [title, file],
-    (err) => {
-      if (err) {
-        console.error("Insert report error:", err.message);
-        return res.status(500).send(err.message);
-      }
-      res.redirect("/admin/reports");
+
+  db.run("INSERT INTO reports (title, file) VALUES (?, ?)", [title, file], (err) => {
+    if (err) {
+      console.error("Insert report error:", err.message);
+      return res.status(500).send(err.message);
     }
-  );
+    res.redirect("/admin/reports");
+  });
 });
 
 app.post("/admin/reports/:id/delete", (req, res) => {
@@ -234,12 +245,16 @@ app.post("/admin/reports/:id/delete", (req, res) => {
   });
 });
 
-// ---------- Error fallback (biar gak [object Object]) ----------
+/* ------------------- 404 & Error Handlers ------------------- */
+app.use((req, res) => res.status(404).send("Not Found"));
+
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err?.message || err);
+  console.error("Unhandled error:", err?.stack || err);
   res.status(500).send(err?.message || "Server Error");
 });
 
-// ---------- Start ----------
+/* --------------------------- Start --------------------------- */
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+app.listen(PORT, () =>
+  console.log(`Server running at http://localhost:${PORT}`)
+);
