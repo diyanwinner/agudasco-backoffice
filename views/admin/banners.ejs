@@ -1,21 +1,19 @@
-<% layout('layout') %>
-<h1>Kelola Banner (Slider)</h1>
-
-<form method="post" enctype="multipart/form-data" class="card max-480">
-  <label>Gambar banner</label>
-  <input type="file" name="image" accept="image/*" required/>
-  <button class="btn" type="submit">Upload</button>
+<h1>Kelola Banner</h1>
+<form method="post" enctype="multipart/form-data">
+  <label>Upload Banner</label>
+  <input type="file" name="image" required>
+  <button class="btn">Tambah</button>
 </form>
 
+<hr>
 <h2>Daftar Banner</h2>
-<div class="cards">
+<ul>
   <% banners.forEach(b => { %>
-    <div class="card">
-      <img src="<%= b.image %>" alt="banner" style="width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:8px">
-      <div class="muted"><%= new Date(b.created_at).toLocaleString() %></div>
-      <form method="post" action="/admin/banners/<%= b.id %>/delete" onsubmit="return confirm('Hapus banner ini?')">
-        <button class="btn small danger" type="submit">Hapus</button>
+    <li>
+      <img src="<%= b.image %>" alt="banner" style="max-width:150px;">
+      <form method="post" action="/admin/banners/<%= b.id %>/delete" style="display:inline">
+        <button class="btn small danger">Hapus</button>
       </form>
-    </div>
+    </li>
   <% }) %>
-</div>
+</ul>
