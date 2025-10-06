@@ -57,14 +57,14 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-/** Storage DOKUMEN (laporan) – PUBLIC RAW, paksa ekstensi di URL */
+/** Storage DOKUMEN (laporan) – PUBLIC, gunakan auto agar PDF masuk jalur image */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const base = path.parse(file.originalname).name; // nama file tanpa ekstensi
+    const base = path.parse(file.originalname).name;
 
-    // mapping mimetype -> ekstensi supaya URL punya .pdf/.docx/.xlsx dst.
-    const extMap = {
+    // Deteksi ekstensi untuk URL yang rapi (opsional)
+    const map = {
       "application/pdf": "pdf",
       "application/msword": "doc",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
@@ -73,15 +73,15 @@ const fileStorage = new CloudinaryStorage({
       "application/vnd.ms-powerpoint": "ppt",
       "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
     };
-    const fmt = extMap[file.mimetype] || undefined;
+    const fmt = map[file.mimetype] || undefined;
 
     return {
       folder: "agudasco/reports",
-      resource_type: "raw",
+      resource_type: "auto",   // <— KUNCI: biar PDF masuk jalur image, bukan raw
       type: "upload",
       access_mode: "public",
-      public_id: base, // simpan nama bersih
-      format: fmt,     // paksa ekstensi di URL (kalau dikenali)
+      public_id: base,
+      format: fmt,
     };
   },
 });
