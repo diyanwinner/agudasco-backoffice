@@ -4,9 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title><%= title || "AGUDASCO" %></title>
-
   <link rel="stylesheet" href="/public/style.css"/>
-  <!-- tiny-slider -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css"/>
 </head>
 <body>
@@ -14,17 +12,14 @@
     <a class="brand" href="/">AGUDASCO</a>
     <nav>
       <a href="/">Beranda</a>
-      <a href="/laporan">Laporan</a>
+      <a href="/laporan">Laporan Keuangan</a>
       <a href="/admin">Admin</a>
     </nav>
   </header>
-
   <main class="container">
     <%- body %>
   </main>
-
   <footer class="footer">© <%= new Date().getFullYear() %> AGUDASCO</footer>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/min/tiny-slider.js"></script>
 </body>
 </html>
