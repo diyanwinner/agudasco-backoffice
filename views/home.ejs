@@ -4,28 +4,24 @@
     <div class="hero__slider" id="heroSlider">
       <% banners.forEach(b => { %>
         <div class="hero__slide">
-          <img src="<%= b.url %>" alt="<%= b.title %>" loading="lazy">
-          <div class="hero__overlay">
-            <h2><%= b.title %></h2>
-            <% if (b.caption) { %>
-              <p><%= b.caption %></p>
-            <% } %>
-          </div>
+          <img src="<%= b.image %>" alt="Banner AGUDASCO">
         </div>
       <% }) %>
     </div>
   </section>
 <% } %>
 
-<!-- GRID ARTIKEL -->
 <section class="container">
   <h3 class="section-title">Berita & Kegiatan Terbaru</h3>
   <div class="cards">
-    <% if (arts && arts.length) { %>
+    <% if (arts.length) { %>
       <% arts.forEach(a => { %>
-        <a class="card" href="/article/<%= a.slug %>">
+        <a class="card" href="/article/<%= a.id %>">
           <h3><%= a.title %></h3>
           <div class="muted"><%= new Date(a.created_at).toLocaleString() %></div>
+          <% if (a.image) { %>
+            <img src="<%= a.image %>" alt="<%= a.title %>" style="width:100%; border-radius:8px;">
+          <% } %>
           <div><%- (a.content || '').slice(0,180) %>…</div>
         </a>
       <% }) %>
@@ -36,27 +32,20 @@
 </section>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const el = document.getElementById('heroSlider');
-    if (!el || !window.tns) return;
-    if (el.dataset.inited === '1') return;
-
-    tns({
-      container: el,
-      items: 1,
-      slideBy: 1,
-      autoplay: true,
-      autoplayTimeout: 4500,
-      autoplayButtonOutput: false,
-      controls: true,
-      controlsText: ['‹','›'],
-      nav: true,
-      navPosition: 'bottom',
-      mouseDrag: true,
-      loop: true,
-      speed: 500
-    });
-
-    el.dataset.inited = '1';
+document.addEventListener('DOMContentLoaded', function () {
+  const el = document.getElementById('heroSlider');
+  if (!el || !window.tns) return;
+  tns({
+    container: el,
+    items: 1,
+    autoplay: true,
+    autoplayTimeout: 4000,
+    controls: true,
+    controlsText: ['‹','›'],
+    nav: true,
+    mouseDrag: true,
+    loop: true,
+    speed: 500
   });
+});
 </script>
