@@ -38,21 +38,66 @@ db.serialize(() => {
   )`);
 });
 
-/* --------------------- Cloudinary config --------------------- */
+// --------------------- Cloudinary config ---------------------
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/** Storage khusus GAMBAR (banner/artikel) */
+// Storage khusus GAMBAR (banner/artikel)
 const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: "agudasco/images",
     resource_type: "image",
+    type: "upload",            // pastikan upload biasa
+    access_mode: "public",     // BUKAN authenticated
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
+});
+
+// --------------------- Cloudinary config ---------------------
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Storage khusus GAMBAR (banner/artikel)
+const imageStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "agudasco/images",
+    resource_type: "image",
+    type: "upload",            // pastikan upload biasa
+    access_mode: "public",     // BUKAN authenticated
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+  },
+});
+
+// Storage khusus DOKUMEN (laporan)
+const fileStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "agudasco/reports",
+    resource_type: "raw",      // dokumen: pdf/doc/xlsx dlsb
+    type: "upload",            // jangan 'authenticated'
+    access_mode: "public",     // agar bisa dipreview publik
+    // biarkan format mengikuti aslinya
+  },
+});
+
+const uploadImage = multer({ storage: imageStorage });
+const uploadFile  = multer({ storage: fileStorage });
+
+// (opsional) long-ttl untuk viewer PDF
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "frame-src 'self' https://docs.google.com https://res.cloudinary.com; child-src 'self' https://docs.google.com https://res.cloudinary.com; object-src 'none';"
+  );
+  next();
 });
 
 /** Storage khusus DOKUMEN (laporan) */
@@ -105,9 +150,7 @@ app.get("/", (req, res) => {
   });
 });
 
-/* ---------- Public: Laporan list & preview ---------- */
-
-// List laporan
+// ------------------- PUBLIC: Laporan -------------------
 app.get("/laporan", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
@@ -115,29 +158,23 @@ app.get("/laporan", (req, res) => {
   });
 });
 
-// Detail + Preview (siapkan pdfSrc untuk embed PDF via proxy lokal)
 app.get("/laporan/:id", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
     if (err) return res.status(500).send(err.message);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
 
-    const url = (report.file || "");
+    const url = report.file || "";
     const lower = url.toLowerCase();
     const isPDF = lower.endsWith(".pdf");
 
-    // Google Viewer untuk Office files
     const googleViewer =
       "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
-
-    // Proxy PDF agar pasti inline (Content-Type/Disposition kita yang atur)
-    const pdfSrc = `/laporan/${req.params.id}/raw`;
 
     res.render("report_view", {
       title: report.title,
       report,
       isPDF,
       googleViewer,
-      pdfSrc
     });
   });
 });
@@ -244,17 +281,10 @@ app.post("/admin/banners/:id/delete", (req, res) => {
   });
 });
 
-/* ---- Admin: Laporan ---- */
-app.get("/admin/reports", (req, res) => {
-  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
-    if (err) return res.status(500).send(err.message);
-    res.render("admin/reports", { title: "Kelola Laporan", reports });
-  });
-});
-
+// ------------------- ADMIN: Upload Laporan -------------------
 app.post("/admin/reports", uploadFile.single("file"), (req, res) => {
   const { title } = req.body;
-  const file = req.file ? req.file.path : null; // URL Cloudinary (secure)
+  const file = req.file ? req.file.path : null;  // URL Cloudinary
 
   if (!title || !file) return res.status(400).send("Judul dan file wajib diisi");
 
