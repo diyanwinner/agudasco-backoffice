@@ -58,7 +58,7 @@ const imageStorage = new CloudinaryStorage({
 /** Storage khusus DOKUMEN (laporan) */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
-  // pakai auto → PDF/DOC/DOCX/XLS/XLSX/PPT/PPTX dll aman
+  // "auto" biar PDF/DOC/DOCX/XLS/XLSX/PPT/PPTX dll aman
   params: {
     folder: "agudasco/reports",
     resource_type: "auto",
@@ -78,9 +78,8 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// optional: tambahkan header agar iframe Google Viewer aman ditampilkan
+// (opsional) izinkan iframe dari docs.google.com & res.cloudinary.com
 app.use((req, res, next) => {
-  // izinkan iframe dari docs.google.com & res.cloudinary.com
   res.setHeader(
     "Content-Security-Policy",
     "frame-src 'self' https://docs.google.com https://res.cloudinary.com; child-src 'self' https://docs.google.com https://res.cloudinary.com; object-src 'none';"
@@ -116,7 +115,7 @@ app.get("/laporan", (req, res) => {
   });
 });
 
-// Detail + Preview
+// Detail + Preview (siapkan pdfSrc untuk embed PDF via proxy lokal)
 app.get("/laporan/:id", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
     if (err) return res.status(500).send(err.message);
@@ -130,13 +129,46 @@ app.get("/laporan/:id", (req, res) => {
     const googleViewer =
       "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
 
+    // Proxy PDF agar pasti inline (Content-Type/Disposition kita yang atur)
+    const pdfSrc = `/laporan/${req.params.id}/raw`;
+
     res.render("report_view", {
       title: report.title,
       report,
       isPDF,
       googleViewer,
+      pdfSrc
     });
   });
+});
+
+// PROXY PDF: stream dari Cloudinary, paksa header inline supaya <object> tampil
+app.get("/laporan/:id/raw", async (req, res) => {
+  try {
+    db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
+      if (err) return res.status(500).send(err.message);
+      if (!report) return res.status(404).send("Laporan tidak ditemukan");
+
+      const url = report.file || "";
+      if (!url.toLowerCase().endsWith(".pdf")) {
+        // kalau bukan PDF, langsung redirect (biar download/view default)
+        return res.redirect(url);
+      }
+
+      const upstream = await fetch(url);
+      if (!upstream.ok || !upstream.body) {
+        return res.status(502).send("Gagal mengambil file dari Cloudinary");
+      }
+
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", "inline; filename=report.pdf");
+
+      upstream.body.pipe(res);
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat PDF");
+  }
 });
 
 /* --------------------------- Admin --------------------------- */
@@ -154,7 +186,7 @@ app.get("/admin/articles", (req, res) => {
 
 app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
   const { title, content } = req.body;
-  const image = req.file ? req.file.path : null; // multer-storage-cloudinary → URL
+  const image = req.file ? req.file.path : null; // URL Cloudinary
 
   if (!title) return res.status(400).send("Judul wajib diisi");
 
