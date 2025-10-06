@@ -1,0 +1,26 @@
+<% layout('layout') %>
+<h1>Kelola Laporan Keuangan</h1>
+
+<form method="post" enctype="multipart/form-data" class="card max-480">
+  <label>Judul Laporan</label>
+  <input type="text" name="title" required/>
+
+  <label>File (PDF/Excel/Gambar)</label>
+  <input type="file" name="file" required/>
+
+  <button class="btn" type="submit">Upload</button>
+</form>
+
+<h2>Daftar Laporan</h2>
+<div class="cards">
+  <% reports.forEach(r => { %>
+    <div class="card">
+      <h3><%= r.title %></h3>
+      <div class="muted"><%= new Date(r.created_at).toLocaleString() %></div>
+      <p><a href="<%= r.file %>" target="_blank">Lihat / Unduh</a></p>
+      <form method="post" action="/admin/reports/<%= r.id %>/delete" onsubmit="return confirm('Hapus laporan ini?')">
+        <button class="btn small danger" type="submit">Hapus</button>
+      </form>
+    </div>
+  <% }) %>
+</div>
