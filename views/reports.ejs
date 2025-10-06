@@ -1,0 +1,15 @@
+<% layout('layout') %>
+
+<h1>Laporan Keuangan</h1>
+<div class="cards">
+  <% (reports || []).forEach(r => { %>
+    <div class="card">
+      <h3><%= r.title %></h3>
+      <div class="muted"><%= new Date(r.created_at).toLocaleDateString() %></div>
+      <p><a href="<%= r.file %>" target="_blank">Lihat / Unduh</a></p>
+    </div>
+  <% }) %>
+  <% if (!(reports && reports.length)) { %>
+    <div class="muted">Belum ada laporan diunggah.</div>
+  <% } %>
+</div>
