@@ -4,22 +4,50 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title><%= title || "AGUDASCO" %></title>
-  <link rel="stylesheet" href="/public/style.css"/>
+
+  <!-- Tiny Slider CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css"/>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/public/style.css?v=3"/>
 </head>
 <body>
+  <!-- TOPBAR -->
   <header class="topbar">
-    <a class="brand" href="/">AGUDASCO</a>
-    <nav>
-      <a href="/">Beranda</a>
-      <a href="/laporan">Laporan Keuangan</a>
-      <a href="/admin">Admin</a>
-    </nav>
+    <div class="topbar__inner">
+      <a class="brand" href="/">AGUDASCO</a>
+
+      <nav class="mainnav">
+        <a href="/">Beranda</a>
+        <a href="/galeri">Galeri</a>
+        <a href="/kegiatan">Kegiatan</a>
+        <a href="/berita">Berita</a>
+        <a href="/anggota">Anggota</a>
+        <a href="/pengurus">Pengurus</a>
+        <a href="/laporan">Laporan Keuangan</a>
+        <a href="/tentang">Tentang</a>
+        <a href="/kontak">Kontak</a>
+        <a class="admin-link" href="/admin">Admin</a>
+      </nav>
+    </div>
   </header>
+
+  <!-- PAGE CONTENT -->
   <main class="container">
     <%- body %>
   </main>
-  <footer class="footer">© <%= new Date().getFullYear() %> AGUDASCO</footer>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    © <%= new Date().getFullYear() %> AGUDASCO
+  </footer>
+
+  <!-- Tiny Slider JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/min/tiny-slider.js"></script>
+
+  <!-- Page-level JS hook (optional) -->
+  <script>
+    // tempat JS halaman (home.ejs akan inject init slider)
+  </script>
 </body>
 </html>
