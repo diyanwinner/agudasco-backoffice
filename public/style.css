@@ -165,3 +165,49 @@ img{ display:block; max-width:100%; }
 .card__title{ margin:0 0 6px; font-size:16px; }
 .card__snippet{ margin:8px 0 0; color:#cbd5e1; line-height:1.5; }
 .muted{ color: var(--muted); font-size: 12px; }
+:root{
+  --bg:#0b1220;
+  --text:#e5e7eb;
+  --muted:#9aa4b2;
+  --line:#222b3a;
+  --primary:#86efac;
+}
+
+/* base */
+body{ background:#0b1220; color:var(--text); }
+a{ color:#a5b4fc; }
+a:hover{ color:#c7d2fe; }
+
+/* topbar */
+.topbar{ background:#0b1020; }
+.logo{ color:#fff; font-weight:800; letter-spacing:.5px; }
+.main-nav{ display:flex; align-items:center; gap:10px; }
+.main-nav .sep{ color:#42506a; user-select:none; }
+.nav-item-link{
+  color:#dee3ea; text-decoration:none; font-weight:600;
+  padding:6px 4px; transition:color .2s ease;
+}
+.nav-item-link:hover{ color:var(--primary); }
+
+/* banner / hero */
+.banner-img{
+  max-height: 500px;      /* tinggi banner cantik */
+  object-fit: cover;      /* gambar ter-crop rapi */
+  background:#0a0f1a;
+}
+
+/* helper for object cover on card image */
+.object-cover{ object-fit: cover; }
+.ratio-16x9{ aspect-ratio: 16 / 9; }
+
+/* cards text color tweak on dark */
+.card.bg-body-tertiary{ background:#0f172a !important; }
+.card-title{ color:#e8edf4; }
+
+/* fine-tune carousel indicators to be terlihat di dark bg */
+.carousel-indicators [data-bs-target]{
+  background-color:#7b8aa1;
+}
+.carousel-indicators .active{
+  background-color:#e5e7eb;
+}
