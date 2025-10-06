@@ -1,42 +1,58 @@
 <!-- views/report_view.ejs -->
-<h1>Laporan Keuangan</h1>
-
-<div class="card">
-  <div class="flex-row" style="margin-bottom:10px">
-    <div class="muted">Pratinjau dokumen</div>
-    <div>
-      <a class="btn" href="<%= report.file %>" target="_blank" rel="noopener">Download</a>
-      <a class="btn small" href="/laporan" style="margin-left:8px">Kembali</a>
-    </div>
-  </div>
-
-  <div class="viewer">
-    <% if (isPDF) { %>
-      <!-- PDF preview native -->
-      <embed
-        src="<%= report.file %>#toolbar=1&navpanes=0&scrollbar=1"
-        type="application/pdf"
-      />
-    <% } else { %>
-      <!-- Office files via Google Viewer -->
-      <iframe src="<%= googleViewer %>" loading="lazy"></iframe>
-    <% } %>
-  </div>
-</div>
+<h1 style="margin:0 0 12px;">Laporan Keuangan</h1>
 
 <style>
-  .viewer{
-    height:70vh;
-    background:#0a0f1a;
-    border:1px solid var(--line);
-    border-radius:12px;
+  .toolbar {
+    display:flex; gap:8px; align-items:center;
+    background:#0b1424; border:1px solid #1f2937; border-radius:10px;
+    padding:10px 12px; margin:8px 0 14px;
+  }
+  .toolbar .hint { color:#9ca3af; font-size:12px; margin-left:auto; }
+  .btn {
+    display:inline-block; padding:8px 12px; border-radius:8px; font-weight:700;
+    text-decoration:none; border:0; cursor:pointer;
+  }
+  .btn.success { background:#22c55e; color:#032010; }
+  .btn.secondary { background:#334155; color:#e5e7eb; }
+  .viewer {
+    height:80vh; width:100%;
+    background:#0c1424; border:1px solid #1f2937; border-radius:12px;
     overflow:hidden;
   }
-  .viewer iframe,
-  .viewer embed{
-    width:100%;
-    height:100%;
-    border:0;
-    display:block;
+  .viewer iframe, .viewer object, .viewer embed {
+    width:100%; height:100%; border:0;
+  }
+  .note {
+    color:#9ca3af; font-size:13px; margin-top:8px;
   }
 </style>
+
+<div class="toolbar">
+  <a href="<%= report.file %>" class="btn success" target="_blank" rel="noopener">Download</a>
+  <a href="/laporan" class="btn secondary">Kembali</a>
+  <span class="hint">Pratinjau dokumen</span>
+</div>
+
+<div class="viewer">
+  <% if (isPDF) { %>
+    <!-- Pratinjau PDF native browser (paling stabil) -->
+    <object data="<%= report.file %>#view=FitH" type="application/pdf">
+      <embed src="<%= report.file %>#view=FitH" type="application/pdf" />
+      <!-- Fallback text -->
+      <div style="padding:16px; color:#e5e7eb;">
+        Browser kamu tidak bisa menampilkan PDF. Silakan
+        <a href="<%= report.file %>" target="_blank" rel="noopener" style="color:#a5b4fc;">download dokumen</a>.
+      </div>
+    </object>
+  <% } else { %>
+    <!-- Non-PDF coba Google Viewer -->
+    <iframe src="<%= googleViewer %>" allowfullscreen></iframe>
+  <% } %>
+</div>
+
+<% if (!isPDF) { %>
+  <div class="note">
+    Jika pratinjau tidak muncul (mis. “refused to connect”), itu pembatasan dari Google Viewer.
+    Kamu tetap bisa <a href="<%= report.file %>" target="_blank" rel="noopener" style="color:#a5b4fc;">download</a> dan membuka file secara langsung.
+  </div>
+<% } %>
