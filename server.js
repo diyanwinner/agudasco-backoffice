@@ -78,20 +78,35 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// ---------- Public Routes ----------
-app.get("/", (req, res) => {
-  db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
-    db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
-      res.render("home", { title: "AGUDASCO – Beranda", banners, arts });
-    });
+// -------- Public Routes --------
+
+// DAFTAR LAPORAN
+app.get("/laporan", (req, res) => {
+  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("reports", { title: "Laporan Keuangan", reports });
   });
 });
 
-app.get("/article/:id", (req, res) => {
-  db.get("SELECT * FROM articles WHERE id = ?", [req.params.id], (err, article) => {
+// PREVIEW LAPORAN (DETAIL)
+app.get("/laporan/:id", (req, res) => {
+  db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
     if (err) return res.status(500).send(err.message);
-    if (!article) return res.status(404).send("Artikel tidak ditemukan");
-    res.render("article", { title: article.title, article });
+    if (!report) return res.status(404).send("Laporan tidak ditemukan");
+
+    const lower = (report.file || "").toLowerCase();
+    const isPDF = lower.endsWith(".pdf");
+
+    const googleViewer =
+      "https://docs.google.com/gview?embedded=1&url=" +
+      encodeURIComponent(report.file);
+
+    res.render("report_view", {
+      title: report.title,
+      report,
+      isPDF,
+      googleViewer
+    });
   });
 });
 
