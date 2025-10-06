@@ -1,31 +1,26 @@
-<% layout('layout') %>
 <h1>Kelola Artikel</h1>
-
-<form method="post" enctype="multipart/form-data" class="card max-480">
+<form method="post" enctype="multipart/form-data">
   <label>Judul</label>
-  <input type="text" name="title" required />
+  <input type="text" name="title" required>
 
   <label>Konten</label>
-  <textarea name="content" rows="6" placeholder="Tulis isi berita/kegiatan..."></textarea>
+  <textarea name="content" rows="6"></textarea>
 
-  <label>Gambar (opsional)</label>
-  <input type="file" name="image" accept="image/*"/>
+  <label>Gambar</label>
+  <input type="file" name="image">
 
-  <button class="btn" type="submit">Simpan</button>
+  <button class="btn">Tambah</button>
 </form>
 
+<hr>
 <h2>Daftar Artikel</h2>
-<div class="cards">
+<ul>
   <% articles.forEach(a => { %>
-    <div class="card">
-      <h3><%= a.title %></h3>
-      <div class="muted"><%= new Date(a.created_at).toLocaleString() %></div>
-      <div style="margin-top:8px">
-        <a class="btn small" href="/article/<%= a.id %>">Lihat</a>
-        <form method="post" action="/admin/articles/<%= a.id %>/delete" style="display:inline" onsubmit="return confirm('Hapus artikel ini?')">
-          <button class="btn small danger" type="submit">Hapus</button>
-        </form>
-      </div>
-    </div>
+    <li>
+      <strong><%= a.title %></strong>
+      <form method="post" action="/admin/articles/<%= a.id %>/delete" style="display:inline">
+        <button class="btn small danger">Hapus</button>
+      </form>
+    </li>
   <% }) %>
-</div>
+</ul>
