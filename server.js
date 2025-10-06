@@ -57,14 +57,34 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-/** Storage DOKUMEN (laporan) – PUBLIC, pakai RAW */
+/** Storage DOKUMEN (laporan) – PUBLIC, RAW, paksa ekstensi di URL */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: "agudasco/reports",
-    resource_type: "raw",
-    type: "upload",
-    access_mode: "public",
+  params: async (req, file) => {
+    // nama file tanpa ekstensi dari file yang di-upload
+    const base = path.parse(file.originalname).name;
+
+    // mapping mimetype -> ekstensi supaya URL punya .pdf/.docx/.xlsx dll
+    const map = {
+      "application/pdf": "pdf",
+      "application/msword": "doc",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+      "application/vnd.ms-excel": "xls",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+      "application/vnd.ms-powerpoint": "ppt",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
+      // kalau mimetype tak dikenali, biarkan undefined—Cloudinary akan set sendiri
+    };
+    const fmt = map[file.mimetype] || undefined;
+
+    return {
+      folder: "agudasco/reports",
+      resource_type: "raw",        // penting untuk dokumen
+      type: "upload",
+      access_mode: "public",
+      public_id: base,             // simpan nama tanpa ekstensi
+      format: fmt,                 // paksa ekstensi di URL (contoh .pdf)
+    };
   },
 });
 
@@ -85,7 +105,11 @@ app.set("layout", "layout");
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "frame-src 'self' https://docs.google.com https://res.cloudinary.com; child-src 'self' https://docs.google.com https://res.cloudinary.com; object-src 'none';"
+    [
+      "frame-src 'self' https://docs.google.com https://res.cloudinary.com",
+      "child-src 'self' https://docs.google.com https://res.cloudinary.com",
+      "object-src 'none'",
+    ].join("; ")
   );
   next();
 });
@@ -117,7 +141,8 @@ app.get("/laporan/:id", (req, res) => {
 
     const url = report.file || "";
     const isPDF = url.toLowerCase().endsWith(".pdf");
-    const googleViewer = "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
+    const googleViewer =
+      "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
 
     res.render("report_view", {
       title: report.title,
