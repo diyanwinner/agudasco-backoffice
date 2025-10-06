@@ -1,11 +1,10 @@
-<% layout('layout') %>
-
-<article class="card">
-  <h1><%= article.title %></h1>
-  <div class="muted"><%= new Date(article.created_at).toLocaleString() %></div>
-  <% if (article.image) { %>
-    <img src="<%= article.image %>" alt="<%= article.title %>"
-         style="width:100%;max-height:360px;object-fit:cover;border-radius:8px;margin:12px 0">
-  <% } %>
-  <div style="white-space:pre-wrap"><%- article.content %></div>
-</article>
+<section class="container">
+  <article class="card">
+    <h1><%= article.title %></h1>
+    <div class="muted"><%= new Date(article.created_at).toLocaleString() %></div>
+    <% if (article.image) { %>
+      <img src="<%= article.image %>" alt="<%= article.title %>" style="width:100%; margin:12px 0; border-radius:8px;">
+    <% } %>
+    <div><%- article.content %></div>
+  </article>
+</section>
