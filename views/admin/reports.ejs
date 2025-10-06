@@ -6,22 +6,17 @@
   <div class="grid">
     <label>
       Judul Laporan
-      <input type="text" name="title" placeholder="Contoh: Laporan Keuangan Q3 2025" required />
+      <input type="text" name="title" placeholder="Contoh: Laporan Keuangan" required />
     </label>
 
     <label>
       Upload File (pdf, docx, xlsx)
-      <input
-        type="file"
-        name="file"
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm"
-        required
-      />
+      <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.xlsm" required />
     </label>
   </div>
 
   <div style="margin-top:12px">
-    <button class="btn">Upload</button>
+    <button class="btn" type="submit">Upload</button>
   </div>
 </form>
 
@@ -41,21 +36,17 @@
       </tr>
     </thead>
     <tbody>
-      <% reports.forEach((r, idx) => { %>
+      <% reports.forEach((r, i) => { %>
         <tr>
-          <td><%= idx + 1 %></td>
+          <td><%= i + 1 %></td>
           <td><%= r.title %></td>
           <td>
-            <% if (r.file) { %>
-              <a href="<%= r.file %>" target="_blank" rel="noopener">Lihat / Unduh</a>
-            <% } else { %>
-              <span class="muted">–</span>
-            <% } %>
+            <a href="<%= r.file %>" target="_blank" rel="noopener">Lihat / Unduh</a>
           </td>
           <td><%= new Date(r.created_at).toLocaleString() %></td>
           <td>
             <form action="/admin/reports/<%= r.id %>/delete" method="post" onsubmit="return confirm('Hapus laporan ini?')">
-              <button class="btn danger small">Hapus</button>
+              <button class="btn danger small" type="submit">Hapus</button>
             </form>
           </td>
         </tr>
