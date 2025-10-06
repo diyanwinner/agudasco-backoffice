@@ -1,33 +1,21 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title><%= typeof title !== "undefined" ? title : "AGUDASCO" %></title>
+  <title><%= title || "AGUDASCO" %></title>
 
-  <link rel="stylesheet" href="/public/style.css?v=3" />
-  <!-- Tiny Slider CSS -->
+  <link rel="stylesheet" href="/public/style.css"/>
+  <!-- tiny-slider -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css"/>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="/">AGUDASCO</a>
-
     <nav>
       <a href="/">Beranda</a>
-      <a href="/#galeri">Galeri</a>
-      <a href="/#kegiatan">Kegiatan</a>
-      <a href="/#berita">Berita</a>
-      <a href="/#anggota">Anggota</a>
-      <a href="/#pengurus">Pengurus</a>
-      <a href="/#laporan">Laporan Keuangan</a>
-      <a href="/#tentang">Tentang</a>
-      <a href="/#kontak">Kontak</a>
-      <% if (!user) { %>
-        <a href="/admin/login">Login</a>
-      <% } else { %>
-        <a href="/admin">Dashboard</a>
-      <% } %>
+      <a href="/laporan">Laporan</a>
+      <a href="/admin">Admin</a>
     </nav>
   </header>
 
@@ -37,30 +25,6 @@
 
   <footer class="footer">© <%= new Date().getFullYear() %> AGUDASCO</footer>
 
-  <!-- Tiny Slider JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/min/tiny-slider.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      var el = document.getElementById("heroSlider");
-      if (el && window.tns && !el.dataset.inited) {
-        tns({
-          container: el,
-          items: 1,
-          slideBy: 1,
-          autoplay: true,
-          autoplayTimeout: 4500,
-          autoplayButtonOutput: false,
-          controls: true,
-          controlsText: ['‹','›'],
-          nav: true,
-          navPosition: 'bottom',
-          mouseDrag: true,
-          loop: true,
-          speed: 500
-        });
-        el.dataset.inited = "1";
-      }
-    });
-  </script>
 </body>
 </html>
