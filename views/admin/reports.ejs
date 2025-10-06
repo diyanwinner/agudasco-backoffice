@@ -1,23 +1,53 @@
+<% layout('layout') %>
+
 <h1>Kelola Laporan</h1>
-<form method="post" enctype="multipart/form-data">
-  <label>Judul Laporan</label>
-  <input type="text" name="title" required>
 
-  <label>Upload File (pdf, docx, xlsx)</label>
-  <input type="file" name="file" required>
+<form action="/admin/reports" method="post" enctype="multipart/form-data" class="card" style="display:flex;gap:12px;align-items:center">
+  <label for="title" style="min-width:110px">Judul Laporan</label>
+  <input id="title" name="title" type="text" required placeholder="Contoh: Laporan Keuangan Q3 2025" style="flex:1" />
 
-  <button class="btn">Tambah</button>
+  <label for="file" style="min-width:140px">Upload File (pdf, docx, xlsx)</label>
+  <input id="file" name="file" type="file" required
+         accept=".pdf,application/pdf,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+
+  <button class="btn" type="submit">Upload</button>
 </form>
 
-<hr>
-<h2>Daftar Laporan</h2>
-<ul>
-  <% reports.forEach(r => { %>
-    <li>
-      <a href="<%= r.file %>" target="_blank"><%= r.title %></a>
-      <form method="post" action="/admin/reports/<%= r.id %>/delete" style="display:inline">
-        <button class="btn small danger">Hapus</button>
-      </form>
-    </li>
-  <% }) %>
-</ul>
+<h2 style="margin-top:20px">Daftar Laporan</h2>
+
+<% if (!reports || reports.length === 0) { %>
+  <div class="muted">Belum ada laporan diunggah.</div>
+<% } else { %>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:48px">#</th>
+        <th>Judul</th>
+        <th>File</th>
+        <th>Tanggal</th>
+        <th style="width:120px">Aksi</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% reports.forEach((r, i) => { %>
+        <tr>
+          <td><%= i+1 %></td>
+          <td><%= r.title %></td>
+          <td>
+            <% if (r.file) { %>
+              <a href="<%= r.file %>" target="_blank" rel="noopener">Lihat / Unduh</a>
+            <% } else { %>
+              <span class="muted">-</span>
+            <% } %>
+          </td>
+          <td><%= new Date(r.created_at).toLocaleString() %></td>
+          <td>
+            <form action="/admin/reports/<%= r.id %>/delete" method="post" onsubmit="return confirm('Hapus laporan ini?')">
+              <button class="btn danger" type="submit">Hapus</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+<% } %>
