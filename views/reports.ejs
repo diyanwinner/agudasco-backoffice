@@ -1,9 +1,15 @@
+<!-- views/reports.ejs -->
 <h1>Laporan Keuangan</h1>
-<ul>
-  <% reports.forEach(r => { %>
-    <li>
-      <a href="<%= r.file %>" target="_blank"><%= r.title %></a>
-      (<%= new Date(r.created_at).toLocaleDateString() %>)
-    </li>
-  <% }) %>
-</ul>
+
+<% if (!reports || reports.length === 0) { %>
+  <div class="muted">Belum ada laporan yang diunggah.</div>
+<% } else { %>
+  <ul class="card" style="list-style:disc; padding-left:24px;">
+    <% reports.forEach(r => { %>
+      <li style="margin:6px 0">
+        <a href="/laporan/<%= r.id %>"><%= r.title %></a>
+        <span class="muted" style="margin-left:6px">(<%= new Date(r.created_at).toLocaleDateString() %>)</span>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>
