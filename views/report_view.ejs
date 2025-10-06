@@ -1,0 +1,29 @@
+<!-- views/report_view.ejs -->
+<h1><%= title %></h1>
+
+<div class="preview-bar card" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+  <div class="muted">Pratinjau dokumen</div>
+  <div>
+    <a class="btn" href="<%= report.file %>" download>Download</a>
+    <a class="btn small" href="/laporan">Kembali</a>
+  </div>
+</div>
+
+<div class="doc-frame card" style="padding:0; overflow:hidden;">
+  <% if (isPDF) { %>
+    <!-- PDF ditampilkan langsung -->
+    <iframe
+      src="<%= report.file %>#toolbar=1&navpanes=0&scrollbar=1"
+      width="100%" height="720" style="border:0;"></iframe>
+  <% } else { %>
+    <!-- Non-PDF (docx/xlsx) via Google Docs Viewer -->
+    <iframe
+      src="<%= googleViewer %>"
+      width="100%" height="720" style="border:0;"></iframe>
+  <% } %>
+</div>
+
+<div style="margin-top:10px;">
+  <a class="btn" href="<%= report.file %>" download>Download</a>
+  <a class="btn small" href="/laporan">Kembali</a>
+</div>
