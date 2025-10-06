@@ -211,3 +211,24 @@ a:hover{ color:#c7d2fe; }
 .carousel-indicators .active{
   background-color:#e5e7eb;
 }
+:root{
+  /* kalau belum ada, tambahkan */
+  --primary: #22c55e;
+  --danger: #ef4444;
+  --text: #e5e7eb;
+  --line: #1f2937;
+}
+
+.btn{
+  display:inline-block;
+  background: var(--primary);
+  color:#04150a;
+  padding:8px 12px;
+  border-radius:8px;
+  font-weight:700;
+  border:none;
+  cursor:pointer;
+}
+.btn:hover{ filter: brightness(1.05); }
+.btn.small{ padding:4px 8px; font-size:12px; }
+.btn.danger{ background: var(--danger); color:#2b0a0a; }
