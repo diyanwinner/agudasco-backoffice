@@ -7,6 +7,7 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "axios": "^1.7.0",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.5.0",
     "ejs": "^3.1.9",
@@ -15,20 +16,5 @@
     "multer": "^1.4.5-lts.2",
     "multer-storage-cloudinary": "^4.0.0",
     "sqlite3": "^5.1.7"
-  }
-}
-{
-  "name": "agudasco-backoffice",
-  "version": "1.0.0",
-  "type": "module",
-  "dependencies": {
-    "axios": "^1.7.0",
-    "express": "…",
-    "multer": "…",
-    "cloudinary": "…",
-    "multer-storage-cloudinary": "…",
-    "express-ejs-layouts": "…",
-    "ejs": "…",
-    "sqlite3": "…"
   }
 }
