@@ -177,20 +177,46 @@ function extractPublicIdFromUrl(rawUrl) {
   }
 }
 
+function getPublicIdFromRecord(report) {
+  // Prioritas: kolom public_id; kalau belum ada, ekstrak dari URL
+  let pid = (report.public_id || "").trim();
+  if (!pid) {
+    const fromUrl = extractPublicIdFromUrl((report.file || "").trim());
+    if (fromUrl) return fromUrl; // sudah "agudasco/reports/Nama File"
+    return null;
+  }
+  // pastikan punya foldernya
+  if (!pid.includes("/")) {
+    pid = `agudasco/reports/${pid}`;
+  }
+  return pid;
+}
+
 /* --------- DEBUG: redirect ke URL download signed (cek 401) --------- */
 app.get("/file/:id/debug", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
     if (err || !report) return res.status(404).send("File tidak ditemukan.");
-    const publicId = report.public_id || extractPublicIdFromUrl(report.file || "");
+
+    const publicId = getPublicIdFromRecord(report);
     if (!publicId) return res.status(500).send("public_id tidak terbaca.");
+
     try {
-      const dlUrl = cloudinary.utils.download_url(publicId, {
-        resource_type: "raw",
-        type: "upload",
-        attachment: false,
-      });
-      return res.redirect(302, dlUrl);
-    } catch (e) {
+      const { cloud_name, api_key, api_secret } = cloudinary.config();
+      const timestamp = Math.floor(Date.now() / 1000);
+
+      // Per dok: signature = sha1("public_id=...&resource_type=raw&timestamp=..."+API_SECRET)
+      const toSign = `public_id=${publicId}&resource_type=raw&timestamp=${timestamp}`;
+      const signature = crypto.createHash("sha1").update(toSign + api_secret).digest("hex");
+
+      const url =
+        `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download` +
+        `?public_id=${encodeURIComponent(publicId)}` +
+        `&timestamp=${timestamp}` +
+        `&signature=${signature}` +
+        `&api_key=${api_key}`;
+
+      return res.redirect(302, url);
+    } catch {
       return res.status(500).send("Gagal membuat URL download.");
     }
   });
@@ -205,21 +231,30 @@ app.get("/file/:id", (req, res) => {
     if (err) return res.status(500).send("Gagal membuka file.");
     if (!report) return res.status(404).send("File tidak ditemukan.");
 
-    let publicId = report.public_id || extractPublicIdFromUrl(report.file || "");
+    const publicId = getPublicIdFromRecord(report);
     if (!publicId) return res.status(500).send("Gagal membaca public_id Cloudinary.");
 
     try {
-      // URL bertanda tangan via utils (Admin Download)
-      const dlUrl = cloudinary.utils.download_url(publicId, {
-        resource_type: "raw",
-        type: "upload",
-        attachment: wantDownload ? `${(report.title || "file")}.pdf` : false,
-        timeout: 60000,
+      const { cloud_name, api_key, api_secret } = cloudinary.config();
+      const timestamp = Math.floor(Date.now() / 1000);
+
+      const toSign = `public_id=${publicId}&resource_type=raw&timestamp=${timestamp}`;
+      const signature = crypto.createHash("sha1").update(toSign + api_secret).digest("hex");
+
+      const adminDownloadUrl =
+        `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download` +
+        `?public_id=${encodeURIComponent(publicId)}` +
+        `&timestamp=${timestamp}` +
+        `&signature=${signature}` +
+        `&api_key=${api_key}`;
+
+      const resp = await axios.get(adminDownloadUrl, {
+        responseType: "stream",
+        validateStatus: () => true,
       });
 
-      const r = await axios.get(dlUrl, { responseType: "stream", validateStatus: () => true });
-      if (r.status < 200 || r.status >= 300) {
-        console.error("Admin download failed:", r.status);
+      if (resp.status < 200 || resp.status >= 300) {
+        console.error("Admin download failed:", resp.status);
         return res.status(502).send("Gagal membuka file.");
       }
 
@@ -230,7 +265,7 @@ app.get("/file/:id", (req, res) => {
           : (wantInline ? "inline" : "inline")
       );
       res.setHeader("Content-Type", "application/pdf");
-      return r.data.pipe(res);
+      return resp.data.pipe(res);
     } catch (e) {
       console.error("Admin download exception:", e?.message);
       return res.status(502).send("Gagal membuka file.");
