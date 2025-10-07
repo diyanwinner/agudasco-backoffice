@@ -18,19 +18,19 @@
     background:#0c1424; border:1px solid #1f2937; border-radius:12px;
     overflow:hidden;
   }
-  .viewer iframe {
-    width:100%; height:100%; border:0;
-  }
+  .viewer iframe { width:100%; height:100%; border:0; }
 </style>
 
 <div class="toolbar">
-  <!-- Download via proxy (signed), aman: -->
-  <a href="/file/<%= report.id %>?download=1" class="btn success" rel="noopener">Download</a>
+  <a href="/file/<%= report.id %>?download=1" class="btn success">Download</a>
   <a href="/laporan" class="btn secondary">Kembali</a>
   <span class="hint">Pratinjau dokumen</span>
 </div>
 
 <div class="viewer">
-  <!-- Pakai PDF.js dengan sumber /file/:id (proxy signed) -->
-  <iframe src="<%= pdfJsViewer %>" allowfullscreen></iframe>
+  <!-- PDF.js viewer diarahkan ke proxy kita -->
+  <iframe
+    src="https://mozilla.github.io/pdf.js/web/viewer.html?file=<%= encodeURIComponent(pdfUrl) %>"
+    allow="fullscreen"
+  ></iframe>
 </div>
