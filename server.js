@@ -39,9 +39,6 @@ db.serialize(() => {
     public_id TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
-
-  // Kalau kolom public_id belum ada, ini akan error tapi aman diabaikan
-  db.run(`ALTER TABLE reports ADD COLUMN public_id TEXT`, () => {});
 });
 
 /* --------------------- Cloudinary config --------------------- */
@@ -63,7 +60,7 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-/** Storage DOKUMEN (laporan) – simpan apa adanya (RAW upload) */
+/** Storage DOKUMEN (laporan) – RAW upload (file utuh) */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -84,7 +81,7 @@ const fileStorage = new CloudinaryStorage({
       resource_type: "raw",
       type: "upload",
       access_mode: "public",
-      public_id: base,
+      public_id: base, // simpan tanpa ekstensi biar rapi
       format: fmt,
     };
   },
@@ -103,13 +100,13 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// Izinkan PDF.js viewer & Cloudinary di iframe
+// Izinkan iframe dari origin kita sendiri (pakai viewer bawaan browser)
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
     [
-      "frame-src 'self' https://mozilla.github.io https://res.cloudinary.com",
-      "child-src 'self' https://mozilla.github.io https://res.cloudinary.com",
+      "frame-src 'self'",
+      "child-src 'self'",
       "object-src 'none'",
     ].join("; ")
   );
@@ -119,7 +116,7 @@ app.use((req, res, next) => {
 /* --------------------------- Routes -------------------------- */
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
-/* --- DIAG: pastikan ENV Cloudinary kebaca --- */
+/* --- DIAG: cek ENV Cloudinary terbaca --- */
 app.get("/diag/cloudinary", (req, res) => {
   const cfg = cloudinary.config();
   res.json({
@@ -151,7 +148,7 @@ app.get("/laporan/:id", (req, res) => {
     if (err) return res.status(500).send(err.message);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
 
-    // PDF.js viewer diarahkan ke proxy kita /file/:id
+    // Pakai viewer PDF native browser: iframe ke proxy kita sendiri
     const pdfUrl = `/file/${report.id}?inline=1`;
     res.render("report_view", {
       title: report.title,
@@ -178,23 +175,22 @@ function extractPublicIdFromUrl(rawUrl) {
 }
 
 function getPublicIdFromRecord(report) {
-  // Prioritas: kolom public_id; kalau belum ada, ekstrak dari URL
+  // Prioritas: kolom public_id; fallback: ekstrak dari URL
   let pid = (report.public_id || "").trim();
   if (!pid) {
     const fromUrl = extractPublicIdFromUrl((report.file || "").trim());
     if (fromUrl) return fromUrl; // sudah "agudasco/reports/Nama File"
     return null;
   }
-  // pastikan punya foldernya
   if (!pid.includes("/")) {
     pid = `agudasco/reports/${pid}`;
   }
   return pid;
 }
 
-/* --------- DEBUG: redirect ke URL download signed (cek 401) --------- */
+/* --------- DEBUG: cek URL signed (redirect ke Cloudinary) --------- */
 app.get("/file/:id/debug", (req, res) => {
-  db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
+  db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
     if (err || !report) return res.status(404).send("File tidak ditemukan.");
 
     const publicId = getPublicIdFromRecord(report);
@@ -204,20 +200,34 @@ app.get("/file/:id/debug", (req, res) => {
       const { cloud_name, api_key, api_secret } = cloudinary.config();
       const timestamp = Math.floor(Date.now() / 1000);
 
-      // Per dok: signature = sha1("public_id=...&resource_type=raw&timestamp=..."+API_SECRET)
+      // Signature per dok
       const toSign = `public_id=${publicId}&resource_type=raw&timestamp=${timestamp}`;
       const signature = crypto.createHash("sha1").update(toSign + api_secret).digest("hex");
 
-      const url =
-        `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download` +
-        `?public_id=${encodeURIComponent(publicId)}` +
-        `&timestamp=${timestamp}` +
-        `&signature=${signature}` +
-        `&api_key=${api_key}`;
+      // Harus POST + Basic Auth untuk dapat URL download sekali-pakai
+      const adminEndpoint = `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download`;
+      const form = new URLSearchParams({
+        public_id: publicId,
+        timestamp: String(timestamp),
+        signature,
+        api_key
+      });
 
-      return res.redirect(302, url);
-    } catch {
-      return res.status(500).send("Gagal membuat URL download.");
+      const resp = await axios.post(adminEndpoint, form.toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        auth: { username: api_key, password: api_secret },
+        validateStatus: () => true
+      });
+
+      if (resp.status < 200 || resp.status >= 300) {
+        return res.status(resp.status).send(`Admin download failed: ${resp.status} ${resp.statusText}`);
+      }
+
+      const dl = resp.data?.url;
+      if (!dl) return res.status(200).send(resp.data || "OK (no url returned)");
+      return res.redirect(302, dl);
+    } catch (e) {
+      return res.status(500).send("Debug error: " + (e?.message || e));
     }
   });
 });
@@ -241,20 +251,36 @@ app.get("/file/:id", (req, res) => {
       const toSign = `public_id=${publicId}&resource_type=raw&timestamp=${timestamp}`;
       const signature = crypto.createHash("sha1").update(toSign + api_secret).digest("hex");
 
-      const adminDownloadUrl =
-        `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download` +
-        `?public_id=${encodeURIComponent(publicId)}` +
-        `&timestamp=${timestamp}` +
-        `&signature=${signature}` +
-        `&api_key=${api_key}`;
-
-      const resp = await axios.get(adminDownloadUrl, {
-        responseType: "stream",
-        validateStatus: () => true,
+      const adminEndpoint = `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download`;
+      const form = new URLSearchParams({
+        public_id: publicId,
+        timestamp: String(timestamp),
+        signature,
+        api_key
       });
 
-      if (resp.status < 200 || resp.status >= 300) {
-        console.error("Admin download failed:", resp.status);
+      // 1) minta signed URL (POST + Basic Auth)
+      const ticket = await axios.post(adminEndpoint, form.toString(), {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        auth: { username: api_key, password: api_secret },
+        validateStatus: () => true
+      });
+
+      if (ticket.status < 200 || ticket.status >= 300) {
+        console.error("Admin download failed:", ticket.status, ticket.data);
+        return res.status(502).send("Gagal membuka file.");
+      }
+
+      const dlUrl = ticket.data?.url;
+      if (!dlUrl) {
+        console.error("Admin download missing url:", ticket.data);
+        return res.status(502).send("Gagal membuka file.");
+      }
+
+      // 2) Stream file ke browser
+      const fileStream = await axios.get(dlUrl, { responseType: "stream", validateStatus: () => true });
+      if (fileStream.status < 200 || fileStream.status >= 300) {
+        console.error("Signed URL fetch failed:", fileStream.status);
         return res.status(502).send("Gagal membuka file.");
       }
 
@@ -264,8 +290,9 @@ app.get("/file/:id", (req, res) => {
           ? `attachment; filename="${encodeURIComponent((report.title || "file") + ".pdf")}"`
           : (wantInline ? "inline" : "inline")
       );
-      res.setHeader("Content-Type", "application/pdf");
-      return resp.data.pipe(res);
+      res.setHeader("Content-Type", fileStream.headers["content-type"] || "application/pdf");
+
+      return fileStream.data.pipe(res);
     } catch (e) {
       console.error("Admin download exception:", e?.message);
       return res.status(502).send("Gagal membuka file.");
@@ -344,13 +371,16 @@ app.get("/admin/reports", (req, res) => {
 app.post("/admin/reports", uploadFile.single("file"), (req, res) => {
   const { title } = req.body;
   const file = req.file ? req.file.path : null;
-  const public_id = req.file ? (req.file.filename || null) : null; // dari multer-storage-cloudinary
+
+  // public_id dari multer-storage-cloudinary → filename
+  let pid = req.file ? (req.file.filename || req.file.public_id || null) : null;
+  if (pid && !pid.includes("/")) pid = `agudasco/reports/${pid}`;
 
   if (!title || !file) return res.status(400).send("Judul dan file wajib diisi");
 
   db.run(
     "INSERT INTO reports (title, file, public_id) VALUES (?, ?, ?)",
-    [title, file, public_id],
+    [title, file, pid],
     (err) => {
       if (err) return res.status(500).send(err.message);
       res.redirect("/admin/reports");
