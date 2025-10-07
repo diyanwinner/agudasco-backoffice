@@ -45,7 +45,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/** Storage GAMBAR (banner/artikel) – PUBLIC */
+/* -------------------- Cloudinary Storage --------------------- */
+// GAMBAR (banner/artikel)
 const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -57,13 +58,12 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-/** Storage DOKUMEN (laporan) – PUBLIC, gunakan auto agar PDF masuk jalur image */
+// DOKUMEN (laporan) — gunakan RAW agar delivery & preview stabil
 const fileStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
     const base = path.parse(file.originalname).name;
 
-    // Deteksi ekstensi untuk URL yang rapi (opsional)
     const map = {
       "application/pdf": "pdf",
       "application/msword": "doc",
@@ -77,11 +77,11 @@ const fileStorage = new CloudinaryStorage({
 
     return {
       folder: "agudasco/reports",
-      resource_type: "auto",   // <— KUNCI: biar PDF masuk jalur image, bukan raw
+      resource_type: "raw",
       type: "upload",
       access_mode: "public",
-      public_id: base,
-      format: fmt,
+      public_id: base, // nama file tanpa ekstensi
+      format: fmt,     // supaya URL ber-ekstensi rapi (contoh .pdf)
     };
   },
 });
@@ -99,7 +99,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// Izinkan iframe dari docs.google.com & res.cloudinary.com
+// Izinkan iframe dari viewer yang kita pakai
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -111,6 +111,21 @@ app.use((req, res, next) => {
   );
   next();
 });
+
+/* ---------------------- URL Normalizer ----------------------- */
+/**
+ * Beberapa data lama mungkin tersimpan sebagai:
+ *   https://res.cloudinary.com/.../image/upload/...pdf   (atau auto/upload)
+ * Untuk akun tertentu, delivery PDF via image bisa 401.
+ * Di-normalisasi ke:
+ *   https://res.cloudinary.com/.../raw/upload/...pdf
+ */
+function toRawUrl(url = "") {
+  if (!url.includes("res.cloudinary.com")) return url;
+  return url
+    .replace("/image/upload/", "/raw/upload/")
+    .replace("/auto/upload/", "/raw/upload/");
+}
 
 /* --------------------------- Routes -------------------------- */
 app.get("/health", (req, res) => res.status(200).send("OK"));
@@ -129,7 +144,9 @@ app.get("/", (req, res) => {
 app.get("/laporan", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
-    res.render("reports", { title: "Laporan Keuangan", reports });
+    // normalisasi URL saat ditampilkan di list (opsional)
+    const fixed = reports.map(r => ({ ...r, file: toRawUrl(r.file || "") }));
+    res.render("reports", { title: "Laporan Keuangan", reports: fixed });
   });
 });
 
@@ -139,18 +156,17 @@ app.get("/laporan/:id", (req, res) => {
     if (err) return res.status(500).send(err.message);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
 
-    const url = (report.file || "").trim();
+    const url = toRawUrl((report.file || "").trim());
     const isPDF = url.toLowerCase().endsWith(".pdf");
 
-    // PDF => pakai PDF.js viewer (paling stabil utk Cloudinary RAW)
+    // PDF → PDF.js (stabil)
     const pdfJsViewer = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(url);
-
-    // Office files => Google Viewer
+    // Office files → Google Viewer
     const googleViewer = "https://docs.google.com/gview?embedded=1&url=" + encodeURIComponent(url);
 
     res.render("report_view", {
       title: report.title,
-      report,
+      report: { ...report, file: url }, // pakai URL yang sudah dibetulkan
       isPDF,
       pdfJsViewer,
       googleViewer,
@@ -231,10 +247,14 @@ app.post("/admin/reports", uploadFile.single("file"), (req, res) => {
   const file = req.file ? req.file.path : null;
   if (!title || !file) return res.status(400).send("Judul dan file wajib diisi");
 
-  db.run("INSERT INTO reports (title, file) VALUES (?, ?)", [title, file], (err) => {
-    if (err) return res.status(500).send(err.message);
-    res.redirect("/admin/reports");
-  });
+  db.run(
+    "INSERT INTO reports (title, file) VALUES (?, ?)",
+    [title, file],
+    (err) => {
+      if (err) return res.status(500).send(err.message);
+      res.redirect("/admin/reports");
+    }
+  );
 });
 
 app.post("/admin/reports/:id/delete", (req, res) => {
