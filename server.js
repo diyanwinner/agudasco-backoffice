@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -57,7 +56,7 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-/** Storage DOKUMEN (laporan) – biar Cloudinary simpan sebagaimana file asli */
+/** Storage DOKUMEN (laporan) – simpan sebagai RAW (utuh), public_id rapih */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
@@ -75,8 +74,6 @@ const fileStorage = new CloudinaryStorage({
 
     return {
       folder: "agudasco/reports",
-      // tetap pakai RAW agar file utuh; meski public delivery di-block,
-      // nanti kita ambil via endpoint download yang bertanda tangan
       resource_type: "raw",
       type: "upload",
       access_mode: "public",
@@ -99,14 +96,14 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// izinkan frame PDF.js dan Cloudinary
+// izinkan frame PDF.js (mozilla) — viewer akan me-load URL dari domain kamu sendiri (aman)
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
     [
-      "frame-src 'self' https://mozilla.github.io https://res.cloudinary.com",
-      "child-src 'self' https://mozilla.github.io https://res.cloudinary.com",
-      "object-src 'none'",
+      "frame-src 'self' https://mozilla.github.io",
+      "child-src 'self' https://mozilla.github.io",
+      "object-src 'none'"
     ].join("; ")
   );
   next();
@@ -138,9 +135,7 @@ app.get("/laporan/:id", (req, res) => {
     if (err) return res.status(500).send(err.message);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
 
-    // PDF viewer akan diarahkan ke /file/:id (proxy kita)
-    const pdfUrl = `/file/${report.id}?inline=1`;
-
+    const pdfUrl = `/file/${report.id}?inline=1`; // viewer akan memanggil ini
     res.render("report_view", {
       title: report.title,
       report,
@@ -149,32 +144,28 @@ app.get("/laporan/:id", (req, res) => {
   });
 });
 
-/* --------- PROXY download/preview file Cloudinary (fix 401) --------- */
-/**
- * Cloudinary account kamu “Blocked for delivery”, jadi res.cloudinary.com 401.
- * Kita pakai endpoint Admin “download” bertanda tangan, lalu stream ke client.
- * Dok: https://cloudinary.com/documentation/admin_api#download_asset
- */
+/* --------- PROXY Cloudinary (fix 401/blocked) --------- */
 function extractPublicIdFromUrl(rawUrl) {
-  // contoh URL: https://res.cloudinary.com/<cloud>/raw/upload/v123456/agudasco/reports/Nama File.pdf
-  // ambil bagian setelah '/raw/upload/' lalu buang ekstensi
+  // contoh: /raw/upload/v12345/agudasco/reports/Nama%20File.pdf
   try {
     const u = new URL(rawUrl);
-    const idx = u.pathname.indexOf("/raw/upload/");
-    if (idx === -1) return null;
-    const after = u.pathname.slice(idx + "/raw/upload/".length); // v123/....pdf
-    const noVer = after.replace(/^v\d+\//, "");                  // agudasco/reports/Nama%20File.pdf
-    const withExt = decodeURIComponent(noVer);
-    const dot = withExt.lastIndexOf(".");
-    return dot === -1 ? withExt : withExt.slice(0, dot);         // agudasco/reports/Nama File
+    const path = decodeURIComponent(u.pathname);
+    const marker = "/raw/upload/";
+    const at = path.indexOf(marker);
+    if (at === -1) return null;
+
+    let tail = path.slice(at + marker.length);     // v12345/agudasco/reports/Nama File.pdf
+    tail = tail.replace(/^v\d+\//, "");            // agudasco/reports/Nama File.pdf
+    const dot = tail.lastIndexOf(".");
+    return dot === -1 ? tail : tail.slice(0, dot); // agudasco/reports/Nama File
   } catch {
     return null;
   }
 }
 
 app.get("/file/:id", (req, res) => {
-  const wantDownload = "download" in req.query && req.query.download !== "0";
-  const wantInline   = "inline" in req.query;
+  const forceDownload = "download" in req.query && req.query.download !== "0";
+  const inlinePreview = "inline" in req.query;
 
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
     if (err) return res.status(500).send("Gagal membuka file.");
@@ -183,41 +174,33 @@ app.get("/file/:id", (req, res) => {
     const fileUrl = (report.file || "").trim();
     if (!fileUrl) return res.status(404).send("URL file kosong.");
 
-    // 1) coba akses langsung (kalau nanti akunmu sudah trusted, ini akan jalan)
+    // (A) Coba akses langsung (kalau akunmu nanti sudah trusted, ini akan langsung sukses)
     try {
-      const head = await axios.head(fileUrl, { timeout: 4000, validateStatus: () => true });
+      const head = await axios.head(fileUrl, { timeout: 5000, validateStatus: () => true });
       if (head.status >= 200 && head.status < 300) {
-        // direct stream
-        const rs = await axios.get(fileUrl, { responseType: "stream" });
-        res.setHeader(
-          "Content-Disposition",
-          wantDownload
-            ? `attachment; filename="${encodeURIComponent(report.title)}.pdf"`
-            : (wantInline ? "inline" : "inline")
-        );
-        res.setHeader("Content-Type", head.headers["content-type"] || "application/pdf");
-        return rs.data.pipe(res);
+        const upstream = await axios.get(fileUrl, { responseType: "stream" });
+        const ct = head.headers["content-type"] || "application/octet-stream";
+
+        res.setHeader("Content-Type", ct);
+        if (forceDownload) {
+          const name = decodeURIComponent(fileUrl.split("?")[0].split("/").pop() || `${report.title}`);
+          res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(name)}"`);
+        } else {
+          res.setHeader("Content-Disposition", inlinePreview ? "inline" : "inline");
+        }
+        return upstream.data.pipe(res);
       }
-    } catch (_) {
-      // lanjut fallback
-    }
+    } catch (_) { /* lanjut fallback */ }
 
-    // 2) fallback: Admin API “download” (signed URL)
+    // (B) Fallback: Admin API “download” (signed URL), stream ke client
     try {
-      const cloud_name = cloudinary.config().cloud_name;
-      const api_key    = cloudinary.config().api_key;
-      const api_secret = cloudinary.config().api_secret;
-
+      const { cloud_name, api_key, api_secret } = cloudinary.config();
       const publicId = extractPublicIdFromUrl(fileUrl);
       if (!publicId) return res.status(500).send("Gagal membaca public_id Cloudinary.");
 
       const timestamp = Math.floor(Date.now() / 1000);
-      // per dok: /resources/{resource_type}/{type}/download
       const paramsToSign = `public_id=${publicId}&resource_type=raw&timestamp=${timestamp}`;
-      const signature = crypto
-        .createHash("sha1")
-        .update(paramsToSign + api_secret)
-        .digest("hex");
+      const signature = crypto.createHash("sha1").update(paramsToSign + api_secret).digest("hex");
 
       const adminDownloadUrl =
         `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download` +
@@ -226,34 +209,36 @@ app.get("/file/:id", (req, res) => {
         `&signature=${signature}` +
         `&api_key=${api_key}`;
 
-      const resp = await axios.get(adminDownloadUrl, {
-        responseType: "stream",
-        validateStatus: () => true,
-      });
+      const resp = await axios.get(adminDownloadUrl, { responseType: "stream", validateStatus: () => true });
 
       if (resp.status >= 200 && resp.status < 300) {
-        res.setHeader(
-          "Content-Disposition",
-          wantDownload
-            ? `attachment; filename="${encodeURIComponent(report.title)}.pdf"`
-            : (wantInline ? "inline" : "inline")
-        );
-        res.setHeader("Content-Type", "application/pdf");
+        const ct =
+          resp.headers["content-type"] ||
+          (fileUrl.toLowerCase().endsWith(".pdf") ? "application/pdf" : "application/octet-stream");
+
+        res.setHeader("Content-Type", ct);
+        if (forceDownload) {
+          const fallbackName = `${report.title}.pdf`;
+          const headerName = (resp.headers["content-disposition"] || "").match(/filename="?([^"]+)"?/i)?.[1];
+          const name = headerName || fallbackName;
+          res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(name)}"`);
+        } else {
+          res.setHeader("Content-Disposition", inlinePreview ? "inline" : "inline");
+        }
         return resp.data.pipe(res);
       }
 
-      // kalau admin download pun gagal
+      console.error("Admin download failed:", resp.status);
       return res.status(502).send("Gagal membuka file.");
     } catch (e) {
+      console.error("Proxy error:", e?.message);
       return res.status(502).send("Gagal membuka file.");
     }
   });
 });
 
 /* --------------------------- Admin --------------------------- */
-app.get("/admin", (req, res) =>
-  res.render("admin/dashboard", { title: "Dashboard" })
-);
+app.get("/admin", (req, res) => res.render("admin/dashboard", { title: "Dashboard" }));
 
 // Artikel
 app.get("/admin/articles", (req, res) => {
@@ -318,7 +303,7 @@ app.get("/admin/reports", (req, res) => {
 
 app.post("/admin/reports", uploadFile.single("file"), (req, res) => {
   const { title } = req.body;
-  const file = req.file ? req.file.path : null;
+  const file = req.file ? req.file.path : null; // URL publik (tetap kita simpan)
   if (!title || !file) return res.status(400).send("Judul dan file wajib diisi");
   db.run("INSERT INTO reports (title, file) VALUES (?, ?)", [title, file], (err) => {
     if (err) return res.status(500).send(err.message);
@@ -342,6 +327,4 @@ app.use((err, req, res, next) => {
 
 /* --------------------------- Start --------------------------- */
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () =>
-  console.log(`Server running at http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
