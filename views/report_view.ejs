@@ -1,5 +1,3 @@
-<!-- views/report_view.ejs -->
-
 <h1 style="margin:0 0 12px;">Laporan Keuangan</h1>
 
 <style>
@@ -20,31 +18,19 @@
     background:#0c1424; border:1px solid #1f2937; border-radius:12px;
     overflow:hidden;
   }
-  .viewer iframe, .viewer object, .viewer embed {
+  .viewer iframe {
     width:100%; height:100%; border:0;
   }
-  .note { color:#9ca3af; font-size:13px; margin-top:8px; }
 </style>
 
 <div class="toolbar">
-  <a href="<%= report.file %>" class="btn success" target="_blank" rel="noopener">Download</a>
+  <!-- Download via proxy (signed), aman: -->
+  <a href="/file/<%= report.id %>?download=1" class="btn success" rel="noopener">Download</a>
   <a href="/laporan" class="btn secondary">Kembali</a>
   <span class="hint">Pratinjau dokumen</span>
 </div>
 
 <div class="viewer">
-  <% if (isPDF) { %>
-    <!-- PDF pakai PDF.js agar stabil di Cloudinary RAW -->
-    <iframe src="<%= pdfJsViewer %>" allowfullscreen></iframe>
-  <% } else { %>
-    <!-- Office files pakai Google Viewer -->
-    <iframe src="<%= googleViewer %>" allowfullscreen></iframe>
-  <% } %>
+  <!-- Pakai PDF.js dengan sumber /file/:id (proxy signed) -->
+  <iframe src="<%= pdfJsViewer %>" allowfullscreen></iframe>
 </div>
-
-<% if (!isPDF) { %>
-  <div class="note">
-    Jika pratinjau tidak muncul (mis. “refused to connect”), itu pembatasan dari Google Viewer.
-    Kamu tetap bisa <a href="<%= report.file %>" target="_blank" rel="noopener" style="color:#a5b4fc;">download</a> dan membuka file secara langsung.
-  </div>
-<% } %>
