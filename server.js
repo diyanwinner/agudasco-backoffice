@@ -105,18 +105,36 @@ app.use((req, res, next) => {
 });
 
 /* --------------------------- Helpers -------------------------- */
-/** Ambil public_id dari URL Cloudinary RAW (PERTAHANKAN ekstensi) */
-function extractPublicIdFromUrl(rawUrl) {
-  try {
-    const u = new URL(rawUrl || "");
-    const idx = u.pathname.indexOf("/raw/upload/");
-    if (idx === -1) return null;
-    const after = u.pathname.slice(idx + "/raw/upload/".length); // v123/....pdf
-    const noVer = after.replace(/^v\d+\//, "");                  // agudasco/reports/Nama%20File.pdf
-    return decodeURIComponent(noVer);                             // termasuk ekstensi
-  } catch {
-    return null;
+/** URL sekali-pakai via Upload API: private_download (stabil untuk RAW). */
+async function requestPrivateDownloadUrl(publicIdWithExt, fallbackFileUrl = "") {
+  const { cloud_name, api_key, api_secret } = cloudinary.config();
+
+  // pisahkan public_id (tanpa ekstensi) & format
+  let base = publicIdWithExt;
+  let format = "";
+  const m = publicIdWithExt.match(/^(.*)\.([^.\/]+)$/);
+  if (m) {
+    base = m[1];       // tanpa ekstensi
+    format = m[2];     // pdf/docx/...
+  } else if (fallbackFileUrl) {
+    try {
+      const name = decodeURIComponent(new URL(fallbackFileUrl).pathname.split("/").pop() || "");
+      const m2 = name.match(/\.([^.\/]+)$/);
+      if (m2) format = m2[1];
+    } catch {}
   }
+  if (!format) format = "pdf"; // default
+
+  const endpoint = `https://api.cloudinary.com/v1_1/${cloud_name}/raw/upload/private_download`;
+  const form = new URLSearchParams({ public_id: base, format });
+
+  const resp = await axios.post(endpoint, form.toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    auth: { username: api_key, password: api_secret },
+    validateStatus: () => true,
+  });
+
+  return resp; // { status, data:{ url? } }
 }
 
 /** Dapatkan public_id final untuk dipakai Admin API */
@@ -176,11 +194,11 @@ app.get("/diag/report/:id", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
     if (err || !report) return res.status(404).json({ error: "Report not found" });
 
-    const publicId = getPublicIdFromRecord(report);
+    const publicId = getPublicIdFromRecord(report); // mengandung ekstensi
     let status = null, has_url = false, url = null;
 
     if (publicId) {
-      const r = await requestAdminSignedUrl(publicId);
+      const r = await requestPrivateDownloadUrl(publicId, report.file);
       status = r.status;
       has_url = !!r.data?.url;
       url = r.data?.url || null;
@@ -192,7 +210,7 @@ app.get("/diag/report/:id", (req, res) => {
       file_from_db: report.file,
       public_id_from_db: report.public_id || null,
       derived_public_id: publicId,
-      admin_status: status,
+      admin_status: status,              // ini sekarang status private_download
       admin_response_has_url: has_url,
       sample_url: url
     });
@@ -228,18 +246,45 @@ app.get("/laporan/:id", (req, res) => {
 });
 
 /* ---------- DEBUG: redirect langsung ke signed URL ---------- */
-app.get("/file/:id/debug", (req, res) => {
+app.get("/file/:id", (req, res) => {
+  const wantDownload = "download" in req.query && req.query.download !== "0";
+  const wantInline   = "inline" in req.query;
+
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
-    if (err || !report) return res.status(404).send("File tidak ditemukan.");
+    if (err) return res.status(500).send("Gagal membuka file.");
+    if (!report) return res.status(404).send("File tidak ditemukan.");
 
     const publicId = getPublicIdFromRecord(report);
-    if (!publicId) return res.status(500).send("public_id tidak terbaca.");
+    if (!publicId) return res.status(500).send("Gagal membaca public_id Cloudinary.");
 
-    const resp = await requestAdminSignedUrl(publicId);
-    if (resp.status >= 200 && resp.status < 300 && resp.data?.url) {
-      return res.redirect(302, resp.data.url);
+    try {
+      // Minta URL sekali-pakai
+      const ticket = await requestPrivateDownloadUrl(publicId, report.file);
+      if (ticket.status < 200 || ticket.status >= 300 || !ticket.data?.url) {
+        console.error("private_download failed:", ticket.status, ticket.data);
+        return res.status(502).send("Gagal membuka file.");
+      }
+
+      // Stream ke browser
+      const dlUrl = ticket.data.url;
+      const fileStream = await axios.get(dlUrl, { responseType: "stream", validateStatus: () => true });
+      if (fileStream.status < 200 || fileStream.status >= 300) {
+        console.error("Signed URL fetch failed:", fileStream.status);
+        return res.status(502).send("Gagal membuka file.");
+      }
+
+      res.setHeader(
+        "Content-Disposition",
+        wantDownload
+          ? `attachment; filename="${encodeURIComponent((report.title || "file") + ".pdf")}"`
+          : (wantInline ? "inline" : "inline")
+      );
+      res.setHeader("Content-Type", fileStream.headers["content-type"] || "application/pdf");
+      fileStream.data.pipe(res);
+    } catch (e) {
+      console.error("Proxy exception:", e?.message);
+      res.status(502).send("Gagal membuka file.");
     }
-    return res.status(502).send(`Admin download failed: ${resp.status}`);
   });
 });
 
