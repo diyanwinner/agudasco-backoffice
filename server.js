@@ -60,6 +60,77 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
+// DIAG: cek record report + public_id yang dipakai + URL admin download
+app.get("/diag/report/:id", async (req, res) => {
+  const { id } = req.params;
+  db.get("SELECT * FROM reports WHERE id = ?", [id], async (err, report) => {
+    if (err || !report) return res.status(404).json({ error: "Report not found" });
+
+    // fungsi yang sudah ada
+    function extractPublicIdFromUrl(rawUrl) {
+      try {
+        const u = new URL(rawUrl);
+        const idx = u.pathname.indexOf("/raw/upload/");
+        if (idx === -1) return null;
+        const after = u.pathname.slice(idx + "/raw/upload/".length);
+        const noVer = after.replace(/^v\d+\//, "");
+        const withExt = decodeURIComponent(noVer);
+        const dot = withExt.lastIndexOf(".");
+        return dot === -1 ? withExt : withExt.slice(0, dot);
+      } catch {
+        return null;
+      }
+    }
+
+    function getPublicIdFromRecord(report) {
+      let pid = (report.public_id || "").trim();
+      if (!pid) {
+        const fromUrl = extractPublicIdFromUrl((report.file || "").trim());
+        if (fromUrl) return fromUrl;
+        return null;
+      }
+      if (!pid.includes("/")) pid = `agudasco/reports/${pid}`;
+      return pid;
+    }
+
+    const derivedPublicId = getPublicIdFromRecord(report);
+
+    const { cloud_name, api_key, api_secret } = cloudinary.config();
+    const timestamp = Math.floor(Date.now() / 1000);
+    const toSign = `public_id=${derivedPublicId}&resource_type=raw&timestamp=${timestamp}`;
+    const signature = crypto.createHash("sha1").update(toSign + api_secret).digest("hex");
+
+    const adminDownloadUrl =
+      `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download` +
+      `?public_id=${encodeURIComponent(derivedPublicId)}` +
+      `&timestamp=${timestamp}` +
+      `&signature=${signature}` +
+      `&api_key=${api_key}`;
+
+    // coba HEAD untuk tahu kode status
+    let head_status = null, head_error = null;
+    try {
+      const r = await axios.get(adminDownloadUrl, { validateStatus: ()=>true, maxRedirects: 0 });
+      head_status = r.status;
+    } catch (e) {
+      head_status = -1;
+      head_error = e?.message || String(e);
+    }
+
+    res.json({
+      id: report.id,
+      title: report.title,
+      file_from_db: report.file,
+      public_id_from_db: report.public_id || null,
+      public_id_from_url: extractPublicIdFromUrl((report.file || "").trim()),
+      derived_public_id: derivedPublicId,
+      admin_download_url: adminDownloadUrl,
+      head_status,
+      head_error
+    });
+  });
+});
+
 /** Storage DOKUMEN (laporan) – RAW upload (file utuh) */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
