@@ -134,22 +134,29 @@ function getPublicIdFromRecord(report) {
 async function requestAdminDownloadUrl(publicIdWithExt) {
   const { cloud_name, api_key, api_secret } = cloudinary.config();
 
-  // pastikan ada ekstensi; kalau tidak ada, fallback .pdf
+  // pastikan ada ekstensi; kalau belum ada, fallback .pdf
   if (!/\.[^.\/]+$/.test(publicIdWithExt)) {
     publicIdWithExt = `${publicIdWithExt}.pdf`;
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
-  const toSign = `public_id=${publicIdWithExt}&resource_type=raw&timestamp=${timestamp}`;
+
+  // SIGN params. Untuk Admin API, yang di-sign adalah field tanpa api_key/signature.
+  // Karena kita kirim array 'public_ids[]', string toSign-nya ikut kunci itu.
+  // Urutan kunci alfabetis:
+  // public_ids[]=<val>&resource_type=raw&timestamp=<ts>
+  const toSign = `public_ids[]=${publicIdWithExt}&resource_type=raw&timestamp=${timestamp}`;
   const signature = crypto.createHash("sha1").update(toSign + api_secret).digest("hex");
 
   const endpoint = `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download`;
-  const form = new URLSearchParams({
-    public_id: publicIdWithExt,
-    timestamp: String(timestamp),
-    signature,
-    api_key
-  });
+
+  // NB: kirim sebagai application/x-www-form-urlencoded
+  const form = new URLSearchParams();
+  form.append("public_ids[]", publicIdWithExt); // ← penting: pakai array
+  form.append("resource_type", "raw");
+  form.append("timestamp", String(timestamp));
+  form.append("signature", signature);
+  form.append("api_key", api_key);
 
   const resp = await axios.post(endpoint, form.toString(), {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -176,14 +183,17 @@ app.get("/diag/cloudinary", (req, res) => {
 app.get("/diag/report/:id", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
     if (err || !report) return res.status(404).json({ error: "Report not found" });
+
     const publicId = getPublicIdFromRecord(report);
     let status = null, has_url = false, url = null;
+
     if (publicId) {
       const r = await requestAdminDownloadUrl(publicId);
       status = r.status;
       has_url = !!r.data?.url;
       url = r.data?.url || null;
     }
+
     res.json({
       id: report.id,
       title: report.title,
