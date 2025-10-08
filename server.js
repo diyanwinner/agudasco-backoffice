@@ -142,29 +142,35 @@ function getFormatFromFileUrl(fileUrl) {
   }
 }
 
-/** URL sekali-pakai via Upload API: private_download (stabil untuk RAW). */
-async function requestPrivateDownloadUrl(publicIdWithExt, fallbackFileUrl = "") {
+// GANTI: gunakan Admin API "resources/raw/upload/download" (POST + Basic Auth)
+async function requestAdminDownloadUrl(publicIdWithExt) {
   const { cloud_name, api_key, api_secret } = cloudinary.config();
 
-  // Pisahkan public_id (tanpa ekstensi) & format (pdf/docx/...)
-  let base = publicIdWithExt;
-  let format = "";
-  const m = publicIdWithExt.match(/^(.*)\.([^.\/]+)$/);
-  if (m) {
-    base = m[1];       // tanpa ekstensi
-    format = m[2];     // pdf/docx/...
-  } else {
-    // Jika public_id tidak mengandung ekstensi, coba ambil dari URL file di DB
-    format = getFormatFromFileUrl(fallbackFileUrl) || "pdf";
+  // WAJIB: sertakan ekstensi di public_id untuk RAW
+  const hasExt = /\.[^.\/]+$/.test(publicIdWithExt);
+  if (!hasExt) {
+    // kalau belum ada, anggap PDF (atau ambil dari URL DB dulu)
+    publicIdWithExt = `${publicIdWithExt}.pdf`;
   }
 
-  const endpoint = `https://api.cloudinary.com/v1_1/${cloud_name}/raw/upload/private_download`;
-  const form = new URLSearchParams({ public_id: base, format });
+  // signature sesuai dok: public_id, resource_type, timestamp
+  const timestamp = Math.floor(Date.now() / 1000);
+  const toSign = `public_id=${publicIdWithExt}&resource_type=raw&timestamp=${timestamp}`;
+  const signature = crypto.createHash("sha1").update(toSign + api_secret).digest("hex");
 
+  const endpoint = `https://api.cloudinary.com/v1_1/${cloud_name}/resources/raw/upload/download`;
+  const form = new URLSearchParams({
+    public_id: publicIdWithExt,
+    timestamp: String(timestamp),
+    signature,
+    api_key
+  });
+
+  // PENTING: method POST + Basic Auth
   const resp = await axios.post(endpoint, form.toString(), {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     auth: { username: api_key, password: api_secret },
-    validateStatus: () => true,
+    validateStatus: () => true
   });
 
   return resp; // { status, data: { url? } }
@@ -192,7 +198,7 @@ app.get("/diag/report/:id", (req, res) => {
     let status = null, has_url = false, url = null;
 
     if (publicId) {
-      const r = await requestPrivateDownloadUrl(publicId, report.file);
+      const r = await requestAdminDownloadUrl(publicId);
       status = r.status;
       has_url = !!r.data?.url;
       url = r.data?.url || null;
@@ -247,7 +253,7 @@ app.get("/file/:id/debug", (req, res) => {
     const publicId = getPublicIdFromRecord(report);
     if (!publicId) return res.status(500).send("public_id tidak terbaca.");
 
-    const resp = await requestPrivateDownloadUrl(publicId, report.file);
+    const resp = await requestAdminDownloadUrl(publicId);
     if (resp.status >= 200 && resp.status < 300 && resp.data?.url) {
       return res.redirect(302, resp.data.url);
     }
@@ -269,7 +275,7 @@ app.get("/file/:id", (req, res) => {
 
     try {
       // 1) minta URL sekali-pakai via Upload API
-      const ticket = await requestPrivateDownloadUrl(publicId, report.file);
+      const ticket = await requestAdminDownloadUrl(publicId);
       if (ticket.status < 200 || ticket.status >= 300 || !ticket.data?.url) {
         console.error("private_download failed:", ticket.status, ticket.data);
         return res.status(502).send("Gagal membuka file.");
