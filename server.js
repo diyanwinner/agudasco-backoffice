@@ -48,6 +48,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+/* -------------------- Multer Storages ------------------------ */
 /** Storage GAMBAR (banner/artikel) – public image */
 const imageStorage = new CloudinaryStorage({
   cloudinary,
@@ -60,29 +61,19 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
-/** Storage DOKUMEN (laporan) – RAW upload (file utuh) */
+/** Storage DOKUMEN (laporan) – RAW upload (file utuh, public_id PAKAI EKSTENSI) */
 const fileStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => {
-    const base = path.parse(file.originalname).name; // tanpa ekstensi
-    const map = {
-      "application/pdf": "pdf",
-      "application/msword": "doc",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
-      "application/vnd.ms-excel": "xls",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
-      "application/vnd.ms-powerpoint": "ppt",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
-    };
-    const fmt = map[file.mimetype] || undefined;
-
+    const base = path.parse(file.originalname).name;       // nama tanpa ekstensi
+    const ext  = path.extname(file.originalname) || "";    // mis. ".pdf"
     return {
       folder: "agudasco/reports",
       resource_type: "raw",
       type: "upload",
       access_mode: "public",
-      public_id: base, // TANPA ekstensi (standar baru)
-      format: fmt,
+      public_id: `${base}${ext}`, // SIMPAN DENGAN EKSTENSI — penting agar cocok dg asset lama
+      // format: untuk resource_type raw tidak perlu dipaksa
     };
   },
 });
@@ -114,7 +105,7 @@ app.use((req, res, next) => {
 });
 
 /* --------------------------- Helpers -------------------------- */
-/** Ambil public_id dasar dari record (prioritas kolom public_id, fallback dari URL) */
+/** Ambil public_id dari URL Cloudinary RAW (PERTAHANKAN ekstensi) */
 function extractPublicIdFromUrl(rawUrl) {
   try {
     const u = new URL(rawUrl || "");
@@ -122,55 +113,28 @@ function extractPublicIdFromUrl(rawUrl) {
     if (idx === -1) return null;
     const after = u.pathname.slice(idx + "/raw/upload/".length); // v123/....pdf
     const noVer = after.replace(/^v\d+\//, "");                  // agudasco/reports/Nama%20File.pdf
-    const decoded = decodeURIComponent(noVer);
-    return decoded.replace(/\.[^/.]+$/, ""); // buang ekstensi
+    return decodeURIComponent(noVer);                             // termasuk ekstensi
   } catch {
     return null;
   }
 }
 
+/** Dapatkan public_id final untuk dipakai Admin API */
 function getPublicIdFromRecord(report) {
   let pid = (report.public_id || "").trim();
 
   if (!pid) {
     const fromUrl = extractPublicIdFromUrl((report.file || "").trim());
     if (!fromUrl) return null;
-    pid = fromUrl; // sudah include folder dari URL
+    pid = fromUrl; // sudah include folder + ekstensi dari URL
   }
 
   if (!pid.includes("/")) pid = `agudasco/reports/${pid}`;
-  pid = pid.replace(/\.[^/.]+$/, ""); // pastikan tanpa ekstensi
+  // PENTING: JANGAN menghapus ekstensi
   return pid;
 }
 
-/** Ambil ekstensi dari URL file di DB (mis. ".pdf") */
-function getExtFromFileUrl(fileUrl) {
-  try {
-    const u = new URL(fileUrl || "");
-    const name = decodeURIComponent(u.pathname.split("/").pop() || "");
-    const m = name.match(/(\.[^.\/]+)$/);
-    return m ? m[1] : "";
-  } catch {
-    return "";
-  }
-}
-
-/** Bangun kandidat public_id: [tanpa_ekstensi, dengan_ekstensi] */
-function buildPublicIdVariants(report) {
-  const base = getPublicIdFromRecord(report);
-  if (!base) return [];
-
-  const ext = getExtFromFileUrl(report.file); // ".pdf" atau ""
-  const noExt = base.replace(/\.[^/.]+$/, "");
-  const withExt = ext ? `${noExt}${ext}` : noExt;
-
-  const variants = [];
-  if (!variants.includes(noExt)) variants.push(noExt);
-  if (!variants.includes(withExt)) variants.push(withExt);
-  return variants;
-}
-
-/** Minta signed URL dari Admin API untuk satu public_id */
+/** Panggil Admin API untuk minta signed download URL (POST + Basic Auth) */
 async function requestAdminSignedUrl(publicId) {
   const { cloud_name, api_key, api_secret } = cloudinary.config();
   const timestamp = Math.floor(Date.now() / 1000);
@@ -191,7 +155,7 @@ async function requestAdminSignedUrl(publicId) {
     validateStatus: () => true
   });
 
-  return resp; // {status, data:{url?}}
+  return resp; // { status, data: { url? } }
 }
 
 /* --------------------------- Routes -------------------------- */
@@ -207,23 +171,19 @@ app.get("/diag/cloudinary", (req, res) => {
   });
 });
 
-/* --- DIAG: per report (lihat kandidat & status Admin API) --- */
-app.get("/diag/report/:id", async (req, res) => {
-  const { id } = req.params;
-  db.get("SELECT * FROM reports WHERE id = ?", [id], async (err, report) => {
+/* --- DIAG: per report (lihat public_id final & status Admin API) --- */
+app.get("/diag/report/:id", (req, res) => {
+  db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
     if (err || !report) return res.status(404).json({ error: "Report not found" });
 
-    const variants = buildPublicIdVariants(report);
-    const tries = [];
-    let chosen = null;
+    const publicId = getPublicIdFromRecord(report);
+    let status = null, has_url = false, url = null;
 
-    for (const v of variants) {
-      const r = await requestAdminSignedUrl(v);
-      tries.push({ public_id: v, status: r.status, has_url: !!r.data?.url });
-      if (r.status >= 200 && r.status < 300 && r.data?.url) {
-        chosen = { public_id: v, url: r.data.url };
-        break;
-      }
+    if (publicId) {
+      const r = await requestAdminSignedUrl(publicId);
+      status = r.status;
+      has_url = !!r.data?.url;
+      url = r.data?.url || null;
     }
 
     res.json({
@@ -231,9 +191,10 @@ app.get("/diag/report/:id", async (req, res) => {
       title: report.title,
       file_from_db: report.file,
       public_id_from_db: report.public_id || null,
-      derived_public_id_base: getPublicIdFromRecord(report),
-      candidates_tried: tries,
-      chosen
+      derived_public_id: publicId,
+      admin_status: status,
+      admin_response_has_url: has_url,
+      sample_url: url
     });
   });
 });
@@ -271,16 +232,14 @@ app.get("/file/:id/debug", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], async (err, report) => {
     if (err || !report) return res.status(404).send("File tidak ditemukan.");
 
-    const variants = buildPublicIdVariants(report);
-    for (const v of variants) {
-      try {
-        const resp = await requestAdminSignedUrl(v);
-        if (resp.status >= 200 && resp.status < 300 && resp.data?.url) {
-          return res.redirect(302, resp.data.url);
-        }
-      } catch { /* try next */ }
+    const publicId = getPublicIdFromRecord(report);
+    if (!publicId) return res.status(500).send("public_id tidak terbaca.");
+
+    const resp = await requestAdminSignedUrl(publicId);
+    if (resp.status >= 200 && resp.status < 300 && resp.data?.url) {
+      return res.redirect(302, resp.data.url);
     }
-    return res.status(502).send("Admin download failed (no candidate worked).");
+    return res.status(502).send(`Admin download failed: ${resp.status}`);
   });
 });
 
@@ -293,26 +252,22 @@ app.get("/file/:id", (req, res) => {
     if (err) return res.status(500).send("Gagal membuka file.");
     if (!report) return res.status(404).send("File tidak ditemukan.");
 
-    const variants = buildPublicIdVariants(report);
-    let signedUrl = null;
+    const publicId = getPublicIdFromRecord(report);
+    if (!publicId) return res.status(500).send("Gagal membaca public_id Cloudinary.");
 
     try {
-      // 1) minta signed URL (POST + Basic Auth) — coba tanpa ekstensi dulu, lalu dengan ekstensi
-      for (const v of variants) {
-        const ticket = await requestAdminSignedUrl(v);
-        if (ticket.status >= 200 && ticket.status < 300 && ticket.data?.url) {
-          signedUrl = ticket.data.url;
-          break;
-        }
-      }
-
-      if (!signedUrl) {
+      // 1) minta signed URL dari Admin API
+      const ticket = await requestAdminSignedUrl(publicId);
+      if (ticket.status < 200 || ticket.status >= 300 || !ticket.data?.url) {
+        console.error("Admin download failed:", ticket.status, ticket.data);
         return res.status(502).send("Gagal membuka file.");
       }
 
       // 2) stream file ke browser
+      const signedUrl = ticket.data.url;
       const fileStream = await axios.get(signedUrl, { responseType: "stream", validateStatus: () => true });
       if (fileStream.status < 200 || fileStream.status >= 300) {
+        console.error("Signed URL fetch failed:", fileStream.status);
         return res.status(502).send("Gagal membuka file.");
       }
 
@@ -326,6 +281,7 @@ app.get("/file/:id", (req, res) => {
 
       return fileStream.data.pipe(res);
     } catch (e) {
+      console.error("Admin download exception:", e?.message);
       return res.status(502).send("Gagal membuka file.");
     }
   });
@@ -384,13 +340,6 @@ app.post("/admin/banners", uploadImage.single("image"), (req, res) => {
   });
 });
 
-app.post("/admin/banners/:id/delete", (req, res) => {
-  db.run("DELETE FROM banners WHERE id = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).send(err.message);
-    res.redirect("/admin/banners");
-  });
-});
-
 /* ---- Admin: Laporan ---- */
 app.get("/admin/reports", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
@@ -403,7 +352,7 @@ app.post("/admin/reports", uploadFile.single("file"), (req, res) => {
   const { title } = req.body;
   const file = req.file ? req.file.path : null;
 
-  // public_id dari multer-storage-cloudinary (filename tanpa ekstensi)
+  // public_id dari multer-storage-cloudinary → filename (sesuai yg kita set, SUDAH pakai ekstensi)
   let pid = req.file ? (req.file.filename || req.file.public_id || null) : null;
   if (pid && !pid.includes("/")) pid = `agudasco/reports/${pid}`;
 
