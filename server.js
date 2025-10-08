@@ -5,7 +5,6 @@ import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
 import sqlite3 from "sqlite3";
 import multer from "multer";
-import axios from "axios";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 
@@ -31,19 +30,18 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // reports: sekarang pakai cover (image di Cloudinary) + pdf_url (link eksternal, mis. Google Drive)
+  // reports: cover (image Cloudinary) + pdf_url (link eksternal)
   db.run(`CREATE TABLE IF NOT EXISTS reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
-    cover TEXT,             -- URL gambar cover (Cloudinary)
-    pdf_url TEXT,           -- Link langsung ke PDF (Drive/Dropbox/S3)
+    cover TEXT,
+    pdf_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // migrasi ringan jika sebelumnya ada kolom lama
+  // migrasi ringan (abaikan error kalau kolom sudah ada)
   db.run(`ALTER TABLE reports ADD COLUMN cover TEXT`, () => {});
   db.run(`ALTER TABLE reports ADD COLUMN pdf_url TEXT`, () => {});
-  // kolom lama "file" / "public_id" kalau ada—biarkan saja, tak dipakai lagi.
 });
 
 /* --------------------- Cloudinary config --------------------- */
@@ -53,8 +51,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/* -------------------- Multer Storages ------------------------ */
-// Gambar (banner, artikel, cover laporan)
+/* -------------------- Multer (images only) ------------------- */
 const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -66,7 +63,6 @@ const imageStorage = new CloudinaryStorage({
     transformation: [{ quality: "auto", fetch_format: "auto" }],
   },
 });
-
 const uploadImage = multer({ storage: imageStorage });
 
 /* ------------------------- Middleware ------------------------ */
@@ -79,7 +75,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// iframe cukup dari origin sendiri
+// CSP: iframe hanya dari origin sendiri
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -88,10 +84,62 @@ app.use((req, res, next) => {
   next();
 });
 
+/* ---------------------- Basic Auth /admin -------------------- */
+function adminAuth(req, res, next) {
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Basic ")) {
+    res.set("WWW-Authenticate", 'Basic realm="Admin Area"');
+    return res.status(401).send("Authentication required");
+  }
+  try {
+    const decoded = Buffer.from(header.split(" ")[1], "base64").toString("utf8");
+    const sep = decoded.indexOf(":");
+    const user = decoded.slice(0, sep);
+    const pass = decoded.slice(sep + 1);
+
+    const ok =
+      user === (process.env.ADMIN_USERNAME || "") &&
+      pass === (process.env.ADMIN_PASSWORD || "");
+
+    if (!ok) {
+      res.set("WWW-Authenticate", 'Basic realm="Admin Area"');
+      return res.status(401).send("Unauthorized");
+    }
+    return next();
+  } catch {
+    res.set("WWW-Authenticate", 'Basic realm="Admin Area"');
+    return res.status(401).send("Invalid auth");
+  }
+}
+// aktifkan proteksi untuk semua route /admin
+app.use("/admin", adminAuth);
+
+/* --------------------------- Helpers ------------------------- */
+// Normalisasi link Google Drive → direct download
+function normalizePdfUrl(url) {
+  if (!url) return "";
+  try {
+    const u = new URL(url.trim());
+    // https://drive.google.com/file/d/<ID>/view?...  -> uc?export=download&id=<ID>
+    const m1 = u.pathname.match(/\/file\/d\/([^/]+)/);
+    if (u.hostname.includes("drive.google.com") && m1) {
+      return `https://drive.google.com/uc?export=download&id=${m1[1]}`;
+    }
+    // https://drive.google.com/open?id=<ID>
+    if (u.hostname.includes("drive.google.com") && u.searchParams.get("id")) {
+      return `https://drive.google.com/uc?export=download&id=${u.searchParams.get("id")}`;
+    }
+    // sudah uc?export=download atau non-drive → biarkan
+    return url.trim();
+  } catch {
+    return url.trim();
+  }
+}
+
 /* --------------------------- Routes -------------------------- */
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
-/* --- DIAG: cek ENV Cloudinary kebaca --- */
+// DIAG Cloudinary
 app.get("/diag/cloudinary", (req, res) => {
   const cfg = cloudinary.config();
   res.json({
@@ -101,7 +149,7 @@ app.get("/diag/cloudinary", (req, res) => {
   });
 });
 
-/* ------------------------------ HOME ------------------------------ */
+// HOME
 app.get("/", (req, res) => {
   db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
     db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
@@ -110,7 +158,7 @@ app.get("/", (req, res) => {
   });
 });
 
-/* --------------------------- LAPORAN --------------------------- */
+/* --------------------------- LAPORAN ------------------------- */
 // List
 app.get("/laporan", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
@@ -119,16 +167,18 @@ app.get("/laporan", (req, res) => {
   });
 });
 
-// Detail (tanpa preview PDF; tampilkan cover + tombol download PDF)
+// Detail (tanpa preview PDF; ada tombol download)
 app.get("/laporan/:id", (req, res) => {
   db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
     if (err) return res.status(500).send(err.message);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
-    res.render("report_view", { title: report.title, report });
+    // tampilkan link yang sudah dinormalisasi (khusus Drive)
+    const fixed = { ...report, pdf_url: normalizePdfUrl(report.pdf_url) };
+    res.render("report_view", { title: report.title, report: fixed });
   });
 });
 
-/* ---------------------------- ADMIN ---------------------------- */
+/* ---------------------------- ADMIN -------------------------- */
 app.get("/admin", (req, res) =>
   res.render("admin/dashboard", { title: "Dashboard" })
 );
@@ -147,7 +197,7 @@ app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
   if (!title) return res.status(400).send("Judul wajib diisi");
   db.run(
     "INSERT INTO articles (title, content, image) VALUES (?, ?, ?)",
-    [title, content || "", image],
+    [title.trim(), content || "", image],
     (err) => {
       if (err) return res.status(500).send(err.message);
       res.redirect("/admin/articles");
@@ -186,7 +236,7 @@ app.post("/admin/banners/:id/delete", (req, res) => {
   });
 });
 
-// Reports (pakai cover image + pdf_url eksternal)
+// Reports: cover image + pdf_url eksternal
 app.get("/admin/reports", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
@@ -194,16 +244,16 @@ app.get("/admin/reports", (req, res) => {
   });
 });
 
-// Form field: title, cover (file), pdf_url (text)
+// Form: title, cover(file input name="cover"), pdf_url(text)
 app.post("/admin/reports", uploadImage.single("cover"), (req, res) => {
   const { title, pdf_url } = req.body;
   const cover = req.file ? req.file.path : null;
-
   if (!title) return res.status(400).send("Judul wajib diisi");
-  // pdf_url opsional; kalau tidak ada, tetap simpan (bisa diisi nanti)
+
+  const fixedPdf = normalizePdfUrl(pdf_url || "");
   db.run(
     "INSERT INTO reports (title, cover, pdf_url) VALUES (?, ?, ?)",
-    [title.trim(), cover, (pdf_url || "").trim()],
+    [title.trim(), cover, fixedPdf],
     (err) => {
       if (err) return res.status(500).send(err.message);
       res.redirect("/admin/reports");
