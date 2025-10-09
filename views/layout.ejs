@@ -5,17 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
-  <!-- CSS dengan fallback otomatis -->
-  <link id="main-css" rel="stylesheet" href="/styles.css" />
-  <script>
-    (function(){
-      var link = document.getElementById('main-css');
-      link.addEventListener('error', function(){
-        // fallback bila /styles.css tidak ada → coba /public/styles.css
-        this.href = '/public/styles.css';
-      });
-    })();
-  </script>
+  <!-- Styles (Opsi B: lewat /public/styles.css) -->
+  <link rel="stylesheet" href="/public/styles.css" />
 </head>
 <body>
   <!-- Header -->
