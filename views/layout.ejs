@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
-  <!-- Styles (Opsi B: lewat /public/styles.css) -->
+  <!-- Styles (Opsi B: /public/styles.css) -->
   <link rel="stylesheet" href="/public/styles.css" />
 </head>
 <body>
   <!-- Header -->
   <header class="header">
-    <div class="container">
+    <div class="container header-wrap">
       <div class="brand">
         <img
           src="https://res.cloudinary.com/<%= (process.env.CLOUDINARY_CLOUD_NAME||'dsyo0e3fu') %>/image/upload/c_scale,w_40/v1710000000/logo.png"
@@ -19,7 +19,13 @@
         <div class="title">AGUDASCO</div>
       </div>
 
-      <nav class="nav">
+      <!-- Tombol hamburger (mobile) -->
+      <button class="nav-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+      </button>
+
+      <!-- Nav -->
+      <nav id="main-nav" class="nav">
         <a href="/" class="<%= (locals.active==='home') ? 'active' : '' %>">Beranda</a>
         <a href="/artikel" class="<%= (locals.active==='artikel') ? 'active' : '' %>">Artikel</a>
         <a href="/laporan" class="<%= (locals.active==='laporan') ? 'active' : '' %>">Laporan</a>
@@ -52,6 +58,7 @@
   </div>
 
   <script>
+    // Lightbox
     function openLightbox(src, cap){
       const b = document.getElementById('lightbox');
       document.getElementById('lightbox-img').src = src;
@@ -63,6 +70,20 @@
         document.getElementById('lightbox').classList.remove('active');
       }
     }
+
+    // Toggle mobile nav
+    (function(){
+      const btn = document.querySelector('.nav-toggle');
+      const nav = document.getElementById('main-nav');
+      const root = document.documentElement;
+      if(!btn || !nav) return;
+      btn.addEventListener('click', () => {
+        const open = nav.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.classList.toggle('is-open', open);
+        root.classList.toggle('no-scroll', open); // kunci scroll saat menu terbuka
+      });
+    })();
   </script>
 </body>
 </html>
