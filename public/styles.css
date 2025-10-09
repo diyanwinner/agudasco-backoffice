@@ -19,29 +19,25 @@
 
 /* ===== Base ===== */
 *{ box-sizing:border-box }
-html{
-  /* cegah loncat center saat scrollbar muncul/hilang */
-  scrollbar-gutter: stable both-edges;
-}
+html{ scrollbar-gutter: stable both-edges; }
 html,body{
   margin:0; padding:0;
   background:var(--navy); color:var(--text);
   font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial;
 }
-body{ overflow-x:hidden }  /* antisipasi elemen yang ‘tumpah’ */
+body{ overflow-x:hidden }
 a{ color:#9ec1ff; text-decoration:none }
 a:hover{ color:#cfe0ff; text-decoration:underline }
 
 /* ===== Layout umum ===== */
-/* PENTING: semua container pakai --wrap supaya center presisi */
 .container{
   width:var(--wrap);
   margin-inline:auto;
   padding:24px;
-  max-width:none; /* override aturan lama */
+  max-width:none;
 }
 
-/* Header */
+/* ===== Header ===== */
 .header{ background:var(--navy-2); border-bottom:1px solid var(--border) }
 .header .container{ position:relative; display:flex; align-items:center; gap:20px }
 .brand{ display:flex; align-items:center; gap:12px }
@@ -53,37 +49,27 @@ a:hover{ color:#cfe0ff; text-decoration:underline }
 .nav a.active,.nav a:hover{ background:var(--blue); color:#fff }
 
 /* ===== Hero & spacing dekat header ===== */
-main{ padding-top:8px }                  /* rapetin jarak global */
+main{ padding-top:8px }
 .hero{ text-align:center; margin-top:0; padding:0 0 8px }
-.hero-title{
-  margin:8px 0 10px;
-  font-size: clamp(1.6rem, 2.2vw + 1rem, 2.4rem);
-  font-weight: 800;
-}
+.hero-title{ margin:8px 0 10px; font-size:clamp(1.6rem, 2.2vw + 1rem, 2.4rem); font-weight:800 }
 
-/* ===== Slider banner (JS-driven) ===== */
+/* ===== Slider banner ===== */
 .banner-wrapper{
   position:relative;
   margin:.25rem auto .75rem;
-  width:var(--wrap);                     /* <<< konsisten center */
+  width:var(--wrap);
   height:clamp(240px,36vw,460px);
   border-radius:18px;
   overflow:hidden;
   background:rgba(255,255,255,.03);
   box-shadow:0 6px 18px rgba(0,0,0,.35);
 }
-.banner-track{
-  display:flex; height:100%;
-  transition: transform .55s ease-in-out;  /* animasi geser */
-  will-change: transform;
-}
+.banner-track{ display:flex; height:100%; transition:transform .55s ease-in-out; will-change:transform }
 .banner-slide{ flex:0 0 100%; height:100% }
 .banner-slide img{ width:100%; height:100%; object-fit:cover; display:block }
-
-/* Caption tepat di bawah banner */
 .hero-caption{ opacity:.85; margin-top:.25rem }
 
-/* Tombol prev/next (simetris) */
+/* Tombol prev/next */
 .banner-wrapper .nav{
   position:absolute; top:50%; transform:translateY(-50%);
   width:42px; height:42px; border-radius:50%; border:0;
@@ -96,14 +82,8 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 @media (max-width:600px){ .banner-wrapper .nav{ display:none } }
 
 /* ===== Section Artikel Terbaru ===== */
-.section{
-  width:var(--wrap);                     /* <<< konsisten center */
-  margin:28px auto 0;
-}
-.section-head{
-  display:flex; align-items:baseline; justify-content:space-between;
-  margin-bottom:12px;
-}
+.section{ width:var(--wrap); margin:28px auto 0 }
+.section-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px }
 .section-head h2{ margin:0 }
 .link-more{ opacity:.85 }
 .link-more:hover{ opacity:1; text-decoration:underline }
@@ -123,8 +103,7 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 .card h3{ margin:0 0 6px; font-size:18px }
 .meta{ color:var(--muted); font-size:13px; margin:0 0 12px }
 
-.btn{ display:inline-block; padding:8px 12px; border-radius:10px;
-      background:#2b72ff; color:#fff; border:1px solid var(--border) }
+.btn{ display:inline-block; padding:8px 12px; border-radius:10px; background:#2b72ff; color:#fff; border:1px solid var(--border) }
 .btn:hover{ filter:brightness(1.08) }
 .btn.red{ background:var(--red) }
 .muted{ opacity:.65 }
@@ -136,13 +115,9 @@ main{ padding-top:8px }                  /* rapetin jarak global */
   color:var(--text);
   border-top:1px solid rgba(255,255,255,.06);
 }
-.site-footer .container{ width:var(--wrap); margin-inline:auto; padding:24px } /* konsisten */
-.site-footer .footer-grid{
-  display:grid; gap:16px; grid-template-columns:1fr; align-items:start;
-}
-@media (min-width:880px){
-  .site-footer .footer-grid{ grid-template-columns:1.2fr 1fr 1fr }
-}
+.site-footer .container{ width:var(--wrap); margin-inline:auto; padding:24px }
+.site-footer .footer-grid{ display:grid; gap:16px; grid-template-columns:1fr; align-items:start }
+@media (min-width:880px){ .site-footer .footer-grid{ grid-template-columns:1.2fr 1fr 1fr } }
 .site-footer .footer-col{ min-width:0 }
 .site-footer .footer-heading{ margin:0 0 6px; font-size:1rem }
 .site-footer a{ color:#cfe0ff; text-decoration:none; border-bottom:1px dashed transparent }
@@ -168,65 +143,65 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 .lightbox-caption{ color:#fff; margin-top:8px; text-align:center }
 
 /* ===== Admin Modern ===== */
-.admin-wrap { padding-top: 8px; }
-.admin-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin:6px 0 14px; }
-.admin-title{ margin:0; font-size:clamp(22px,2.2vw,28px); }
+.admin-wrap { padding-top: 8px }
+.admin-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin:6px 0 14px }
+.admin-title{ margin:0; font-size:clamp(22px,2.2vw,28px) }
 
-.form-modern{ padding:16px; }
-.form-grid-2{ display:grid; grid-template-columns: 1.3fr .9fr; gap:18px; }
-@media (max-width: 900px){ .form-grid-2{ grid-template-columns:1fr; } }
+.form-modern{ padding:16px }
+.form-grid-2{ display:grid; grid-template-columns: 1.3fr .9fr; gap:18px }
+@media (max-width: 900px){ .form-grid-2{ grid-template-columns:1fr } }
 
-.label{ display:block; margin:8px 0 6px; font-weight:600; }
+.label{ display:block; margin:8px 0 6px; font-weight:600 }
 .input,.textarea{
   width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--border);
   background:#0b1322; color:var(--text); outline:none;
 }
-.input:focus,.textarea:focus{ border-color:#2b72ff; box-shadow:0 0 0 3px rgba(43,114,255,.15); }
-.textarea{ resize:vertical; min-height:120px; }
+.input:focus,.textarea:focus{ border-color:#2b72ff; box-shadow:0 0 0 3px rgba(43,114,255,.15) }
+.textarea{ resize:vertical; min-height:120px }
 
 .form-bar{
-  position: sticky; bottom:12px; margin-top:12px; padding:10px 12px;
-  background: rgba(20,35,58,.85); border:1px solid var(--border); border-radius:12px;
-  display:flex; align-items:center; justify-content:space-between; backdrop-filter: blur(6px);
+  position:sticky; bottom:12px; margin-top:12px; padding:10px 12px;
+  background:rgba(20,35,58,.85); border:1px solid var(--border); border-radius:12px;
+  display:flex; align-items:center; justify-content:space-between; backdrop-filter:blur(6px);
 }
 
-.btn.ghost{ background:transparent; border:1px solid var(--border); }
-.btn.ghost:hover{ background:rgba(255,255,255,.05); }
+.btn.ghost{ background:transparent; border:1px solid var(--border) }
+.btn.ghost:hover{ background:rgba(255,255,255,.05) }
 
 /* Dropzone */
 .dropzone{
   position:relative; border:1px dashed #35527a; border-radius:14px; min-height:230px;
   display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.02);
-  transition: border-color .2s, background .2s; cursor:pointer; overflow:hidden;
+  transition:border-color .2s, background .2s; cursor:pointer; overflow:hidden;
 }
-.dropzone.is-drag{ border-color:#2b72ff; background:rgba(43,114,255,.06); }
-.dropzone .dz-empty{ display:flex; flex-direction:column; gap:6px; align-items:center; color:#bcd1ff; }
-.dropzone .dz-empty svg{ opacity:.85; }
-
-.dz-preview{ position:absolute; inset:0; display:none; }
-.dz-preview img{ width:100%; height:100%; object-fit:cover; }
+.dropzone.is-drag{ border-color:#2b72ff; background:rgba(43,114,255,.06) }
+.dropzone .dz-empty{ display:flex; flex-direction:column; gap:6px; align-items:center; color:#bcd1ff }
+.dropzone .dz-empty svg{ opacity:.85 }
+.dz-preview{ position:absolute; inset:0; display:none }
+.dz-preview img{ width:100%; height:100%; object-fit:cover }
 .dz-preview .dz-remove{
   position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%;
   border:1px solid rgba(255,255,255,.3); background:rgba(0,0,0,.45); color:#fff;
 }
 
 /* Table wrapper */
-.table-wrap{ overflow:auto; }
-.rowlink{ color:#e7eefc; }
-.rowlink:hover{ text-decoration:underline; }
+.table-wrap{ overflow:auto }
+.rowlink{ color:#e7eefc }
+.rowlink:hover{ text-decoration:underline }
 
 /* Small tweaks */
-.help-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px; }
+.help-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px }
 
 /* ======= Header responsive (Mobile Nav) ======= */
-.header-wrap{ display:flex; align-items:center; gap:16px } /* optional jika dipakai */
+.header-wrap{ display:flex; align-items:center; gap:16px } /* jika dipakai */
+
 .nav-toggle{
   display:none; position:relative; width:44px; height:38px; border:1px solid var(--border);
   border-radius:10px; background:var(--card); cursor:pointer;
 }
 .nav-toggle span{
   position:absolute; left:9px; right:9px; height:2px; background:#cfe0ff; border-radius:2px;
-  transition: transform .25s ease, opacity .2s ease, top .25s ease;
+  transition:transform .25s ease, opacity .2s ease, top .25s ease;
 }
 .nav-toggle span:nth-child(1){ top:11px }
 .nav-toggle span:nth-child(2){ top:18px }
@@ -237,8 +212,10 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 
 @media (max-width: 860px){
   .nav-toggle{ display:inline-block; margin-left:auto }
+
+  /* Panel nav menempel tepat di bawah header container */
   .nav{
-    position:absolute; left:0; right:0; top:calc(64px + 1px);
+    position:absolute; left:0; right:0; top:calc(100% + 1px);
     display:none; flex-direction:column; gap:8px;
     margin:0; padding:10px 16px 16px;
     background:rgba(20,35,58,.96);
@@ -253,9 +230,5 @@ main{ padding-top:8px }                  /* rapetin jarak global */
     background:rgba(255,255,255,.02);
   }
   .nav a.active,.nav a:hover{ background:var(--blue); color:#fff }
-  .no-scroll, .no-scroll body{ overflow:hidden } /* lock scroll saat menu terbuka */
+  .no-scroll, .no-scroll body{ overflow:hidden }
 }
-
-git add public/styles.css
-git commit -m "Fix center layout & responsive header"
-git push
