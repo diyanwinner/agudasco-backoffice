@@ -178,6 +178,24 @@ app.get("/laporan/:id", (req, res) => {
   });
 });
 
+/* ---------------------- ARTIKEL (Publik) ---------------------- */
+// List artikel (dua alias: /articles dan /artikel)
+app.get(["/articles", "/artikel"], (req, res) => {
+  db.all("SELECT * FROM articles ORDER BY id DESC", [], (err, articles = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("articles", { title: "Artikel", articles });
+  });
+});
+
+// Detail artikel (dua alias: /article/:id dan /artikel/:id)
+app.get(["/article/:id", "/artikel/:id"], (req, res) => {
+  db.get("SELECT * FROM articles WHERE id = ?", [req.params.id], (err, article) => {
+    if (err) return res.status(500).send(err.message);
+    if (!article) return res.status(404).send("Artikel tidak ditemukan");
+    res.render("article_view", { title: article.title, article });
+  });
+});
+
 /* ---------------------------- ADMIN -------------------------- */
 app.get("/admin", (req, res) =>
   res.render("admin/dashboard", { title: "Dashboard" })
