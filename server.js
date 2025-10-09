@@ -209,6 +209,23 @@ app.get("/laporan/:id", (req, res) => {
   });
 });
 
+/* --------------------------- AD/ART (PUBLIC) --------------------------- */
+app.get("/adart", (req, res) => {
+  db.all("SELECT * FROM adarts ORDER BY id DESC", [], (err, adarts = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("adart", { title: "AD/ART", active: "adart", adarts });
+  });
+});
+
+app.get("/adart/:id", (req, res) => {
+  db.get("SELECT * FROM adarts WHERE id = ?", [req.params.id], (err, item) => {
+    if (err) return res.status(500).send(err.message);
+    if (!item) return res.status(404).send("Dokumen AD/ART tidak ditemukan");
+    const fixed = { ...item, pdf_url: normalizePdfUrl(item.pdf_url) };
+    res.render("adart_view", { title: item.title, active: "adart", item: fixed });
+  });
+});
+
 /* --------------------------- MENU STATIS --------------------------- */
 app.get("/adart",   (req, res) => renderSafe(res, "adart",   { title: "AD/ART",   active: "adart",   adarts: [] }));
 app.get("/anggota", (req, res) => renderSafe(res, "anggota", { title: "Anggota", active: "anggota", anggota: [] }));
@@ -302,6 +319,39 @@ app.post("/admin/reports/:id/delete", (req, res) => {
   db.run("DELETE FROM reports WHERE id = ?", [req.params.id], (err) => {
     if (err) return res.status(500).send(err.message);
     res.redirect("/admin/reports");
+  });
+});
+
+/* --------------------------- AD/ART (ADMIN) --------------------------- */
+// List + form tambah
+app.get("/admin/adart", (req, res) => {
+  db.all("SELECT * FROM adarts ORDER BY id DESC", [], (err, adarts = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("admin/adart", { title: "Kelola AD/ART", adarts });
+  });
+});
+
+// Form field: title (text), cover (file input name="cover"), pdf_url (text)
+app.post("/admin/adart", uploadImage.single("cover"), (req, res) => {
+  const { title, pdf_url } = req.body;
+  const cover = req.file ? req.file.path : null;
+  if (!title) return res.status(400).send("Judul wajib diisi");
+
+  const fixedPdf = normalizePdfUrl(pdf_url || "");
+  db.run(
+    "INSERT INTO adarts (title, cover, pdf_url) VALUES (?, ?, ?)",
+    [title.trim(), cover, fixedPdf],
+    (err) => {
+      if (err) return res.status(500).send(err.message);
+      res.redirect("/admin/adart");
+    }
+  );
+});
+
+app.post("/admin/adart/:id/delete", (req, res) => {
+  db.run("DELETE FROM adarts WHERE id = ?", [req.params.id], (err) => {
+    if (err) return res.status(500).send(err.message);
+    res.redirect("/admin/adart");
   });
 });
 
