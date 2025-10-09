@@ -39,6 +39,15 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
+  // AD/ART: cover (image Cloudinary) + pdf_url (link eksternal, mis. Google Drive)
+  db.run(`CREATE TABLE IF NOT EXISTS adarts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    cover TEXT,
+    pdf_url TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
   // migrasi ringan (abaikan error kalau kolom sudah ada)
   db.run(`ALTER TABLE reports ADD COLUMN cover TEXT`, () => {});
   db.run(`ALTER TABLE reports ADD COLUMN pdf_url TEXT`, () => {});
