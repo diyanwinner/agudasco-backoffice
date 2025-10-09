@@ -190,3 +190,52 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 
 /* Small tweaks */
 .help-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px; }
+
+/* ======= Header responsive ======= */
+.header { background: var(--navy-2); border-bottom: 1px solid var(--border); }
+.header-wrap { display:flex; align-items:center; gap:16px; }
+.header .container { position: relative; } /* untuk panel nav absolute */
+
+.nav { margin-left:auto; display:flex; flex-wrap:wrap; gap:14px; }
+.nav a { padding:10px 12px; border-radius:10px; }
+.nav a.active, .nav a:hover { background:var(--blue); color:#fff; }
+
+/* Tombol hamburger */
+.nav-toggle{
+  display:none; position:relative; width:44px; height:38px; border:1px solid var(--border);
+  border-radius:10px; background:var(--card); cursor:pointer;
+}
+.nav-toggle span{
+  position:absolute; left:9px; right:9px; height:2px; background:#cfe0ff; border-radius:2px;
+  transition: transform .25s ease, opacity .2s ease, top .25s ease;
+}
+.nav-toggle span:nth-child(1){ top:11px }
+.nav-toggle span:nth-child(2){ top:18px }
+.nav-toggle span:nth-child(3){ top:25px }
+.nav-toggle.is-open span:nth-child(1){ top:18px; transform:rotate(45deg) }
+.nav-toggle.is-open span:nth-child(2){ opacity:0 }
+.nav-toggle.is-open span:nth-child(3){ top:18px; transform:rotate(-45deg) }
+
+/* Mobile panel */
+@media (max-width: 860px){
+  .nav-toggle{ display:inline-block; margin-left:auto; }
+  .nav{
+    position:absolute; left:0; right:0; top:calc(64px + 1px);
+    display:none; flex-direction:column; gap:8px;
+    margin:0; padding:10px 16px 16px;
+    background:rgba(20,35,58,.96);
+    border-bottom:1px solid var(--border);
+    box-shadow:0 12px 24px rgba(0,0,0,.25);
+    z-index:40;
+  }
+  .nav.is-open{ display:flex; }
+  .nav a{
+    display:block; width:100%;
+    padding:12px 14px; border-radius:12px;
+    background:rgba(255,255,255,.02);
+  }
+  .nav a.active, .nav a:hover{ background:var(--blue); color:#fff; }
+
+  /* Lock scroll ketika menu terbuka */
+  .no-scroll, .no-scroll body { overflow: hidden; }
+}
