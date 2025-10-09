@@ -31,7 +31,6 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // reports: cover (image Cloudinary) + pdf_url (link eksternal)
   db.run(`CREATE TABLE IF NOT EXISTS reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
@@ -40,7 +39,7 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // migrasi ringan (abaikan error bila kolom sudah ada)
+  // migrasi ringan (abaikan error kalau kolom sudah ada)
   db.run(`ALTER TABLE reports ADD COLUMN cover TEXT`, () => {});
   db.run(`ALTER TABLE reports ADD COLUMN pdf_url TEXT`, () => {});
 });
@@ -76,14 +75,14 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// default locals → cegah "active is not defined" di layout
+// default locals → cegah "active is not defined"
 app.use((req, res, next) => {
   res.locals.active = "";
   res.locals.title  = res.locals.title || "AGUDASCO";
   next();
 });
 
-// CSP: iframe hanya dari origin sendiri
+// CSP sederhana
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -120,17 +119,14 @@ function adminAuth(req, res, next) {
 app.use("/admin", adminAuth);
 
 /* --------------------------- Helpers ------------------------- */
-// Normalisasi link Google Drive → direct download
 function normalizePdfUrl(url) {
   if (!url) return "";
   try {
     const u = new URL(url.trim());
-    // https://drive.google.com/file/d/<ID>/view?...  -> uc?export=download&id=<ID>
     const m1 = u.pathname.match(/\/file\/d\/([^/]+)/);
     if (u.hostname.includes("drive.google.com") && m1) {
       return `https://drive.google.com/uc?export=download&id=${m1[1]}`;
     }
-    // https://drive.google.com/open?id=<ID>
     if (u.hostname.includes("drive.google.com") && u.searchParams.get("id")) {
       return `https://drive.google.com/uc?export=download&id=${u.searchParams.get("id")}`;
     }
@@ -140,35 +136,24 @@ function normalizePdfUrl(url) {
   }
 }
 
-// Render aman: jika view belum ada, pakai fallback
+// Render aman: kalau view tidak ada, pakai fallback sederhana
 function renderSafe(res, viewName, props = {}) {
   const full = path.join(__dirname, "views", `${viewName}.ejs`);
   if (fs.existsSync(full)) {
     return res.render(viewName, props);
   }
-  const fallback = path.join(__dirname, "views", "page.ejs");
-  if (fs.existsSync(fallback)) {
-    return res.render("page", props);
-  }
-  return res
-    .status(200)
-    .send(`<h1>${props.title || viewName}</h1><p>Halaman dalam pengembangan.</p>`);
+  // fallback minimal tanpa helper layout()
+  return res.render("page", {
+    title: props.title || viewName,
+    active: props.active || "",
+    heading: props.title || viewName,
+    content: props.content || "<p>Halaman dalam pengembangan.</p>"
+  });
 }
 
 /* --------------------------- Routes -------------------------- */
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
-// DIAG Cloudinary
-app.get("/diag/cloudinary", (req, res) => {
-  const cfg = cloudinary.config();
-  res.json({
-    cloud_name: cfg.cloud_name,
-    api_key_present: !!cfg.api_key,
-    api_secret_present: !!cfg.api_secret,
-  });
-});
-
-/* ------------------------------ HOME ------------------------------ */
 app.get("/", (req, res) => {
   db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
     db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
@@ -216,9 +201,9 @@ app.get("/laporan/:id", (req, res) => {
 });
 
 /* --------------------------- MENU STATIS --------------------------- */
-app.get("/adart",   (req, res) => renderSafe(res, "adart",   { title: "AD/ART",   active: "adart"   }));
-app.get("/anggota", (req, res) => renderSafe(res, "anggota", { title: "Anggota", active: "anggota" }));
-app.get("/galeri",  (req, res) => renderSafe(res, "galeri",  { title: "Galeri",  active: "galeri"  }));
+app.get("/adart",   (req, res) => renderSafe(res, "adart",   { title: "AD/ART",   active: "adart",   adarts: [] }));
+app.get("/anggota", (req, res) => renderSafe(res, "anggota", { title: "Anggota", active: "anggota", anggota: [] }));
+app.get("/galeri",  (req, res) => renderSafe(res, "galeri",  { title: "Galeri",  active: "galeri",  fotos: [] }));
 app.get("/tentang", (req, res) => renderSafe(res, "tentang", { title: "Tentang", active: "tentang" }));
 app.get("/kontak",  (req, res) => renderSafe(res, "kontak",  { title: "Kontak",  active: "kontak"  }));
 
@@ -280,7 +265,7 @@ app.post("/admin/banners/:id/delete", (req, res) => {
   });
 });
 
-// Admin: Reports (cover image + pdf_url eksternal)
+// Admin: Reports
 app.get("/admin/reports", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
