@@ -30,65 +30,46 @@
   if(!track) return;
 
   const slides = track.querySelectorAll('.banner-slide');
-  const realCount = slides.length / 2;        // karena kita gandakan
-  const slideW = () => track.clientWidth;     // lebar per slide (100%)
+  const realCount = slides.length / 2; // karena kita gandakan untuk loop
   let index = 0;
-  let anim; let tick;
-  const DURATION = 500; // ms animasi geser
-  const INTERVAL = 4000; // ms jeda antar slide
+  const INTERVAL = 4000;  // jeda antar slide
 
-  // set posisi
-  function setX(px){ track.style.transform = `translateX(${px}px)`; }
+  // terapkan posisi berdasar index (tiap slide = 100% lebar)
+  const apply = () => track.style.transform = `translateX(-${index * 100}%)`;
 
-  function goTo(i, withAnim=true){
-    index = i;
-    if(withAnim){
-      const start = performance.now();
-      const from = -((i) * slideW());
-      const current = parseFloat(getComputedStyle(track).transform.split(',')[4]) || 0;
-      const delta = from - current;
-
-      cancelAnimationFrame(anim);
-      (function step(t){
-        const p = Math.min(1, (t - start)/DURATION);
-        const ease = .5 - Math.cos(p*Math.PI)/2;  // ease-in-out
-        setX(current + delta*ease);
-        if(p<1) anim = requestAnimationFrame(step);
-      })(start);
-    }else{
-      setX(-i * slideW());
-    }
+  // lompat instan (tanpa animasi) ke index tertentu
+  function jump(to){
+    const old = track.style.transition;
+    track.style.transition = 'none';
+    index = to;
+    apply();
+    // force reflow agar transition berikutnya aktif lagi
+    track.offsetHeight; 
+    track.style.transition = old || 'transform .55s ease-in-out';
   }
 
+  // gerak maju 1 slide (kiri terus)
   function next(){
-    goTo(index+1);
-    if(index >= realCount){
-      // lompat instan ke slide 0 (duplikat membuatnya mulus)
-      index = 0;
-      setTimeout(()=>goTo(0,false), 30);
+    index++;
+    apply();
+    // jika sudah mencapai duplikasi terakhir, setelah transisi selesai
+    // kita lompat instan balik ke index 0 supaya loop mulus
+    if(index === realCount){
+      track.addEventListener('transitionend', () => jump(0), { once:true });
     }
   }
-  function prev(){
-    if(index<=0){
-      index = realCount;
-      goTo(index,false);
-    }
-    goTo(index-1);
-  }
 
-  // autoplay
-  function start(){ tick = setInterval(next, INTERVAL); }
-  function stop(){ clearInterval(tick); }
-
-  // init
-  goTo(0,false);
-  start();
-  window.addEventListener('resize', ()=>goTo(index,false));
-
-  // nav
+  // tombol opsional
   const p = document.querySelector('.banner-wrapper .prev');
   const n = document.querySelector('.banner-wrapper .next');
-  p && p.addEventListener('click', ()=>{ stop(); prev(); start(); });
-  n && n.addEventListener('click', ()=>{ stop(); next(); start(); });
+  p && p.addEventListener('click', ()=>{ jump( (index-1+realCount)%realCount ); });
+  n && n.addEventListener('click', ()=>{ next(); });
+
+  // init posisi & autoplay satu arah
+  jump(0);
+  let timer = setInterval(next, INTERVAL);
+  // pause saat hover (opsional)
+  track.closest('.banner-wrapper').addEventListener('mouseenter', ()=>clearInterval(timer));
+  track.closest('.banner-wrapper').addEventListener('mouseleave', ()=>timer = setInterval(next, INTERVAL));
 })();
 </script>
