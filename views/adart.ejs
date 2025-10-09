@@ -1,0 +1,14 @@
+<% layout('layout', {active:'adart'}) %>
+<h2>AD/ART</h2>
+<div class="grid cards">
+  <% (adarts||[]).forEach(i=>{ %>
+    <div class="card">
+      <img src="<%= i.cover||'https://via.placeholder.com/640x360?text=AD/ART' %>" alt="<%= i.title %>"/>
+      <div class="pad">
+        <h3><a href="/adart/<%= i.id %>"><%= i.title %></a></h3>
+        <p class="meta"><%= new Date(i.created_at).toLocaleDateString('id-ID') %></p>
+        <a class="btn" href="/adart/<%= i.id %>">Detail</a>
+      </div>
+    </div>
+  <% }) %>
+</div>
