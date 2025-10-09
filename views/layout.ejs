@@ -14,15 +14,15 @@
         <div class="title">AGUDASCO</div>
       </div>
       <nav class="nav">
-        <a href="/" class="<%= (active==='home')?'active':'' %>">Beranda</a>
-        <a href="/artikel" class="<%= (active==='artikel')?'active':'' %>">Artikel</a>
-        <a href="/laporan" class="<%= (active==='laporan')?'active':'' %>">Laporan</a>
-        <a href="/adart" class="<%= (active==='adart')?'active':'' %>">AD/ART</a>
-        <a href="/anggota" class="<%= (active==='anggota')?'active':'' %>">Anggota</a>
-        <a href="/galeri" class="<%= (active==='galeri')?'active':'' %>">Galeri</a>
-        <a href="/tentang" class="<%= (active==='tentang')?'active':'' %>">Tentang</a>
-        <a href="/kontak" class="<%= (active==='kontak')?'active':'' %>">Kontak</a>
-        <a href="/admin" class="nav-link">Admin</a>
+        <a href="/"Beranda" class="<%= (locals.active==='home') ? 'active' : '' %>">Beranda</a>
+        <a href="/artikel" class="<%= (locals.active==='artikel') ? 'active' : '' %>">Artikel</a>
+        <a href="/laporan" class="<%= (locals.active==='laporan') ? 'active' : '' %>">Laporan</a>
+        <a href="/adart" class="<%= (locals.active==='adart') ? 'active' : '' %>">AD/ART</a>
+        <a href="/anggota" class="<%= (locals.active==='anggota') ? 'active' : '' %>">Anggota</a>
+        <a href="/galeri" class="<%= (locals.active==='galeri') ? 'active' : '' %>">Galeri</a>
+        <a href="/tentang" class="<%= (locals.active==='tentang') ? 'active' : '' %>">Tentang</a>
+        <a href="/kontak" class="<%= (locals.active==='kontak') ? 'active' : '' %>">Kontak</a>
+        <a href="/admin" class="<%= (locals.active==='admin') ? 'active' : '' %>">Admin</a>
       </nav>
     </div>
   </header>
