@@ -5,8 +5,17 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="/styles.css" />
+  <!-- CSS dengan fallback otomatis -->
+  <link id="main-css" rel="stylesheet" href="/styles.css" />
+  <script>
+    (function(){
+      var link = document.getElementById('main-css');
+      link.addEventListener('error', function(){
+        // fallback bila /styles.css tidak ada → coba /public/styles.css
+        this.href = '/public/styles.css';
+      });
+    })();
+  </script>
 </head>
 <body>
   <!-- Header -->
@@ -20,24 +29,15 @@
       </div>
 
       <nav class="nav">
-        <a href="/"
-           class="<%= (locals.active==='home') ? 'active' : '' %>">Beranda</a>
-        <a href="/artikel"
-           class="<%= (locals.active==='artikel') ? 'active' : '' %>">Artikel</a>
-        <a href="/laporan"
-           class="<%= (locals.active==='laporan') ? 'active' : '' %>">Laporan</a>
-        <a href="/adart"
-           class="<%= (locals.active==='adart') ? 'active' : '' %>">AD/ART</a>
-        <a href="/anggota"
-           class="<%= (locals.active==='anggota') ? 'active' : '' %>">Anggota</a>
-        <a href="/galeri"
-           class="<%= (locals.active==='galeri') ? 'active' : '' %>">Galeri</a>
-        <a href="/tentang"
-           class="<%= (locals.active==='tentang') ? 'active' : '' %>">Tentang</a>
-        <a href="/kontak"
-           class="<%= (locals.active==='kontak') ? 'active' : '' %>">Kontak</a>
-        <a href="/admin"
-           class="<%= (locals.active==='admin') ? 'active' : '' %>">Admin</a>
+        <a href="/" class="<%= (locals.active==='home') ? 'active' : '' %>">Beranda</a>
+        <a href="/artikel" class="<%= (locals.active==='artikel') ? 'active' : '' %>">Artikel</a>
+        <a href="/laporan" class="<%= (locals.active==='laporan') ? 'active' : '' %>">Laporan</a>
+        <a href="/adart" class="<%= (locals.active==='adart') ? 'active' : '' %>">AD/ART</a>
+        <a href="/anggota" class="<%= (locals.active==='anggota') ? 'active' : '' %>">Anggota</a>
+        <a href="/galeri" class="<%= (locals.active==='galeri') ? 'active' : '' %>">Galeri</a>
+        <a href="/tentang" class="<%= (locals.active==='tentang') ? 'active' : '' %>">Tentang</a>
+        <a href="/kontak" class="<%= (locals.active==='kontak') ? 'active' : '' %>">Kontak</a>
+        <a href="/admin" class="<%= (locals.active==='admin') ? 'active' : '' %>">Admin</a>
       </nav>
     </div>
   </header>
@@ -49,7 +49,7 @@
     </div>
   </main>
 
-  <!-- Footer (pakai partial) -->
+  <!-- Footer partial -->
   <%- include('partials/footer') %>
 
   <!-- Lightbox -->
@@ -68,8 +68,9 @@
       b.classList.add('active');
     }
     function closeLightbox(e){
-      // Tutup kalau klik backdrop atau tombol close (kalau nanti ditambah)
-      if(e.target.id==='lightbox'){ document.getElementById('lightbox').classList.remove('active'); }
+      if (e.target.id === 'lightbox') {
+        document.getElementById('lightbox').classList.remove('active');
+      }
     }
   </script>
 </body>
