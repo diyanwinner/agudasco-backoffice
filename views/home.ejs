@@ -24,3 +24,71 @@
 
   <p class="hero-caption">Kabar terbaru dan kegiatan terkini.</p>
 </section>
+<script>
+(function(){
+  const track = document.querySelector('.banner-track');
+  if(!track) return;
+
+  const slides = track.querySelectorAll('.banner-slide');
+  const realCount = slides.length / 2;        // karena kita gandakan
+  const slideW = () => track.clientWidth;     // lebar per slide (100%)
+  let index = 0;
+  let anim; let tick;
+  const DURATION = 500; // ms animasi geser
+  const INTERVAL = 4000; // ms jeda antar slide
+
+  // set posisi
+  function setX(px){ track.style.transform = `translateX(${px}px)`; }
+
+  function goTo(i, withAnim=true){
+    index = i;
+    if(withAnim){
+      const start = performance.now();
+      const from = -((i) * slideW());
+      const current = parseFloat(getComputedStyle(track).transform.split(',')[4]) || 0;
+      const delta = from - current;
+
+      cancelAnimationFrame(anim);
+      (function step(t){
+        const p = Math.min(1, (t - start)/DURATION);
+        const ease = .5 - Math.cos(p*Math.PI)/2;  // ease-in-out
+        setX(current + delta*ease);
+        if(p<1) anim = requestAnimationFrame(step);
+      })(start);
+    }else{
+      setX(-i * slideW());
+    }
+  }
+
+  function next(){
+    goTo(index+1);
+    if(index >= realCount){
+      // lompat instan ke slide 0 (duplikat membuatnya mulus)
+      index = 0;
+      setTimeout(()=>goTo(0,false), 30);
+    }
+  }
+  function prev(){
+    if(index<=0){
+      index = realCount;
+      goTo(index,false);
+    }
+    goTo(index-1);
+  }
+
+  // autoplay
+  function start(){ tick = setInterval(next, INTERVAL); }
+  function stop(){ clearInterval(tick); }
+
+  // init
+  goTo(0,false);
+  start();
+  window.addEventListener('resize', ()=>goTo(index,false));
+
+  // nav
+  const p = document.querySelector('.banner-wrapper .prev');
+  const n = document.querySelector('.banner-wrapper .next');
+  p && p.addEventListener('click', ()=>{ stop(); prev(); start(); });
+  n && n.addEventListener('click', ()=>{ stop(); next(); start(); });
+})();
+</script>
