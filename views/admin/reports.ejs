@@ -1,85 +1,26 @@
-<h1 style="margin:0 0 12px;">Kelola Laporan</h1>
+<% layout('layout') %>
+<h2>Kelola Laporan Keuangan</h2>
+<form method="post" enctype="multipart/form-data" class="card pad">
+  <div class="form-row"><label>Judul</label><input name="title" type="text" required/></div>
+  <div class="form-row cols-2">
+    <div><label>Cover (gambar)</label><input name="cover" type="file" accept="image/*"/></div>
+    <div><label>PDF URL (Google Drive direct / lainnya)</label><input name="pdf_url" type="text" placeholder="https://drive.google.com/file/d/ID/view"/></div>
+  </div>
+  <button class="btn">Simpan</button>
+</form>
 
-<style>
-  .card { background:#0b1424; border:1px solid #1f2937; border-radius:12px; padding:16px; margin:16px 0; }
-  .row { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
-  .row > div { display:flex; flex-direction:column; gap:6px; }
-  label { color:#cbd5e1; font-weight:600; font-size:14px; }
-  input[type="text"] { background:#0f1829; border:1px solid #334155; color:#e5e7eb; padding:10px; border-radius:8px; }
-  input[type="file"] { color:#e5e7eb; }
-  .btn { padding:10px 14px; border-radius:8px; font-weight:700; border:0; cursor:pointer; }
-  .btn.primary { background:#22c55e; color:#032010; }
-  .table { width:100%; border-collapse:collapse; }
-  .table th, .table td { border-bottom:1px solid #1f2937; padding:10px; text-align:left; }
-  .thumb { width:120px; height:80px; object-fit:cover; border-radius:8px; border:1px solid #1f2937; }
-  .actions { display:flex; gap:8px; }
-  a.link { color:#60a5fa; text-decoration:none; }
-</style>
-
-<div class="card">
-  <form action="/admin/reports" method="post" enctype="multipart/form-data">
-    <div class="row">
-      <div>
-        <label>Judul</label>
-        <input type="text" name="title" placeholder="Contoh: Laporan Keuangan Q3 2024" required>
-      </div>
-      <div>
-        <label>Cover (Gambar)</label>
-        <input type="file" name="cover" accept="image/*">
-        <small style="color:#94a3b8">Opsional, untuk pratinjau visual.</small>
-      </div>
-      <div style="grid-column:1 / span 2">
-        <label>Link PDF (Google Drive / Dropbox / S3)</label>
-        <input type="text" name="pdf_url" placeholder="https://drive.google.com/uc?export=download&id=FILE_ID">
-        <small style="color:#94a3b8">
-          Tips Google Drive: gunakan format <code>https://drive.google.com/uc?export=download&id=FILE_ID</code>
-        </small>
-      </div>
-    </div>
-    <div style="margin-top:12px">
-      <button class="btn primary" type="submit">Simpan</button>
-    </div>
-  </form>
-</div>
-
-<div class="card">
-  <h3 style="margin-top:0">Daftar Laporan</h3>
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Cover</th>
-        <th>Judul</th>
-        <th>PDF</th>
-        <th>Dibuat</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% reports.forEach(r => { %>
-        <tr>
-          <td>
-            <% if (r.cover) { %>
-              <img src="<%= r.cover %>" class="thumb" />
-            <% } else { %>
-              <span style="color:#94a3b8">-</span>
-            <% } %>
-          </td>
-          <td><a class="link" href="/laporan/<%= r.id %>"><%= r.title %></a></td>
-          <td>
-            <% if (r.pdf_url) { %>
-              <a class="link" href="<%= r.pdf_url %>" target="_blank" rel="noopener">Download</a>
-            <% } else { %>
-              <span style="color:#94a3b8">Belum ada</span>
-            <% } %>
-          </td>
-          <td><%= r.created_at || "-" %></td>
-          <td class="actions">
-            <form action="/admin/reports/<%= r.id %>/delete" method="post" onsubmit="return confirm('Hapus laporan ini?')">
-              <button class="btn" type="submit">Hapus</button>
-            </form>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-</div>
+<table class="table" style="margin-top:16px">
+  <tr><th>Cover</th><th>Judul</th><th>PDF</th><th>Aksi</th></tr>
+  <% (reports||[]).forEach(r=>{ %>
+    <tr>
+      <td><img src="<%= r.cover %>" alt="" style="width:120px;height:70px;object-fit:cover"/></td>
+      <td><a href="/laporan/<%= r.id %>" target="_blank"><%= r.title %></a></td>
+      <td class="meta"><%= r.pdf_url||'-' %></td>
+      <td>
+        <form method="post" action="/admin/reports/<%= r.id %>/delete" onsubmit="return confirm('Hapus?')">
+          <button class="btn red">Hapus</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+</table>
