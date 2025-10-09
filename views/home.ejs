@@ -1,38 +1,26 @@
 <section class="hero">
-  <h1>Selamat datang di AGUDASCO</h1>
-  <p>Kabar terbaru dan kegiatan terkini.</p>
+  <h1 class="hero-title">Selamat datang di AGUDASCO</h1>
 
-  <div class="banner-slider">
-    <% (banners || []).forEach((b, idx) => { %>
-      <img src="<%= b.image %>"
-           class="slide <%= idx === 0 ? 'active' : '' %>"
-           alt="Banner <%= idx+1 %>" />
-    <% }) %>
-  </div>
-</section>
-
-<section class="latest-articles">
-  <h2>Artikel Terbaru</h2>
-  <div class="grid cards">
-    <% (arts || []).forEach(a => { %>
-      <div class="card">
-        <img src="<%= a.image || 'https://via.placeholder.com/640x360?text=Artikel' %>" alt="<%= a.title %>" />
-        <div class="pad">
-          <h3><a href="/artikel/<%= a.id %>"><%= a.title %></a></h3>
-          <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
-          <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
+  <!-- SLIDER -->
+  <div class="banner-wrapper">
+    <div class="banner-track" style="--count:<%= (banners||[]).length %>;">
+      <% (banners || []).forEach((b)=> { %>
+        <div class="banner-slide">
+          <img src="<%= b.image %>" alt="Banner">
         </div>
-      </div>
-    <% }) %>
-  </div>
-</section>
+      <% }) %>
+      <!-- duplikasi untuk looping mulus -->
+      <% (banners || []).forEach((b)=> { %>
+        <div class="banner-slide clone">
+          <img src="<%= b.image %>" alt="Banner">
+        </div>
+      <% }) %>
+    </div>
 
-<script>
-let slideIndex = 0;
-const slides = document.querySelectorAll('.banner-slider .slide');
-function showSlides() {
-  slides.forEach((s,i)=>s.classList.toggle('active', i===slideIndex));
-  slideIndex = (slideIndex + 1) % slides.length;
-}
-if (slides.length > 0) setInterval(showSlides, 4000);
-</script>
+    <!-- optional nav -->
+    <button class="nav prev" aria-label="Sebelumnya">‹</button>
+    <button class="nav next" aria-label="Berikutnya">›</button>
+  </div>
+
+  <p class="hero-caption">Kabar terbaru dan kegiatan terkini.</p>
+</section>
