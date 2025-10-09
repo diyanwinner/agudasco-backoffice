@@ -54,3 +54,45 @@ label{font-size:.95rem;color:#cfe0ff}
 .lightbox-backdrop.active{display:flex}
 .lightbox-img{max-width:92vw;max-height:90vh;border-radius:12px;border:1px solid var(--border);box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .lightbox-caption{color:#fff;margin-top:8px;text-align:center}
+/* Footer compact */
+.site-footer {
+  padding: 20px 0;          /* sebelumnya mungkin 40–60px, kita kecilkan */
+  font-size: 0.95rem;       /* sedikit lebih kecil */
+  background: #0f2236;      /* navy gelap tetap */
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.site-footer .footer-grid {
+  gap: 16px;                /* rapetkan jarak antar kolom */
+}
+
+.site-footer h4 {
+  margin: 0 0 6px 0;        /* judul di footer lebih ringkas */
+  font-size: 1rem;
+}
+
+.site-footer p,
+.site-footer a,
+.site-footer li {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.site-footer .copyright {
+  margin-top: 8px;          /* spasi bawah minimal */
+  opacity: .7;
+  font-size: .9rem;
+}
+
+/* Mobile: makin rapet */
+@media (max-width: 640px) {
+  .site-footer { padding: 16px 0; }
+  .site-footer .footer-grid { gap: 12px; }
+}
+.menu .nav-link[href="/admin"] {
+  opacity: .9;
+}
+.menu .nav-link[href="/admin"]:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
