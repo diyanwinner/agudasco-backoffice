@@ -1,45 +1,80 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title><%= title || "AGUDASCO" %></title>
-
-  <!-- Bootstrap 5 CSS (CDN) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-
-  <!-- App CSS -->
-  <link rel="stylesheet" href="/public/style.css"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
+  <link rel="stylesheet" href="/public/css/styles.css"/>
 </head>
-<body class="bg-dark text-light">
-
-  <!-- TOPBAR -->
-  <header class="topbar border-bottom border-secondary">
-    <div class="container d-flex justify-content-between align-items-center py-2">
-      <a href="/" class="logo text-decoration-none">AGUDASCO</a>
-
-      <!-- NAV RIGHT -->
-      <nav class="main-nav">
-        <a href="/" class="nav-item-link">Beranda</a>
-        <span class="sep">|</span>
-        <a href="/laporan" class="nav-item-link">Laporan Keuangan</a>
-        <span class="sep">|</span>
-        <a href="/admin" class="nav-item-link">Admin</a>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="brand">
+        <img src="https://res.cloudinary.com/<%= (process.env.CLOUDINARY_CLOUD_NAME||'dsyo0e3fu') %>/image/upload/c_scale,w_40/v1710000000/logo.png" alt="Logo" width="40" height="40" />
+        <div class="title">AGUDASCO</div>
+      </div>
+      <nav class="nav">
+        <a href="/" class="<%= (active==='home')?'active':'' %>">Beranda</a>
+        <a href="/artikel" class="<%= (active==='artikel')?'active':'' %>">Artikel</a>
+        <a href="/laporan" class="<%= (active==='laporan')?'active':'' %>">Laporan</a>
+        <a href="/adart" class="<%= (active==='adart')?'active':'' %>">AD/ART</a>
+        <a href="/anggota" class="<%= (active==='anggota')?'active':'' %>">Anggota</a>
+        <a href="/galeri" class="<%= (active==='galeri')?'active':'' %>">Galeri</a>
+        <a href="/tentang" class="<%= (active==='tentang')?'active':'' %>">Tentang</a>
+        <a href="/kontak" class="<%= (active==='kontak')?'active':'' %>">Kontak</a>
       </nav>
     </div>
   </header>
 
-  <!-- PAGE BODY -->
-  <main class="container py-3">
-    <%- body %>
+  <main>
+    <div class="container">
+      <%- body %>
+    </div>
   </main>
 
-  <!-- FOOTER -->
-  <footer class="py-4 border-top border-secondary text-center text-muted small">
-    © <%= new Date().getFullYear() %> AGUDASCO
+  <footer class="footer">
+    <div class="container">
+      <div class="grid">
+        <div>
+          <div class="brand">
+            <div class="title">AGUDASCO</div>
+          </div>
+          <p class="meta">Organisasi alumni – membangun jaringan dan kontribusi nyata.</p>
+        </div>
+        <div>
+          <h4>Kontak</h4>
+          <p class="meta">Email: info@agudasco.org<br/>Alamat: Jakarta</p>
+        </div>
+        <div>
+          <h4>Tautan</h4>
+          <p><a href="/laporan">Laporan Keuangan</a><br/><a href="/adart">AD/ART</a></p>
+        </div>
+      </div>
+      <p class="meta" style="margin-top:20px;">© <%= new Date().getFullYear() %> AGUDASCO</p>
+    </div>
   </footer>
 
-  <!-- Bootstrap 5 JS (CDN) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
+    <div>
+      <img id="lightbox-img" class="lightbox-img" src="" alt=""/>
+      <div id="lightbox-cap" class="lightbox-caption"></div>
+    </div>
+  </div>
+  <script>
+    function openLightbox(src, cap){ 
+      const b=document.getElementById('lightbox'); 
+      document.getElementById('lightbox-img').src=src; 
+      document.getElementById('lightbox-cap').textContent=cap||''; 
+      b.classList.add('active');
+    }
+    function closeLightbox(e){
+      if(e.target.id==='lightbox' || e.target.id==='lightbox-img'){
+        document.getElementById('lightbox').classList.remove('active');
+      } else {
+        document.getElementById('lightbox').classList.remove('active');
+      }
+    }
+  </script>
 </body>
 </html>
