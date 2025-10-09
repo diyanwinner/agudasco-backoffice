@@ -1,35 +1,19 @@
-<h1 class="mb-3">Kelola Banner</h1>
-
-<!-- FORM UPLOAD -->
-<form action="/admin/banners" method="post" enctype="multipart/form-data"
-      class="d-flex flex-wrap gap-2 align-items-center mb-4">
-  <label class="form-label mb-0 me-2">Upload Banner</label>
-  <input class="form-control" type="file" name="image" accept="image/*" required style="max-width:360px">
-  <button class="btn btn-success">Upload</button>
+<% layout('layout') %>
+<h2>Kelola Banner</h2>
+<form method="post" enctype="multipart/form-data" class="card pad">
+  <div class="form-row"><label>Gambar</label><input name="image" type="file" accept="image/*" required/></div>
+  <button class="btn">Upload</button>
 </form>
 
-<hr class="border-secondary"/>
-
-<h4 class="mb-3">Daftar Banner</h4>
-
-<% if (banners && banners.length) { %>
-  <div class="row g-3">
-    <% banners.forEach(b => { %>
-      <div class="col-12 col-sm-6 col-lg-4">
-        <div class="card bg-body-tertiary border-0 h-100 shadow-sm">
-          <img src="<%= b.image %>" alt="Banner <%= b.id %>"
-               class="card-img-top object-cover ratio-16x9">
-          <div class="card-body d-flex justify-content-between align-items-center">
-            <small class="text-muted">#<%= b.id %></small>
-            <form action="/admin/banners/<%= b.id %>/delete" method="post"
-                  onsubmit="return confirm('Hapus banner ini?')">
-              <button class="btn btn-sm btn-outline-danger">Hapus</button>
-            </form>
-          </div>
-        </div>
+<div class="grid cards" style="margin-top:16px;">
+  <% (banners||[]).forEach(b=>{ %>
+    <div class="card">
+      <img src="<%= b.image %>" alt=""/>
+      <div class="pad">
+        <form method="post" action="/admin/banners/<%= b.id %>/delete" onsubmit="return confirm('Hapus banner?')">
+          <button class="btn red">Hapus</button>
+        </form>
       </div>
-    <% }) %>
-  </div>
-<% } else { %>
-  <div class="text-muted">Belum ada banner.</div>
-<% } %>
+    </div>
+  <% }) %>
+</div>
