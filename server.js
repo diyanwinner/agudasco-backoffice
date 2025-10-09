@@ -14,7 +14,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-/* ------------------------ DB (SQLite) ------------------------ */
+/* ------------------------------------------------------------------
+   DB (SQLite) – tabel minimal untuk laman
+------------------------------------------------------------------- */
 const db = new sqlite3.Database("./db.sqlite");
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS articles (
@@ -39,7 +41,6 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // AD/ART: cover (image Cloudinary) + pdf_url (link eksternal, mis. Google Drive)
   db.run(`CREATE TABLE IF NOT EXISTS adarts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
@@ -53,14 +54,15 @@ db.serialize(() => {
   db.run(`ALTER TABLE reports ADD COLUMN pdf_url TEXT`, () => {});
 });
 
-/* --------------------- Cloudinary config --------------------- */
+/* ------------------------------------------------------------------
+   Cloudinary + Multer (image only)
+------------------------------------------------------------------- */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-/* -------------------- Multer (images only) ------------------- */
 const imageStorage = new CloudinaryStorage({
   cloudinary,
   params: {
@@ -74,33 +76,43 @@ const imageStorage = new CloudinaryStorage({
 });
 const uploadImage = multer({ storage: imageStorage });
 
-/* ------------------------- Middleware ------------------------ */
+/* ------------------------------------------------------------------
+   App config & middleware
+------------------------------------------------------------------- */
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Opsi B: assets di /public -> diakses via /public/...
+import { dirname } from "path";
 app.use("/public", express.static(path.join(__dirname, "public")));
 
+// View engine
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// default locals → cegah "active is not defined"
+// Build id untuk cache-busting (pakai di layout: ?v=<%= buildId %>)
+app.locals.buildId = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
 app.use((req, res, next) => {
-  res.locals.active = "";
-  res.locals.title  = res.locals.title || "AGUDASCO";
+  res.locals.buildId = app.locals.buildId;
+  res.locals.active = res.locals.active || "";
+  res.locals.title = res.locals.title || "AGUDASCO";
   next();
 });
 
-// CSP sederhana
+// CSP sederhana (tidak terlalu ketat supaya Cloudinary bisa load)
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    ["frame-src 'self'", "child-src 'self'", "object-src 'none'"].join("; ")
+    "default-src 'self' https:; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; object-src 'none'"
   );
   next();
 });
 
-/* ---------------------- Basic Auth /admin -------------------- */
+/* ------------------------------------------------------------------
+   Basic Auth untuk /admin
+------------------------------------------------------------------- */
 function adminAuth(req, res, next) {
   const header = req.headers.authorization || "";
   if (!header.startsWith("Basic ")) {
@@ -127,7 +139,9 @@ function adminAuth(req, res, next) {
 }
 app.use("/admin", adminAuth);
 
-/* --------------------------- Helpers ------------------------- */
+/* ------------------------------------------------------------------
+   Helpers
+------------------------------------------------------------------- */
 function normalizePdfUrl(url) {
   if (!url) return "";
   try {
@@ -145,22 +159,23 @@ function normalizePdfUrl(url) {
   }
 }
 
-// Render aman: kalau view tidak ada, pakai fallback sederhana
+// Render aman: fallback jika view tidak ada
 function renderSafe(res, viewName, props = {}) {
   const full = path.join(__dirname, "views", `${viewName}.ejs`);
   if (fs.existsSync(full)) {
     return res.render(viewName, props);
   }
-  // fallback minimal tanpa helper layout()
   return res.render("page", {
     title: props.title || viewName,
     active: props.active || "",
     heading: props.title || viewName,
-    content: props.content || "<p>Halaman dalam pengembangan.</p>"
+    content: props.content || "<p>Halaman dalam pengembangan.</p>",
   });
 }
 
-/* --------------------------- Routes -------------------------- */
+/* ------------------------------------------------------------------
+   Routes – Public
+------------------------------------------------------------------- */
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
 app.get("/", (req, res) => {
@@ -170,13 +185,13 @@ app.get("/", (req, res) => {
         title: "AGUDASCO – Beranda",
         active: "home",
         banners,
-        arts
+        arts,
       });
     });
   });
 });
 
-/* ---------------------------- ARTIKEL ---------------------------- */
+/* ---- Artikel ---- */
 app.get("/artikel", (req, res) => {
   db.all("SELECT * FROM articles ORDER BY id DESC", [], (err, articles = []) => {
     if (err) return res.status(500).send(err.message);
@@ -192,7 +207,7 @@ app.get("/artikel/:id", (req, res) => {
   });
 });
 
-/* --------------------------- LAPORAN --------------------------- */
+/* ---- Laporan ---- */
 app.get("/laporan", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
@@ -209,7 +224,7 @@ app.get("/laporan/:id", (req, res) => {
   });
 });
 
-/* --------------------------- AD/ART (PUBLIC) --------------------------- */
+/* ---- AD/ART (public) ---- */
 app.get("/adart", (req, res) => {
   db.all("SELECT * FROM adarts ORDER BY id DESC", [], (err, adarts = []) => {
     if (err) return res.status(500).send(err.message);
@@ -226,17 +241,16 @@ app.get("/adart/:id", (req, res) => {
   });
 });
 
-/* --------------------------- MENU STATIS --------------------------- */
-app.get("/adart",   (req, res) => renderSafe(res, "adart",   { title: "AD/ART",   active: "adart",   adarts: [] }));
+/* ---- Menu statis lainnya ---- */
 app.get("/anggota", (req, res) => renderSafe(res, "anggota", { title: "Anggota", active: "anggota", anggota: [] }));
 app.get("/galeri",  (req, res) => renderSafe(res, "galeri",  { title: "Galeri",  active: "galeri",  fotos: [] }));
 app.get("/tentang", (req, res) => renderSafe(res, "tentang", { title: "Tentang", active: "tentang" }));
 app.get("/kontak",  (req, res) => renderSafe(res, "kontak",  { title: "Kontak",  active: "kontak"  }));
 
-/* ----------------------------- ADMIN ----------------------------- */
-app.get("/admin", (req, res) =>
-  res.render("admin/dashboard", { title: "Dashboard" })
-);
+/* ------------------------------------------------------------------
+   Routes – Admin
+------------------------------------------------------------------- */
+app.get("/admin", (req, res) => res.render("admin/dashboard", { title: "Dashboard" }));
 
 // Admin: Artikel
 app.get("/admin/articles", (req, res) => {
@@ -322,8 +336,7 @@ app.post("/admin/reports/:id/delete", (req, res) => {
   });
 });
 
-/* --------------------------- AD/ART (ADMIN) --------------------------- */
-// List + form tambah
+// Admin: AD/ART
 app.get("/admin/adart", (req, res) => {
   db.all("SELECT * FROM adarts ORDER BY id DESC", [], (err, adarts = []) => {
     if (err) return res.status(500).send(err.message);
@@ -331,7 +344,6 @@ app.get("/admin/adart", (req, res) => {
   });
 });
 
-// Form field: title (text), cover (file input name="cover"), pdf_url (text)
 app.post("/admin/adart", uploadImage.single("cover"), (req, res) => {
   const { title, pdf_url } = req.body;
   const cover = req.file ? req.file.path : null;
@@ -355,15 +367,20 @@ app.post("/admin/adart/:id/delete", (req, res) => {
   });
 });
 
-/* ------------------- 404 & Error Handlers ------------------- */
+/* ------------------------------------------------------------------
+   404 & Error handlers
+------------------------------------------------------------------- */
+app.get("/health", (req, res) => res.status(200).send("OK")); // readiness
 app.use((req, res) => res.status(404).send("Not Found"));
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err?.stack || err);
   res.status(500).send(err?.message || "Server Error");
 });
 
-/* --------------------------- Start --------------------------- */
+/* ------------------------------------------------------------------
+   Start
+------------------------------------------------------------------- */
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () =>
-  console.log(`Server running at http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
