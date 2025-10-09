@@ -1,23 +1,174 @@
-<h2>Kelola Artikel</h2>
-<form method="post" enctype="multipart/form-data" class="card pad">
-  <div class="form-row"><label>Judul</label><input name="title" type="text" required/></div>
-  <div class="form-row"><label>Gambar</label><input name="image" type="file" accept="image/*"/></div>
-  <div class="form-row"><label>Konten</label><textarea name="content" rows="6"></textarea></div>
-  <button class="btn">Simpan</button>
-</form>
+<% layout('layout', { title }) %>
 
-<table class="table" style="margin-top:16px">
-  <tr><th>Gambar</th><th>Judul</th><th>Tanggal</th><th>Aksi</th></tr>
-  <% (articles||[]).forEach(a=>{ %>
-    <tr>
-      <td><img src="<%= a.image %>" alt="" style="width:120px;height:70px;object-fit:cover"/></td>
-      <td><a href="/artikel/<%= a.id %>" target="_blank"><%= a.title %></a></td>
-      <td class="meta"><%= new Date(a.created_at).toLocaleString('id-ID') %></td>
-      <td>
-        <form method="post" action="/admin/articles/<%= a.id %>/delete" onsubmit="return confirm('Hapus artikel?')">
-          <button class="btn red">Hapus</button>
-        </form>
-      </td>
-    </tr>
-  <% }) %>
-</table>
+<section class="admin-wrap container">
+  <header class="admin-head">
+    <div>
+      <h1 class="admin-title">Kelola Artikel</h1>
+      <p class="meta">Tulis artikel, unggah sampul, dan terbitkan kabar terbaru.</p>
+    </div>
+    <nav class="admin-actions">
+      <a class="btn ghost" href="/artikel" target="_blank" rel="noopener">Lihat Halaman Artikel ↗</a>
+    </nav>
+  </header>
+
+  <!-- Editor -->
+  <form id="articleForm" class="card form-modern" action="/admin/articles" method="post" enctype="multipart/form-data">
+    <div class="form-grid-2">
+      <div class="form-col">
+        <label class="label">Judul</label>
+        <input class="input" type="text" name="title" placeholder="Tulis judul artikel..." required />
+
+        <label class="label">Konten</label>
+        <textarea class="textarea autosize" name="content" rows="8" placeholder="Tulis isi artikel di sini..."></textarea>
+
+        <div class="help-row">
+          <span class="meta">Tips: boleh pakai paragraf pendek biar enak dibaca.</span>
+        </div>
+      </div>
+
+      <div class="form-col">
+        <label class="label">Gambar Sampul</label>
+
+        <!-- Dropzone -->
+        <div id="coverDrop" class="dropzone" data-input="image">
+          <div class="dz-preview" id="coverPreview">
+            <img id="coverImg" alt="Preview" />
+            <button type="button" class="dz-remove" id="removeCover" title="Hapus">✕</button>
+          </div>
+
+        <div class="dz-empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M4 17v2a1 1 0 0 0 1 1h14M4 17l4-4 3 3 5-5 4 4M4 17V7a1 1 0 0 1 1-1h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div>Tarik & letakkan gambar ke sini</div>
+            <small class="meta">atau klik untuk pilih file (JPG/PNG/WebP)</small>
+          </div>
+
+          <input id="imageInput" type="file" name="image" accept="image/*" hidden />
+        </div>
+
+        <ul class="meta" style="margin-top:8px">
+          <li>Disarankan rasio 16:9, ukuran ≥ 1280×720px</li>
+          <li>File akan dikirim ke Cloudinary via server</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Sticky action bar -->
+    <div class="form-bar">
+      <div class="left meta" id="draftHint" style="display:none">Draf otomatis tersimpan…</div>
+      <div class="right">
+        <button class="btn" type="submit">Simpan</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- List -->
+  <h2 style="margin:26px 0 12px">Artikel Saat Ini</h2>
+  <div class="table-wrap card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:90px">Gambar</th>
+          <th>Judul</th>
+          <th style="width:160px">Tanggal</th>
+          <th style="width:110px">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (articles || []).forEach(a => { %>
+          <tr>
+            <td>
+              <img src="<%= a.image || 'https://via.placeholder.com/120x80?text=IMG' %>" alt="" style="width:80px;height:52px;object-fit:cover;border-radius:8px">
+            </td>
+            <td><a href="/artikel/<%= a.id %>" target="_blank" class="rowlink"><%= a.title %></a></td>
+            <td class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></td>
+            <td>
+              <form action="/admin/articles/<%= a.id %>/delete" method="post" onsubmit="return confirm('Hapus artikel ini?')">
+                <button class="btn red" type="submit">Hapus</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (!(articles||[]).length) { %>
+          <tr><td colspan="4" class="meta">Belum ada artikel.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+/* ---------- UX helpers (tanpa lib) ---------- */
+(() => {
+  // autosize textarea
+  document.querySelectorAll('textarea.autosize').forEach(t => {
+    const fit = () => { t.style.height = 'auto'; t.style.height = (t.scrollHeight+2)+'px'; };
+    ['input','change'].forEach(ev => t.addEventListener(ev, fit));
+    fit();
+  });
+
+  // dropzone + preview
+  const dz = document.getElementById('coverDrop');
+  const input = document.getElementById('imageInput');
+  const preview = document.getElementById('coverPreview');
+  const img = document.getElementById('coverImg');
+  const removeBtn = document.getElementById('removeCover');
+  const empty = dz.querySelector('.dz-empty');
+
+  function showPreview(file){
+    const url = URL.createObjectURL(file);
+    img.src = url;
+    preview.style.display = 'block';
+    empty.style.display = 'none';
+  }
+  function clearPreview(){
+    input.value = '';
+    img.src = '';
+    preview.style.display = 'none';
+    empty.style.display = 'flex';
+  }
+  removeBtn.addEventListener('click', clearPreview);
+
+  dz.addEventListener('click', () => input.click());
+  input.addEventListener('change', e => {
+    const f = e.target.files?.[0];
+    if (f) showPreview(f);
+  });
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('is-drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('is-drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('is-drag');
+    const f = e.dataTransfer.files?.[0];
+    if (f && f.type.startsWith('image/')) { input.files = e.dataTransfer.files; showPreview(f); }
+  });
+
+  // optional: autosave draft (localStorage)
+  const form = document.getElementById('articleForm');
+  const hint = document.getElementById('draftHint');
+  const KEY = 'draft_article_v1';
+  const saveDraft = () => {
+    const data = {
+      title: form.title.value,
+      content: form.content.value
+    };
+    localStorage.setItem(KEY, JSON.stringify(data));
+    hint.style.display = 'block';
+    setTimeout(()=>hint.style.display='none', 900);
+  };
+  form.title.addEventListener('input', saveDraft);
+  form.content.addEventListener('input', saveDraft);
+
+  // load draft
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw){
+      const d = JSON.parse(raw);
+      if (!form.title.value) form.title.value = d.title || '';
+      if (!form.content.value) form.content.value = d.content || '';
+      form.querySelector('textarea.autosize')?.dispatchEvent(new Event('input'));
+    }
+  } catch {}
+
+  // clear draft on submit
+  form.addEventListener('submit', ()=> localStorage.removeItem(KEY));
+})();
+</script>
