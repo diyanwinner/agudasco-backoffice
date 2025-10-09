@@ -102,105 +102,37 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 .btn.red{ background:var(--red) }
 .muted{ opacity:.65 }
 
-<!-- ==================== AGUDASCO | FOOTER ==================== -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-grid">
-      <!-- Kolom 1: Brand -->
-      <section class="footer-col">
-        <h4 class="footer-heading">AGUDASCO</h4>
-        <!-- Deskripsi dihapus sesuai permintaan -->
-      </section>
-
-      <!-- Kolom 2: Kontak -->
-      <section class="footer-col">
-        <h4 class="footer-heading">Kontak</h4>
-        <p>Email: <a href="mailto:info@agudasco.org">info@agudasco.org</a></p>
-        <p>Alamat: Jakarta</p>
-      </section>
-
-      <!-- Kolom 3: Tautan -->
-      <nav class="footer-col" aria-label="Tautan">
-        <h4 class="footer-heading">Tautan</h4>
-        <ul class="footer-links">
-          <li><a href="/laporan">Laporan Keuangan</a></li>
-          <li><a href="/adart">AD/ART</a></li>
-        </ul>
-      </nav>
-    </div>
-
-    <div class="footer-bottom">
-      <span>© <span id="agudasco-year"></span> AGUDASCO</span>
-      <!-- Optional: <a href="/privacy">Privacy</a> -->
-    </div>
-  </div>
-</footer>
-
-<!-- Styles khusus footer; aman dipaste bareng stylesheet kamu -->
-<style>
-  /* Warna mengikuti palet yang sudah kamu pakai */
-  :root{
-    --navy:#0f1a2b; --navy-2:#14233a; --blue:#1f3f7f; --red:#e63946;
-    --text:#e7eefc; --muted:#a9b7d1; --card:#14233a; --border:#233756;
-  }
-
-  .site-footer{
-    padding:20px 0;
-    background:#0f2236; /* sedikit lebih terang dari --navy agar terpisah */
-    color:var(--text);
-    border-top:1px solid rgba(255,255,255,.06);
-  }
-  .site-footer .container{
-    max-width:1100px; margin:0 auto; padding:24px;
-  }
-
-  /* Grid footer: default 1 kolom (mobile) */
-  .site-footer .footer-grid{
-    display:grid; gap:16px; grid-template-columns:1fr; align-items:start;
-  }
-  /* Desktop: paksa 3 kolom rapi */
-  @media (min-width:880px){
-    .site-footer .footer-grid{
-      grid-template-columns: 1.2fr 1fr 1fr; /* brand | kontak | tautan */
-    }
-  }
-  .site-footer .footer-col{ min-width:0 }
-  .site-footer .footer-heading{
-    margin:0 0 6px; font-size:1rem; color:var(--text);
-  }
-
-  /* Link & teks */
-  .site-footer a{
-    color:#cfe0ff; text-decoration:none; border-bottom:1px dashed transparent;
-  }
-  .site-footer a:hover{ border-color:#cfe0ff }
-  .site-footer p{ margin:.15rem 0; line-height:1.45 }
-
-  /* List tautan */
-  .site-footer .footer-links{ list-style:none; margin:0; padding:0 }
-  .site-footer .footer-links li{ margin:.25rem 0 }
-
-  /* Bawah footer */
-  .site-footer .footer-bottom{
-    margin-top:8px; padding-top:12px;
-    border-top:1px solid var(--border); color:var(--muted); font-size:.95rem;
-    display:flex; justify-content:space-between; align-items:center; gap:12px;
-  }
-  @media (max-width:640px){
-    .site-footer{ padding:16px 0 }
-    .site-footer .container{ padding:20px }
-    .site-footer .footer-bottom{ flex-direction:column; align-items:flex-start }
-  }
-</style>
-
-<!-- Auto year -->
-<script>
-  (function(){
-    var y = document.getElementById('agudasco-year');
-    if (y) y.textContent = new Date().getFullYear();
-  })();
-</script>
-<!-- ================= end FOOTER ================= -->
+/* === FOOTER === */
+.site-footer{
+  padding:20px 0;
+  background:#0f2236;
+  color:var(--text);
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.site-footer .container{ max-width:1100px; margin:0 auto; padding:24px }
+.site-footer .footer-grid{
+  display:grid; gap:16px; grid-template-columns:1fr; align-items:start;
+}
+@media (min-width:880px){
+  .site-footer .footer-grid{ grid-template-columns:1.2fr 1fr 1fr }
+}
+.site-footer .footer-col{ min-width:0 }
+.site-footer .footer-heading{ margin:0 0 6px; font-size:1rem }
+.site-footer a{ color:#cfe0ff; text-decoration:none; border-bottom:1px dashed transparent }
+.site-footer a:hover{ border-color:#cfe0ff }
+.site-footer p{ margin:.15rem 0; line-height:1.45 }
+.site-footer .footer-links{ list-style:none; margin:0; padding:0 }
+.site-footer .footer-links li{ margin:.25rem 0 }
+.site-footer .footer-bottom{
+  margin-top:8px; padding-top:12px;
+  border-top:1px solid var(--border); color:var(--muted); font-size:.95rem;
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+}
+@media (max-width:640px){
+  .site-footer{ padding:16px 0 }
+  .site-footer .container{ padding:20px }
+  .site-footer .footer-bottom{ flex-direction:column; align-items:flex-start }
+}
 
 /* ===== Lightbox (kalau dipakai di galeri) ===== */
 .lightbox-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:50 }
