@@ -1,13 +1,24 @@
-<h2>Artikel</h2>
-<div class="grid cards">
-  <% (articles||[]).forEach(a=>{ %>
-    <div class="card">
-      <img src="<%= a.image||'https://via.placeholder.com/640x360?text=Artikel' %>" alt="<%= a.title %>"/>
-      <div class="pad">
-        <h3><a href="/artikel/<%= a.id %>"><%= a.title %></a></h3>
-        <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
-        <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
+<% layout('layout', { title: 'Artikel', active: 'artikel' }) %>
+
+<section class="container py-6">
+  <h2>Artikel</h2>
+
+  <div class="grid cards">
+    <% (articles || []).forEach(a => { %>
+      <div class="card">
+        <img
+          src="<%= a.image || 'https://via.placeholder.com/640x360?text=Artikel' %>"
+          alt="<%= a.title %>" />
+        <div class="pad">
+          <h3><a href="/artikel/<%= a.id %>"><%= a.title %></a></h3>
+          <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
+          <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
+        </div>
       </div>
-    </div>
-  <% }) %>
-</div>
+    <% }) %>
+  </div>
+
+  <% if (!articles || articles.length === 0) { %>
+    <p class="muted">Belum ada artikel.</p>
+  <% } %>
+</section>
