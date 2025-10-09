@@ -1,38 +1,13 @@
-<h1 style="margin:0 0 12px;"><%= title %></h1>
-
-<style>
-  .toolbar {
-    display:flex; gap:8px; align-items:center;
-    background:#0b1424; border:1px solid #1f2937; border-radius:10px;
-    padding:10px 12px; margin:8px 0 14px;
-  }
-  .toolbar .hint { color:#9ca3af; font-size:12px; margin-left:auto; }
-  .btn {
-    display:inline-block; padding:8px 12px; border-radius:8px; font-weight:700;
-    text-decoration:none; border:0; cursor:pointer;
-  }
-  .btn.success { background:#22c55e; color:#032010; }
-  .btn.secondary { background:#334155; color:#e5e7eb; }
-  .cover {
-    width:100%; max-height:75vh; object-fit:contain; background:#0c1424;
-    border:1px solid #1f2937; border-radius:12px; padding:8px;
-  }
-  .empty {
-    border:1px dashed #334155; border-radius:12px; padding:24px; color:#94a3b8;
-    text-align:center; background:#0b1424;
-  }
-</style>
-
-<div class="toolbar">
-  <% if (report.pdf_url) { %>
-    <a href="<%= report.pdf_url %>" class="btn success" target="_blank" rel="noopener">Download PDF</a>
-  <% } %>
-  <a href="/laporan" class="btn secondary">Kembali</a>
-  <span class="hint">Gambaran besar ditampilkan sebagai gambar. Rincian lengkap ada di PDF.</span>
+<% layout('layout', {active:'laporan'}) %>
+<div class="card">
+  <img src="<%= report.cover||'https://via.placeholder.com/960x400?text=Laporan' %>" alt="<%= report.title %>"/>
+  <div class="pad">
+    <h1><%= report.title %></h1>
+    <p class="meta">Diunggah: <%= new Date(report.created_at).toLocaleString('id-ID') %></p>
+    <% if(report.pdf_url){ %>
+      <a class="btn red" href="<%= report.pdf_url %>" target="_blank" rel="noopener">Unduh PDF</a>
+    <% } else { %>
+      <p class="meta">Belum ada file PDF.</p>
+    <% } %>
+  </div>
 </div>
-
-<% if (report.cover) { %>
-  <img class="cover" src="<%= report.cover %>" alt="Cover <%= report.title %>">
-<% } else { %>
-  <div class="empty">Belum ada cover untuk laporan ini.</div>
-<% } %>
