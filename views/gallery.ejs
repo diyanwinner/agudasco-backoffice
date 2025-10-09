@@ -1,0 +1,12 @@
+<% layout('layout', {active:'galeri'}) %>
+<h2>Galeri</h2>
+<div class="grid cards">
+  <% (photos||[]).forEach(p=>{ %>
+    <div class="card" onclick="openLightbox('<%= p.image %>', '<%= (p.caption||'') %>')">
+      <img src="<%= p.image %>" alt="<%= p.caption||'Foto' %>"/>
+      <div class="pad">
+        <p class="meta"><%= p.caption||'&nbsp;' %></p>
+      </div>
+    </div>
+  <% }) %>
+</div>
