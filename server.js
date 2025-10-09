@@ -39,9 +39,37 @@ db.serialize(() => {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  // migrasi ringan (abaikan error kalau kolom sudah ada)
+  // AD/ART (terpisah dari reports)
+  db.run(`CREATE TABLE IF NOT EXISTS adart (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    cover TEXT,
+    pdf_url TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // Anggota (publik)
+  db.run(`CREATE TABLE IF NOT EXISTS members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    role TEXT,
+    photo TEXT,
+    bio TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // Galeri foto
+  db.run(`CREATE TABLE IF NOT EXISTS gallery (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    image TEXT NOT NULL,
+    caption TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // migrasi ringan (abaikan error jika sudah ada)
   db.run(`ALTER TABLE reports ADD COLUMN cover TEXT`, () => {});
   db.run(`ALTER TABLE reports ADD COLUMN pdf_url TEXT`, () => {});
+  db.run(`ALTER TABLE members ADD COLUMN bio TEXT`, () => {});
 });
 
 /* --------------------- Cloudinary config --------------------- */
@@ -75,7 +103,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// CSP: iframe hanya dari origin sendiri
+// CSP
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -111,25 +139,21 @@ function adminAuth(req, res, next) {
     return res.status(401).send("Invalid auth");
   }
 }
-// aktifkan proteksi untuk semua route /admin
 app.use("/admin", adminAuth);
 
 /* --------------------------- Helpers ------------------------- */
-// Normalisasi link Google Drive → direct download
+// Normalize Google Drive link -> direct download
 function normalizePdfUrl(url) {
   if (!url) return "";
   try {
     const u = new URL(url.trim());
-    // https://drive.google.com/file/d/<ID>/view?...  -> uc?export=download&id=<ID>
     const m1 = u.pathname.match(/\/file\/d\/([^/]+)/);
     if (u.hostname.includes("drive.google.com") && m1) {
       return `https://drive.google.com/uc?export=download&id=${m1[1]}`;
     }
-    // https://drive.google.com/open?id=<ID>
     if (u.hostname.includes("drive.google.com") && u.searchParams.get("id")) {
       return `https://drive.google.com/uc?export=download&id=${u.searchParams.get("id")}`;
     }
-    // sudah uc?export=download atau non-drive → biarkan
     return url.trim();
   } catch {
     return url.trim();
@@ -139,7 +163,6 @@ function normalizePdfUrl(url) {
 /* --------------------------- Routes -------------------------- */
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
-// DIAG Cloudinary
 app.get("/diag/cloudinary", (req, res) => {
   const cfg = cloudinary.config();
   res.json({
@@ -149,7 +172,7 @@ app.get("/diag/cloudinary", (req, res) => {
   });
 });
 
-// HOME
+/* ------------------------------ HOME ------------------------------ */
 app.get("/", (req, res) => {
   db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
     db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
@@ -158,37 +181,15 @@ app.get("/", (req, res) => {
   });
 });
 
-/* --------------------------- LAPORAN ------------------------- */
-// List
-app.get("/laporan", (req, res) => {
-  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
-    if (err) return res.status(500).send(err.message);
-    res.render("reports", { title: "Laporan Keuangan", reports });
-  });
-});
-
-// Detail (tanpa preview PDF; ada tombol download)
-app.get("/laporan/:id", (req, res) => {
-  db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
-    if (err) return res.status(500).send(err.message);
-    if (!report) return res.status(404).send("Laporan tidak ditemukan");
-    // tampilkan link yang sudah dinormalisasi (khusus Drive)
-    const fixed = { ...report, pdf_url: normalizePdfUrl(report.pdf_url) };
-    res.render("report_view", { title: report.title, report: fixed });
-  });
-});
-
-/* ---------------------- ARTIKEL (Publik) ---------------------- */
-// List artikel (dua alias: /articles dan /artikel)
-app.get(["/articles", "/artikel"], (req, res) => {
+/* --------------------------- ARTIKEL -------------------------- */
+app.get("/artikel", (req, res) => {
   db.all("SELECT * FROM articles ORDER BY id DESC", [], (err, articles = []) => {
     if (err) return res.status(500).send(err.message);
     res.render("articles", { title: "Artikel", articles });
   });
 });
 
-// Detail artikel (dua alias: /article/:id dan /artikel/:id)
-app.get(["/article/:id", "/artikel/:id"], (req, res) => {
+app.get("/artikel/:id", (req, res) => {
   db.get("SELECT * FROM articles WHERE id = ?", [req.params.id], (err, article) => {
     if (err) return res.status(500).send(err.message);
     if (!article) return res.status(404).send("Artikel tidak ditemukan");
@@ -196,7 +197,59 @@ app.get(["/article/:id", "/artikel/:id"], (req, res) => {
   });
 });
 
-/* ---------------------------- ADMIN -------------------------- */
+/* --------------------------- LAPORAN ------------------------- */
+app.get("/laporan", (req, res) => {
+  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("reports", { title: "Laporan Keuangan", reports });
+  });
+});
+app.get("/laporan/:id", (req, res) => {
+  db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
+    if (err) return res.status(500).send(err.message);
+    if (!report) return res.status(404).send("Laporan tidak ditemukan");
+    const fixed = { ...report, pdf_url: normalizePdfUrl(report.pdf_url) };
+    res.render("report_view", { title: report.title, report: fixed });
+  });
+});
+
+/* ---------------------------- AD/ART -------------------------- */
+app.get("/adart", (req, res) => {
+  db.all("SELECT * FROM adart ORDER BY id DESC", [], (err, adarts = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("adart", { title: "AD/ART", adarts });
+  });
+});
+app.get("/adart/:id", (req, res) => {
+  db.get("SELECT * FROM adart WHERE id = ?", [req.params.id], (err, item) => {
+    if (err) return res.status(500).send(err.message);
+    if (!item) return res.status(404).send("Dokumen tidak ditemukan");
+    const fixed = { ...item, pdf_url: normalizePdfUrl(item.pdf_url) };
+    res.render("adart_view", { title: item.title, item: fixed });
+  });
+});
+
+/* ---------------------------- ANGGOTA ------------------------- */
+app.get("/anggota", (req, res) => {
+  db.all("SELECT * FROM members ORDER BY id DESC", [], (err, members = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("members", { title: "Anggota", members });
+  });
+});
+
+/* ----------------------------- GALERI ------------------------- */
+app.get("/galeri", (req, res) => {
+  db.all("SELECT * FROM gallery ORDER BY id DESC", [], (err, photos = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("gallery", { title: "Galeri", photos });
+  });
+});
+
+/* ----------------------- TENTANG & KONTAK --------------------- */
+app.get("/tentang", (req, res) => res.render("about", { title: "Tentang Kami" }));
+app.get("/kontak", (req, res) => res.render("contact", { title: "Kontak" }));
+
+/* ---------------------------- ADMIN --------------------------- */
 app.get("/admin", (req, res) =>
   res.render("admin/dashboard", { title: "Dashboard" })
 );
@@ -208,7 +261,6 @@ app.get("/admin/articles", (req, res) => {
     res.render("admin/articles", { title: "Kelola Artikel", articles });
   });
 });
-
 app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
   const { title, content } = req.body;
   const image = req.file ? req.file.path : null;
@@ -222,7 +274,6 @@ app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
     }
   );
 });
-
 app.post("/admin/articles/:id/delete", (req, res) => {
   db.run("DELETE FROM articles WHERE id = ?", [req.params.id], (err) => {
     if (err) return res.status(500).send(err.message);
@@ -237,7 +288,6 @@ app.get("/admin/banners", (req, res) => {
     res.render("admin/banners", { title: "Kelola Banner", banners });
   });
 });
-
 app.post("/admin/banners", uploadImage.single("image"), (req, res) => {
   const image = req.file ? req.file.path : null;
   if (!image) return res.status(400).send("File gambar belum dipilih");
@@ -246,7 +296,6 @@ app.post("/admin/banners", uploadImage.single("image"), (req, res) => {
     res.redirect("/admin/banners");
   });
 });
-
 app.post("/admin/banners/:id/delete", (req, res) => {
   db.run("DELETE FROM banners WHERE id = ?", [req.params.id], (err) => {
     if (err) return res.status(500).send(err.message);
@@ -254,20 +303,17 @@ app.post("/admin/banners/:id/delete", (req, res) => {
   });
 });
 
-// Reports: cover image + pdf_url eksternal
+// Laporan
 app.get("/admin/reports", (req, res) => {
   db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
     if (err) return res.status(500).send(err.message);
     res.render("admin/reports", { title: "Kelola Laporan", reports });
   });
 });
-
-// Form: title, cover(file input name="cover"), pdf_url(text)
 app.post("/admin/reports", uploadImage.single("cover"), (req, res) => {
   const { title, pdf_url } = req.body;
   const cover = req.file ? req.file.path : null;
   if (!title) return res.status(400).send("Judul wajib diisi");
-
   const fixedPdf = normalizePdfUrl(pdf_url || "");
   db.run(
     "INSERT INTO reports (title, cover, pdf_url) VALUES (?, ?, ?)",
@@ -278,11 +324,92 @@ app.post("/admin/reports", uploadImage.single("cover"), (req, res) => {
     }
   );
 });
-
 app.post("/admin/reports/:id/delete", (req, res) => {
   db.run("DELETE FROM reports WHERE id = ?", [req.params.id], (err) => {
     if (err) return res.status(500).send(err.message);
     res.redirect("/admin/reports");
+  });
+});
+
+// AD/ART
+app.get("/admin/adart", (req, res) => {
+  db.all("SELECT * FROM adart ORDER BY id DESC", [], (err, adarts = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("admin/adart", { title: "Kelola AD/ART", adarts });
+  });
+});
+app.post("/admin/adart", uploadImage.single("cover"), (req, res) => {
+  const { title, pdf_url } = req.body;
+  const cover = req.file ? req.file.path : null;
+  if (!title) return res.status(400).send("Judul wajib diisi");
+  const fixedPdf = normalizePdfUrl(pdf_url || "");
+  db.run(
+    "INSERT INTO adart (title, cover, pdf_url) VALUES (?, ?, ?)",
+    [title.trim(), cover, fixedPdf],
+    (err) => {
+      if (err) return res.status(500).send(err.message);
+      res.redirect("/admin/adart");
+    }
+  );
+});
+app.post("/admin/adart/:id/delete", (req, res) => {
+  db.run("DELETE FROM adart WHERE id = ?", [req.params.id], (err) => {
+    if (err) return res.status(500).send(err.message);
+    res.redirect("/admin/adart");
+  });
+});
+
+// Anggota
+app.get("/admin/members", (req, res) => {
+  db.all("SELECT * FROM members ORDER BY id DESC", [], (err, members = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("admin/members", { title: "Kelola Anggota", members });
+  });
+});
+app.post("/admin/members", uploadImage.single("photo"), (req, res) => {
+  const { name, role, bio } = req.body;
+  const photo = req.file ? req.file.path : null;
+  if (!name) return res.status(400).send("Nama wajib diisi");
+  db.run(
+    "INSERT INTO members (name, role, photo, bio) VALUES (?, ?, ?, ?)",
+    [name.trim(), (role || "").trim(), photo, (bio || "").trim()],
+    (err) => {
+      if (err) return res.status(500).send(err.message);
+      res.redirect("/admin/members");
+    }
+  );
+});
+app.post("/admin/members/:id/delete", (req, res) => {
+  db.run("DELETE FROM members WHERE id = ?", [req.params.id], (err) => {
+    if (err) return res.status(500).send(err.message);
+    res.redirect("/admin/members");
+  });
+});
+
+// Galeri
+app.get("/admin/gallery", (req, res) => {
+  db.all("SELECT * FROM gallery ORDER BY id DESC", [], (err, photos = []) => {
+    if (err) return res.status(500).send(err.message);
+    res.render("admin/gallery", { title: "Kelola Galeri", photos });
+  });
+});
+app.post("/admin/gallery", uploadImage.single("image"), (req, res) => {
+  const { caption } = req.body;
+  const image = req.file ? req.file.path : null;
+  if (!image) return res.status(400).send("Gambar wajib diunggah");
+  db.run(
+    "INSERT INTO gallery (image, caption) VALUES (?, ?)",
+    [image, (caption || "").trim()],
+    (err) => {
+      if (err) return res.status(500).send(err.message);
+      res.redirect("/admin/gallery");
+    }
+  );
+});
+app.post("/admin/gallery/:id/delete", (req, res) => {
+  db.run("DELETE FROM gallery WHERE id = ?", [req.params.id], (err) => {
+    if (err) return res.status(500).send(err.message);
+    res.redirect("/admin/gallery");
   });
 });
 
