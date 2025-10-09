@@ -1,6 +1,7 @@
 // server.js
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
 import sqlite3 from "sqlite3";
@@ -75,6 +76,13 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
+// default locals → cegah "active is not defined" di layout
+app.use((req, res, next) => {
+  res.locals.active = "";
+  res.locals.title  = res.locals.title || "AGUDASCO";
+  next();
+});
+
 // CSP: iframe hanya dari origin sendiri
 app.use((req, res, next) => {
   res.setHeader(
@@ -130,6 +138,21 @@ function normalizePdfUrl(url) {
   } catch {
     return url.trim();
   }
+}
+
+// Render aman: jika view belum ada, pakai fallback
+function renderSafe(res, viewName, props = {}) {
+  const full = path.join(__dirname, "views", `${viewName}.ejs`);
+  if (fs.existsSync(full)) {
+    return res.render(viewName, props);
+  }
+  const fallback = path.join(__dirname, "views", "page.ejs");
+  if (fs.existsSync(fallback)) {
+    return res.render("page", props);
+  }
+  return res
+    .status(200)
+    .send(`<h1>${props.title || viewName}</h1><p>Halaman dalam pengembangan.</p>`);
 }
 
 /* --------------------------- Routes -------------------------- */
@@ -191,6 +214,13 @@ app.get("/laporan/:id", (req, res) => {
     res.render("report_view", { title: report.title, active: "laporan", report: fixed });
   });
 });
+
+/* --------------------------- MENU STATIS --------------------------- */
+app.get("/adart",   (req, res) => renderSafe(res, "adart",   { title: "AD/ART",   active: "adart"   }));
+app.get("/anggota", (req, res) => renderSafe(res, "anggota", { title: "Anggota", active: "anggota" }));
+app.get("/galeri",  (req, res) => renderSafe(res, "galeri",  { title: "Galeri",  active: "galeri"  }));
+app.get("/tentang", (req, res) => renderSafe(res, "tentang", { title: "Tentang", active: "tentang" }));
+app.get("/kontak",  (req, res) => renderSafe(res, "kontak",  { title: "Kontak",  active: "kontak"  }));
 
 /* ----------------------------- ADMIN ----------------------------- */
 app.get("/admin", (req, res) =>
@@ -258,7 +288,6 @@ app.get("/admin/reports", (req, res) => {
   });
 });
 
-// Form: title, cover(file input name="cover"), pdf_url(text)
 app.post("/admin/reports", uploadImage.single("cover"), (req, res) => {
   const { title, pdf_url } = req.body;
   const cover = req.file ? req.file.path : null;
