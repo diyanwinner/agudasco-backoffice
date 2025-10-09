@@ -1,18 +1,84 @@
-<h2>Kelola Banner</h2>
-<form method="post" enctype="multipart/form-data" class="card pad">
-  <div class="form-row"><label>Gambar</label><input name="image" type="file" accept="image/*" required/></div>
-  <button class="btn">Upload</button>
-</form>
+<section class="admin-wrap container">
+  <header class="admin-head">
+    <div>
+      <h1 class="admin-title">Kelola Banner</h1>
+      <p class="meta">Unggah gambar untuk slider di beranda.</p>
+    </div>
+  </header>
 
-<div class="grid cards" style="margin-top:16px;">
-  <% (banners||[]).forEach(b=>{ %>
-    <div class="card">
-      <img src="<%= b.image %>" alt=""/>
-      <div class="pad">
-        <form method="post" action="/admin/banners/<%= b.id %>/delete" onsubmit="return confirm('Hapus banner?')">
-          <button class="btn red">Hapus</button>
-        </form>
+  <form class="card form-modern" action="/admin/banners" method="post" enctype="multipart/form-data">
+    <div class="form-grid-2">
+      <div class="form-col">
+        <label class="label">Petunjuk</label>
+        <ul class="meta" style="margin:0">
+          <li>Rasio 16:9 (misal 1920×1080) akan pas banget.</li>
+          <li>Format JPG/PNG/WebP. Ukuran file disarankan &lt; 1.5 MB.</li>
+        </ul>
+      </div>
+
+      <div class="form-col">
+        <label class="label">Gambar Banner</label>
+        <div id="dzBanner" class="dropzone">
+          <div class="dz-preview"><img id="imgBanner"/><button type="button" class="dz-remove" id="rmBanner">✕</button></div>
+          <div class="dz-empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M4 17v2a1 1 0 0 0 1 1h14M4 17l4-4 3 3 5-5 4 4M4 17V7a1 1 0 0 1 1-1h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <div>Tarik & letakkan gambar ke sini</div>
+            <small class="meta">atau klik untuk pilih file</small>
+          </div>
+          <input id="bannerInput" type="file" name="image" accept="image/*" hidden>
+        </div>
       </div>
     </div>
-  <% }) %>
-</div>
+
+    <div class="form-bar">
+      <div class="left meta">Pastikan gambar jelas & tajam.</div>
+      <div class="right"><button class="btn" type="submit">Simpan</button></div>
+    </div>
+  </form>
+
+  <h2 style="margin:26px 0 12px">Banner Saat Ini</h2>
+  <div class="table-wrap card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:120px">Gambar</th>
+          <th style="width:140px">Tanggal</th>
+          <th style="width:110px">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% (banners||[]).forEach(b=>{ %>
+          <tr>
+            <td><img src="<%= b.image %>" alt="" style="width:110px;height:66px;object-fit:cover;border-radius:8px"></td>
+            <td class="meta"><%= new Date(b.created_at).toLocaleString('id-ID') %></td>
+            <td>
+              <form action="/admin/banners/<%= b.id %>/delete" method="post" onsubmit="return confirm('Hapus banner ini?')">
+                <button class="btn red" type="submit">Hapus</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+        <% if (!(banners||[]).length) { %>
+          <tr><td class="meta" colspan="3">Belum ada banner.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+(function() {
+  const dz = document.getElementById('dzBanner');
+  const i  = document.getElementById('bannerInput');
+  const pv = dz.querySelector('.dz-preview'); const im = document.getElementById('imgBanner');
+  const rm = document.getElementById('rmBanner'); const emp = dz.querySelector('.dz-empty');
+  const show = f => { im.src = URL.createObjectURL(f); pv.style.display='block'; emp.style.display='flex'; emp.style.display='none'; };
+  const clear=()=>{ i.value=''; im.src=''; pv.style.display='none'; emp.style.display='flex'; };
+  rm.addEventListener('click', clear);
+  dz.addEventListener('click', ()=>i.click());
+  i.addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) show(f); });
+  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('is-drag'); });
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('is-drag'));
+  dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('is-drag'); const f=e.dataTransfer.files?.[0]; if(f&&f.type.startsWith('image/')){ i.files=e.dataTransfer.files; show(f);} });
+})();
+</script>
