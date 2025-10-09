@@ -1,0 +1,26 @@
+<% layout('layout') %>
+<h2>Kelola AD/ART</h2>
+<form method="post" enctype="multipart/form-data" class="card pad">
+  <div class="form-row"><label>Judul</label><input name="title" type="text" required/></div>
+  <div class="form-row cols-2">
+    <div><label>Cover (gambar)</label><input name="cover" type="file" accept="image/*"/></div>
+    <div><label>PDF URL</label><input name="pdf_url" type="text" placeholder="https://drive.google.com/file/d/ID/view"/></div>
+  </div>
+  <button class="btn">Simpan</button>
+</form>
+
+<table class="table" style="margin-top:16px">
+  <tr><th>Cover</th><th>Judul</th><th>PDF</th><th>Aksi</th></tr>
+  <% (adarts||[]).forEach(i=>{ %>
+    <tr>
+      <td><img src="<%= i.cover %>" alt="" style="width:120px;height:70px;object-fit:cover"/></td>
+      <td><a href="/adart/<%= i.id %>" target="_blank"><%= i.title %></a></td>
+      <td class="meta"><%= i.pdf_url||'-' %></td>
+      <td>
+        <form method="post" action="/admin/adart/<%= i.id %>/delete" onsubmit="return confirm('Hapus?')">
+          <button class="btn red">Hapus</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+</table>
