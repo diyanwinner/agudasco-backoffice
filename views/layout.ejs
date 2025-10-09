@@ -4,56 +4,53 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
-  <link rel="stylesheet" href="/public/styles.css" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
+  <!-- Header -->
   <header class="header">
     <div class="container">
       <div class="brand">
-        <img src="https://res.cloudinary.com/<%= (process.env.CLOUDINARY_CLOUD_NAME||'dsyo0e3fu') %>/image/upload/c_scale,w_40/v1710000000/logo.png" alt="Logo" width="40" height="40" />
+        <img
+          src="https://res.cloudinary.com/<%= (process.env.CLOUDINARY_CLOUD_NAME||'dsyo0e3fu') %>/image/upload/c_scale,w_40/v1710000000/logo.png"
+          alt="Logo" width="40" height="40" />
         <div class="title">AGUDASCO</div>
       </div>
+
       <nav class="nav">
-        <a href="/"Beranda" class="<%= (locals.active==='home') ? 'active' : '' %>">Beranda</a>
-        <a href="/artikel" class="<%= (locals.active==='artikel') ? 'active' : '' %>">Artikel</a>
-        <a href="/laporan" class="<%= (locals.active==='laporan') ? 'active' : '' %>">Laporan</a>
-        <a href="/adart" class="<%= (locals.active==='adart') ? 'active' : '' %>">AD/ART</a>
-        <a href="/anggota" class="<%= (locals.active==='anggota') ? 'active' : '' %>">Anggota</a>
-        <a href="/galeri" class="<%= (locals.active==='galeri') ? 'active' : '' %>">Galeri</a>
-        <a href="/tentang" class="<%= (locals.active==='tentang') ? 'active' : '' %>">Tentang</a>
-        <a href="/kontak" class="<%= (locals.active==='kontak') ? 'active' : '' %>">Kontak</a>
-        <a href="/admin" class="<%= (locals.active==='admin') ? 'active' : '' %>">Admin</a>
+        <a href="/"
+           class="<%= (locals.active==='home') ? 'active' : '' %>">Beranda</a>
+        <a href="/artikel"
+           class="<%= (locals.active==='artikel') ? 'active' : '' %>">Artikel</a>
+        <a href="/laporan"
+           class="<%= (locals.active==='laporan') ? 'active' : '' %>">Laporan</a>
+        <a href="/adart"
+           class="<%= (locals.active==='adart') ? 'active' : '' %>">AD/ART</a>
+        <a href="/anggota"
+           class="<%= (locals.active==='anggota') ? 'active' : '' %>">Anggota</a>
+        <a href="/galeri"
+           class="<%= (locals.active==='galeri') ? 'active' : '' %>">Galeri</a>
+        <a href="/tentang"
+           class="<%= (locals.active==='tentang') ? 'active' : '' %>">Tentang</a>
+        <a href="/kontak"
+           class="<%= (locals.active==='kontak') ? 'active' : '' %>">Kontak</a>
+        <a href="/admin"
+           class="<%= (locals.active==='admin') ? 'active' : '' %>">Admin</a>
       </nav>
     </div>
   </header>
 
+  <!-- Main -->
   <main>
     <div class="container">
       <%- body %>
     </div>
   </main>
 
-  <footer class="footer">
-    <div class="container">
-      <div class="grid">
-        <div>
-          <div class="brand">
-            <div class="title">AGUDASCO</div>
-          </div>
-          <p class="meta">Organisasi alumni – membangun jaringan dan kontribusi nyata.</p>
-        </div>
-        <div>
-          <h4>Kontak</h4>
-          <p class="meta">Email: info@agudasco.org<br/>Alamat: Jakarta</p>
-        </div>
-        <div>
-          <h4>Tautan</h4>
-          <p><a href="/laporan">Laporan Keuangan</a><br/><a href="/adart">AD/ART</a></p>
-        </div>
-      </div>
-      <p class="meta" style="margin-top:20px;">© <%= new Date().getFullYear() %> AGUDASCO</p>
-    </div>
-  </footer>
+  <!-- Footer (pakai partial) -->
+  <%- include('partials/footer') %>
 
   <!-- Lightbox -->
   <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
@@ -62,19 +59,17 @@
       <div id="lightbox-cap" class="lightbox-caption"></div>
     </div>
   </div>
+
   <script>
-    function openLightbox(src, cap){ 
-      const b=document.getElementById('lightbox'); 
-      document.getElementById('lightbox-img').src=src; 
-      document.getElementById('lightbox-cap').textContent=cap||''; 
+    function openLightbox(src, cap){
+      const b = document.getElementById('lightbox');
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox-cap').textContent = cap || '';
       b.classList.add('active');
     }
     function closeLightbox(e){
-      if(e.target.id==='lightbox' || e.target.id==='lightbox-img'){
-        document.getElementById('lightbox').classList.remove('active');
-      } else {
-        document.getElementById('lightbox').classList.remove('active');
-      }
+      // Tutup kalau klik backdrop atau tombol close (kalau nanti ditambah)
+      if(e.target.id==='lightbox'){ document.getElementById('lightbox').classList.remove('active'); }
     }
   </script>
 </body>
