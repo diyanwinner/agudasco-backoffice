@@ -1,75 +1,28 @@
-<h1 class="visually-hidden">AGUDASCO</h1>
-
-<!-- SLIDER / HERO -->
-<section class="hero mb-3">
-  <% if (banners && banners.length) { %>
-    <div id="carouselBanner" class="carousel slide" data-bs-ride="carousel">
-      <!-- dots -->
-      <div class="carousel-indicators">
-        <% banners.forEach((b, i) => { %>
-          <button type="button"
-                  data-bs-target="#carouselBanner"
-                  data-bs-slide-to="<%= i %>"
-                  class="<%= i === 0 ? 'active' : '' %>"
-                  aria-current="<%= i === 0 ? 'true' : 'false' %>"
-                  aria-label="Slide <%= i+1 %>"></button>
-        <% }) %>
-      </div>
-
-      <!-- slides -->
-      <div class="carousel-inner rounded-3 overflow-hidden shadow">
-        <% banners.forEach((b, i) => { %>
-          <div class="carousel-item <%= i === 0 ? 'active' : '' %>">
-            <img src="<%= b.image %>"
-                 alt="Banner <%= i+1 %>"
-                 class="d-block w-100 banner-img">
-          </div>
-        <% }) %>
-      </div>
-
-      <!-- controls -->
-      <button class="carousel-control-prev" type="button" data-bs-target="#carouselBanner" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Sebelumnya</span>
-      </button>
-      <button class="carousel-control-next" type="button" data-bs-target="#carouselBanner" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Berikutnya</span>
-      </button>
-    </div>
-  <% } else { %>
-    <div class="card bg-body-secondary text-center py-5">
-      <div class="card-body">
-        <div class="text-muted">Belum ada banner diunggah.</div>
-      </div>
-    </div>
-  <% } %>
+<% layout('layout', {active:'home'}) %>
+<section class="hero">
+  <h1>Selamat datang di AGUDASCO</h1>
+  <p class="meta">Kabar terbaru dan kegiatan terkini.</p>
 </section>
 
-<!-- BERITA / ARTIKEL -->
-<section>
-  <h3 class="mb-3">Berita & Kegiatan Terbaru</h3>
-
-  <% if (arts && arts.length) { %>
-    <div class="row g-3">
-      <% arts.forEach(a => { %>
-        <div class="col-12 col-sm-6 col-lg-4">
-          <a href="/article/<%= a.id %>" class="card h-100 text-decoration-none bg-body-tertiary border-0 shadow-sm">
-            <% if (a.image) { %>
-              <img src="<%= a.image %>" alt="<%= a.title %>" class="card-img-top object-cover ratio-16x9">
-            <% } %>
-            <div class="card-body">
-              <h5 class="card-title text-light"><%= a.title %></h5>
-              <div class="text-muted small mb-2"><%= new Date(a.created_at).toLocaleString('id-ID') %></div>
-              <p class="card-text text-secondary">
-                <%= (a.content || '').slice(0, 160) %>…
-              </p>
-            </div>
-          </a>
-        </div>
-      <% }) %>
+<h3>Banner</h3>
+<div class="grid cards">
+  <% (banners||[]).forEach(b=>{ %>
+    <div class="card">
+      <img src="<%= b.image %>" alt="Banner"/>
     </div>
-  <% } else { %>
-    <div class="text-muted">Belum ada artikel dipublikasi.</div>
-  <% } %>
-</section>
+  <% }) %>
+</div>
+
+<h3 style="margin-top:24px;">Artikel Terbaru</h3>
+<div class="grid cards">
+  <% (arts||[]).forEach(a=>{ %>
+    <div class="card">
+      <img src="<%= a.image||'https://via.placeholder.com/640x360?text=Artikel' %>" alt="<%= a.title %>"/>
+      <div class="pad">
+        <h4><a href="/artikel/<%= a.id %>"><%= a.title %></a></h4>
+        <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
+        <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
+      </div>
+    </div>
+  <% }) %>
+</div>
