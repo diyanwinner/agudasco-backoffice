@@ -255,3 +255,7 @@ main{ padding-top:8px }                  /* rapetin jarak global */
   .nav a.active,.nav a:hover{ background:var(--blue); color:#fff }
   .no-scroll, .no-scroll body{ overflow:hidden } /* lock scroll saat menu terbuka */
 }
+
+git add public/styles.css
+git commit -m "Fix center layout & responsive header"
+git push
