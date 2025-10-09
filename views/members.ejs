@@ -1,0 +1,14 @@
+<% layout('layout', {active:'anggota'}) %>
+<h2>Anggota</h2>
+<div class="grid cards">
+  <% (members||[]).forEach(m=>{ %>
+    <div class="card">
+      <img src="<%= m.photo||'https://via.placeholder.com/480x480?text=Anggota' %>" alt="<%= m.name %>"/>
+      <div class="pad">
+        <h3><%= m.name %></h3>
+        <p class="meta"><%= m.role||'' %></p>
+        <% if(m.bio){ %><p><%= m.bio %></p><% } %>
+      </div>
+    </div>
+  <% }) %>
+</div>
