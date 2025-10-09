@@ -13,8 +13,13 @@
   --card:#14233a;
   --border:#233756;
 
-  /* Lebar wrapper seragam untuk SEMUA blok (header, banner, section, footer) */
+  /* Lebar konten maksimum */
   --wrap: min(1120px, 92vw);
+
+  /* Gutter seragam (ikut layar + safe area) */
+  --gutter: clamp(12px, 3vw, 24px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
 }
 
 /* ===== Base ===== */
@@ -31,10 +36,12 @@ a:hover{ color:#cfe0ff; text-decoration:underline }
 
 /* ===== Layout umum ===== */
 .container{
-  width:var(--wrap);
+  width:100%;
+  max-width:var(--wrap);
   margin-inline:auto;
-  padding:24px;
-  max-width:none;
+  padding-left: calc(var(--gutter) + var(--safe-l));
+  padding-right: calc(var(--gutter) + var(--safe-r));
+  padding-top:24px; padding-bottom:24px;
 }
 
 /* ===== Header ===== */
@@ -54,10 +61,17 @@ main{ padding-top:8px }
 .hero-title{ margin:8px 0 10px; font-size:clamp(1.6rem, 2.2vw + 1rem, 2.4rem); font-weight:800 }
 
 /* ===== Slider banner ===== */
+.banner-outer{
+  /* pembungkus agar gutter banner match container */
+  width:100%;
+  max-width:var(--wrap);
+  margin-inline:auto;
+  padding-left: calc(var(--gutter) + var(--safe-l));
+  padding-right: calc(var(--gutter) + var(--safe-r));
+}
 .banner-wrapper{
   position:relative;
   margin:.25rem auto .75rem;
-  width:var(--wrap);
   height:clamp(240px,36vw,460px);
   border-radius:18px;
   overflow:hidden;
@@ -82,7 +96,13 @@ main{ padding-top:8px }
 @media (max-width:600px){ .banner-wrapper .nav{ display:none } }
 
 /* ===== Section Artikel Terbaru ===== */
-.section{ width:var(--wrap); margin:28px auto 0 }
+.section{
+  width:100%;
+  max-width:var(--wrap);
+  margin:28px auto 0;
+  padding-left: calc(var(--gutter) + var(--safe-l));
+  padding-right: calc(var(--gutter) + var(--safe-r));
+}
 .section-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px }
 .section-head h2{ margin:0 }
 .link-more{ opacity:.85 }
@@ -115,7 +135,14 @@ main{ padding-top:8px }
   color:var(--text);
   border-top:1px solid rgba(255,255,255,.06);
 }
-.site-footer .container{ width:var(--wrap); margin-inline:auto; padding:24px }
+.site-footer .container{
+  width:100%;
+  max-width:var(--wrap);
+  margin-inline:auto;
+  padding-left: calc(var(--gutter) + var(--safe-l));
+  padding-right: calc(var(--gutter) + var(--safe-r));
+  padding-top:24px; padding-bottom:24px;
+}
 .site-footer .footer-grid{ display:grid; gap:16px; grid-template-columns:1fr; align-items:start }
 @media (min-width:880px){ .site-footer .footer-grid{ grid-template-columns:1.2fr 1fr 1fr } }
 .site-footer .footer-col{ min-width:0 }
@@ -132,7 +159,6 @@ main{ padding-top:8px }
 }
 @media (max-width:640px){
   .site-footer{ padding:16px 0 }
-  .site-footer .container{ padding:20px }
   .site-footer .footer-bottom{ flex-direction:column; align-items:flex-start }
 }
 
@@ -154,7 +180,7 @@ main{ padding-top:8px }
 .label{ display:block; margin:8px 0 6px; font-weight:600 }
 .input,.textarea{
   width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--border);
-  background:#0b1322; color:var(--text); outline:none;
+  background:#0b1322; color:#var(--text); outline:none;
 }
 .input:focus,.textarea:focus{ border-color:#2b72ff; box-shadow:0 0 0 3px rgba(43,114,255,.15) }
 .textarea{ resize:vertical; min-height:120px }
@@ -193,7 +219,7 @@ main{ padding-top:8px }
 .help-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px }
 
 /* ======= Header responsive (Mobile Nav) ======= */
-.header-wrap{ display:flex; align-items:center; gap:16px } /* jika dipakai */
+.header-wrap{ display:flex; align-items:center; gap:16px } /* kalau dipakai */
 
 .nav-toggle{
   display:none; position:relative; width:44px; height:38px; border:1px solid var(--border);
@@ -230,5 +256,15 @@ main{ padding-top:8px }
     background:rgba(255,255,255,.02);
   }
   .nav a.active,.nav a:hover{ background:var(--blue); color:#fff }
+
+  /* Jaga keseimbangan layout mobile */
+  .header .container,
+  .banner-outer,
+  .section,
+  .site-footer .container{
+    padding-left: calc(var(--gutter) + var(--safe-l));
+    padding-right: calc(var(--gutter) + var(--safe-r));
+  }
+
   .no-scroll, .no-scroll body{ overflow:hidden }
-}
+             }
