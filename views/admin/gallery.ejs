@@ -1,0 +1,23 @@
+<% layout('layout') %>
+<h2>Kelola Galeri</h2>
+<form method="post" enctype="multipart/form-data" class="card pad">
+  <div class="form-row cols-2">
+    <div><label>Gambar</label><input name="image" type="file" accept="image/*" required/></div>
+    <div><label>Caption</label><input name="caption" type="text"/></div>
+  </div>
+  <button class="btn">Upload</button>
+</form>
+
+<div class="grid cards" style="margin-top:16px;">
+  <% (photos||[]).forEach(p=>{ %>
+    <div class="card">
+      <img src="<%= p.image %>" alt="<%= p.caption||'' %>"/>
+      <div class="pad">
+        <p class="meta"><%= p.caption||'' %></p>
+        <form method="post" action="/admin/gallery/<%= p.id %>/delete" onsubmit="return confirm('Hapus foto?')">
+          <button class="btn red">Hapus</button>
+        </form>
+      </div>
+    </div>
+  <% }) %>
+</div>
