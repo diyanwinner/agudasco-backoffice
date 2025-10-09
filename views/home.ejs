@@ -73,3 +73,27 @@
   track.closest('.banner-wrapper').addEventListener('mouseleave', ()=>timer = setInterval(next, INTERVAL));
 })();
 </script>
+
+<!-- ARTIKEL TERBARU -->
+<section class="section">
+  <div class="section-head">
+    <h2>Artikel Terbaru</h2>
+    <a class="link-more" href="/artikel">Lihat semua →</a>
+  </div>
+
+  <div class="grid cards">
+    <% (arts||[]).forEach(a => { %>
+      <article class="card">
+        <img src="<%= a.image || 'https://via.placeholder.com/640x360?text=Artikel' %>" alt="<%= a.title %>">
+        <div class="pad">
+          <h3><a href="/artikel/<%= a.id %>"><%= a.title %></a></h3>
+          <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
+          <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
+        </div>
+      </article>
+    <% }) %>
+    <% if (!(arts||[]).length) { %>
+      <p class="muted">Belum ada artikel.</p>
+    <% } %>
+  </div>
+</section>
