@@ -1,3 +1,8 @@
+/* =======================
+   AGUDASCO – Global Styles
+   ======================= */
+
+/* ===== Theme Vars ===== */
 :root{
   --navy:#0f1a2b;      /* dominan */
   --navy-2:#14233a;
@@ -7,23 +12,42 @@
   --muted:#a9b7d1;
   --card:#14233a;
   --border:#233756;
+
+  /* Lebar wrapper seragam untuk SEMUA blok (header, banner, section, footer) */
+  --wrap: min(1120px, 92vw);
 }
 
 /* ===== Base ===== */
 *{ box-sizing:border-box }
+html{
+  /* cegah loncat center saat scrollbar muncul/hilang */
+  scrollbar-gutter: stable both-edges;
+}
 html,body{
-  margin:0; padding:0; background:var(--navy); color:var(--text);
+  margin:0; padding:0;
+  background:var(--navy); color:var(--text);
   font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial;
 }
+body{ overflow-x:hidden }  /* antisipasi elemen yang ‘tumpah’ */
 a{ color:#9ec1ff; text-decoration:none }
 a:hover{ color:#cfe0ff; text-decoration:underline }
 
 /* ===== Layout umum ===== */
-.container{ max-width:1100px; margin:0 auto; padding:24px }
+/* PENTING: semua container pakai --wrap supaya center presisi */
+.container{
+  width:var(--wrap);
+  margin-inline:auto;
+  padding:24px;
+  max-width:none; /* override aturan lama */
+}
+
+/* Header */
 .header{ background:var(--navy-2); border-bottom:1px solid var(--border) }
-.header .container{ display:flex; align-items:center; gap:20px }
+.header .container{ position:relative; display:flex; align-items:center; gap:20px }
 .brand{ display:flex; align-items:center; gap:12px }
 .brand .title{ font-weight:700; letter-spacing:.5px }
+
+/* Nav (desktop) */
 .nav{ margin-left:auto; display:flex; flex-wrap:wrap; gap:14px }
 .nav a{ padding:10px 12px; border-radius:10px }
 .nav a.active,.nav a:hover{ background:var(--blue); color:#fff }
@@ -41,7 +65,7 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 .banner-wrapper{
   position:relative;
   margin:.25rem auto .75rem;
-  width:min(1120px,92vw);
+  width:var(--wrap);                     /* <<< konsisten center */
   height:clamp(240px,36vw,460px);
   border-radius:18px;
   overflow:hidden;
@@ -59,7 +83,7 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 /* Caption tepat di bawah banner */
 .hero-caption{ opacity:.85; margin-top:.25rem }
 
-/* Tombol prev/next (opsional) */
+/* Tombol prev/next (simetris) */
 .banner-wrapper .nav{
   position:absolute; top:50%; transform:translateY(-50%);
   width:42px; height:42px; border-radius:50%; border:0;
@@ -72,7 +96,10 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 @media (max-width:600px){ .banner-wrapper .nav{ display:none } }
 
 /* ===== Section Artikel Terbaru ===== */
-.section{ width:min(1120px,92vw); margin:28px auto 0 }
+.section{
+  width:var(--wrap);                     /* <<< konsisten center */
+  margin:28px auto 0;
+}
 .section-head{
   display:flex; align-items:baseline; justify-content:space-between;
   margin-bottom:12px;
@@ -102,14 +129,14 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 .btn.red{ background:var(--red) }
 .muted{ opacity:.65 }
 
-/* === FOOTER === */
+/* ===== Footer ===== */
 .site-footer{
   padding:20px 0;
   background:#0f2236;
   color:var(--text);
   border-top:1px solid rgba(255,255,255,.06);
 }
-.site-footer .container{ max-width:1100px; margin:0 auto; padding:24px }
+.site-footer .container{ width:var(--wrap); margin-inline:auto; padding:24px } /* konsisten */
 .site-footer .footer-grid{
   display:grid; gap:16px; grid-template-columns:1fr; align-items:start;
 }
@@ -134,7 +161,7 @@ main{ padding-top:8px }                  /* rapetin jarak global */
   .site-footer .footer-bottom{ flex-direction:column; align-items:flex-start }
 }
 
-/* ===== Lightbox (kalau dipakai di galeri) ===== */
+/* ===== Lightbox ===== */
 .lightbox-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.8); display:none; align-items:center; justify-content:center; z-index:50 }
 .lightbox-backdrop.active{ display:flex }
 .lightbox-img{ max-width:92vw; max-height:90vh; border-radius:12px; border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,.5) }
@@ -191,16 +218,8 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 /* Small tweaks */
 .help-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px; }
 
-/* ======= Header responsive ======= */
-.header { background: var(--navy-2); border-bottom: 1px solid var(--border); }
-.header-wrap { display:flex; align-items:center; gap:16px; }
-.header .container { position: relative; } /* untuk panel nav absolute */
-
-.nav { margin-left:auto; display:flex; flex-wrap:wrap; gap:14px; }
-.nav a { padding:10px 12px; border-radius:10px; }
-.nav a.active, .nav a:hover { background:var(--blue); color:#fff; }
-
-/* Tombol hamburger */
+/* ======= Header responsive (Mobile Nav) ======= */
+.header-wrap{ display:flex; align-items:center; gap:16px } /* optional jika dipakai */
 .nav-toggle{
   display:none; position:relative; width:44px; height:38px; border:1px solid var(--border);
   border-radius:10px; background:var(--card); cursor:pointer;
@@ -216,9 +235,8 @@ main{ padding-top:8px }                  /* rapetin jarak global */
 .nav-toggle.is-open span:nth-child(2){ opacity:0 }
 .nav-toggle.is-open span:nth-child(3){ top:18px; transform:rotate(-45deg) }
 
-/* Mobile panel */
 @media (max-width: 860px){
-  .nav-toggle{ display:inline-block; margin-left:auto; }
+  .nav-toggle{ display:inline-block; margin-left:auto }
   .nav{
     position:absolute; left:0; right:0; top:calc(64px + 1px);
     display:none; flex-direction:column; gap:8px;
@@ -228,14 +246,12 @@ main{ padding-top:8px }                  /* rapetin jarak global */
     box-shadow:0 12px 24px rgba(0,0,0,.25);
     z-index:40;
   }
-  .nav.is-open{ display:flex; }
+  .nav.is-open{ display:flex }
   .nav a{
     display:block; width:100%;
     padding:12px 14px; border-radius:12px;
     background:rgba(255,255,255,.02);
   }
-  .nav a.active, .nav a:hover{ background:var(--blue); color:#fff; }
-
-  /* Lock scroll ketika menu terbuka */
-  .no-scroll, .no-scroll body { overflow: hidden; }
+  .nav a.active,.nav a:hover{ background:var(--blue); color:#fff }
+  .no-scroll, .no-scroll body{ overflow:hidden } /* lock scroll saat menu terbuka */
 }
