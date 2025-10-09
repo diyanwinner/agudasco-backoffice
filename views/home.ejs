@@ -1,27 +1,38 @@
 <section class="hero">
   <h1>Selamat datang di AGUDASCO</h1>
-  <p class="meta">Kabar terbaru dan kegiatan terkini.</p>
+  <p>Kabar terbaru dan kegiatan terkini.</p>
+
+  <div class="banner-slider">
+    <% (banners || []).forEach((b, idx) => { %>
+      <img src="<%= b.image %>"
+           class="slide <%= idx === 0 ? 'active' : '' %>"
+           alt="Banner <%= idx+1 %>" />
+    <% }) %>
+  </div>
 </section>
 
-<h3>Banner</h3>
-<div class="grid cards">
-  <% (banners||[]).forEach(b=>{ %>
-    <div class="card">
-      <img src="<%= b.image %>" alt="Banner"/>
-    </div>
-  <% }) %>
-</div>
-
-<h3 style="margin-top:24px;">Artikel Terbaru</h3>
-<div class="grid cards">
-  <% (arts||[]).forEach(a=>{ %>
-    <div class="card">
-      <img src="<%= a.image||'https://via.placeholder.com/640x360?text=Artikel' %>" alt="<%= a.title %>"/>
-      <div class="pad">
-        <h4><a href="/artikel/<%= a.id %>"><%= a.title %></a></h4>
-        <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
-        <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
+<section class="latest-articles">
+  <h2>Artikel Terbaru</h2>
+  <div class="grid cards">
+    <% (arts || []).forEach(a => { %>
+      <div class="card">
+        <img src="<%= a.image || 'https://via.placeholder.com/640x360?text=Artikel' %>" alt="<%= a.title %>" />
+        <div class="pad">
+          <h3><a href="/artikel/<%= a.id %>"><%= a.title %></a></h3>
+          <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
+          <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
+        </div>
       </div>
-    </div>
-  <% }) %>
-</div>
+    <% }) %>
+  </div>
+</section>
+
+<script>
+let slideIndex = 0;
+const slides = document.querySelectorAll('.banner-slider .slide');
+function showSlides() {
+  slides.forEach((s,i)=>s.classList.toggle('active', i===slideIndex));
+  slideIndex = (slideIndex + 1) % slides.length;
+}
+if (slides.length > 0) setInterval(showSlides, 4000);
+</script>
