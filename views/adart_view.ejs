@@ -1,0 +1,12 @@
+<% layout('layout', {active:'adart'}) %>
+<div class="card">
+  <img src="<%= item.cover||'https://via.placeholder.com/960x400?text=AD/ART' %>" alt="<%= item.title %>"/>
+  <div class="pad">
+    <h1><%= item.title %></h1>
+    <% if(item.pdf_url){ %>
+      <a class="btn red" href="<%= item.pdf_url %>" target="_blank" rel="noopener">Unduh PDF</a>
+    <% } else { %>
+      <p class="meta">Belum ada file PDF.</p>
+    <% } %>
+  </div>
+</div>
