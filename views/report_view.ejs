@@ -1,9 +1,14 @@
+<figure class="media-preview" onclick="openLightbox('<%= report.cover %>', '<%= report.title %>')">
+  <img class="media-fit" src="<%= report.cover || 'https://via.placeholder.com/1200x800?text=Laporan' %>" alt="<%= report.title %>">
+  <figcaption class="media-caption">Klik gambar untuk memperbesar</figcaption>
+</figure>
+
 <div class="card">
-  <img src="<%= report.cover||'https://via.placeholder.com/960x400?text=Laporan' %>" alt="<%= report.title %>"/>
   <div class="pad">
-    <h1><%= report.title %></h1>
+    <h1 class="hero-title"><%= report.title %></h1>
     <p class="meta">Diunggah: <%= new Date(report.created_at).toLocaleString('id-ID') %></p>
-    <% if(report.pdf_url){ %>
+
+    <% if (report.pdf_url) { %>
       <a class="btn red" href="<%= report.pdf_url %>" target="_blank" rel="noopener">Unduh PDF</a>
     <% } else { %>
       <p class="meta">Belum ada file PDF.</p>
