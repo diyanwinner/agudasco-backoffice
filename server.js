@@ -4,10 +4,14 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
-import sqlite3 from "sqlite3";
+// ❌ (hapus) import sqlite3 from "sqlite3";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
+
+// ✅ Postgres (Neon)
+import pkg from "pg";
+const { Pool } = pkg;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,43 +19,60 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 /* ------------------------------------------------------------------
-   DB (SQLite) – tabel minimal untuk laman
+   DB (Postgres / Neon)
 ------------------------------------------------------------------- */
-const db = new sqlite3.Database("./db.sqlite");
-db.serialize(() => {
-  db.run(`CREATE TABLE IF NOT EXISTS articles (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    content TEXT,
-    image TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }, // diperlukan untuk Neon
+});
 
-  db.run(`CREATE TABLE IF NOT EXISTS banners (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    image TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+// helper query
+async function q(sql, params = []) {
+  const { rows } = await pool.query(sql, params);
+  return rows;
+}
+async function q1(sql, params = []) {
+  const { rows } = await pool.query(sql, params);
+  return rows[0] || null;
+}
 
-  db.run(`CREATE TABLE IF NOT EXISTS reports (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    cover TEXT,
-    pdf_url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+// (opsional) bootstrap tabel agar aman di env baru
+async function ensureTables() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS articles (
+      id         BIGSERIAL PRIMARY KEY,
+      title      TEXT NOT NULL,
+      content    TEXT,
+      image      TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_articles_created_at ON articles (created_at DESC);
 
-  db.run(`CREATE TABLE IF NOT EXISTS adarts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    cover TEXT,
-    pdf_url TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+    CREATE TABLE IF NOT EXISTS banners (
+      id         BIGSERIAL PRIMARY KEY,
+      image      TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
 
-  // migrasi ringan (abaikan error kalau kolom sudah ada)
-  db.run(`ALTER TABLE reports ADD COLUMN cover TEXT`, () => {});
-  db.run(`ALTER TABLE reports ADD COLUMN pdf_url TEXT`, () => {});
+    CREATE TABLE IF NOT EXISTS reports (
+      id         BIGSERIAL PRIMARY KEY,
+      title      TEXT NOT NULL,
+      cover      TEXT,
+      pdf_url    TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS adarts (
+      id         BIGSERIAL PRIMARY KEY,
+      title      TEXT NOT NULL,
+      cover      TEXT,
+      pdf_url    TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+  `);
+}
+ensureTables().catch((e) => {
+  console.error("ensureTables error:", e);
 });
 
 /* ------------------------------------------------------------------
@@ -82,8 +103,7 @@ const uploadImage = multer({ storage: imageStorage });
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Opsi B: assets di /public -> diakses via /public/...
-import { dirname } from "path";
+// aset statis di /public
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 // View engine
@@ -92,7 +112,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// Build id untuk cache-busting (pakai di layout: ?v=<%= buildId %>)
+// build id untuk cache busting
 app.locals.buildId = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
 app.use((req, res, next) => {
   res.locals.buildId = app.locals.buildId;
@@ -101,7 +121,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// CSP sederhana (tidak terlalu ketat supaya Cloudinary bisa load)
+// CSP (longgar agar Cloudinary bisa load)
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -159,12 +179,10 @@ function normalizePdfUrl(url) {
   }
 }
 
-// Render aman: fallback jika view tidak ada
+// render aman fallback
 function renderSafe(res, viewName, props = {}) {
   const full = path.join(__dirname, "views", `${viewName}.ejs`);
-  if (fs.existsSync(full)) {
-    return res.render(viewName, props);
-  }
+  if (fs.existsSync(full)) return res.render(viewName, props);
   return res.render("page", {
     title: props.title || viewName,
     active: props.active || "",
@@ -178,74 +196,103 @@ function renderSafe(res, viewName, props = {}) {
 ------------------------------------------------------------------- */
 app.get("/health", (req, res) => res.status(200).send("OK"));
 
-app.get("/", (req, res) => {
-  db.all("SELECT * FROM banners ORDER BY id DESC LIMIT 10", [], (e1, banners = []) => {
-    db.all("SELECT * FROM articles ORDER BY id DESC LIMIT 6", [], (e2, arts = []) => {
-      res.render("home", {
-        title: "AGUDASCO – Beranda",
-        active: "home",
-        banners,
-        arts,
-      });
+app.get("/", async (req, res) => {
+  try {
+    const banners = await q("SELECT * FROM banners ORDER BY id DESC LIMIT 10");
+    const arts = await q("SELECT * FROM articles ORDER BY id DESC LIMIT 6");
+    res.render("home", {
+      title: "AGUDASCO – Beranda",
+      active: "home",
+      banners,
+      arts,
     });
-  });
+  } catch (err) {
+    console.error("Home error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 /* ---- Artikel ---- */
-app.get("/artikel", (req, res) => {
-  db.all("SELECT * FROM articles ORDER BY id DESC", [], (err, articles = []) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/artikel", async (req, res) => {
+  try {
+    const articles = await q("SELECT * FROM articles ORDER BY id DESC");
     res.render("articles", { title: "Artikel", active: "artikel", articles });
-  });
+  } catch (err) {
+    console.error("Artikel list error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.get("/artikel/:id", (req, res) => {
-  db.get("SELECT * FROM articles WHERE id = ?", [req.params.id], (err, article) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/artikel/:id", async (req, res) => {
+  try {
+    const article = await q1("SELECT * FROM articles WHERE id = $1", [req.params.id]);
     if (!article) return res.status(404).send("Artikel tidak ditemukan");
     res.render("article_view", { title: article.title, active: "artikel", article });
-  });
+  } catch (err) {
+    console.error("Artikel view error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 /* ---- Laporan ---- */
-app.get("/laporan", (req, res) => {
-  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/laporan", async (req, res) => {
+  try {
+    const reports = await q("SELECT * FROM reports ORDER BY id DESC");
     res.render("reports", { title: "Laporan Keuangan", active: "laporan", reports });
-  });
+  } catch (err) {
+    console.error("Laporan list error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.get("/laporan/:id", (req, res) => {
-  db.get("SELECT * FROM reports WHERE id = ?", [req.params.id], (err, report) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/laporan/:id", async (req, res) => {
+  try {
+    const report = await q1("SELECT * FROM reports WHERE id = $1", [req.params.id]);
     if (!report) return res.status(404).send("Laporan tidak ditemukan");
     const fixed = { ...report, pdf_url: normalizePdfUrl(report.pdf_url) };
     res.render("report_view", { title: report.title, active: "laporan", report: fixed });
-  });
+  } catch (err) {
+    console.error("Laporan view error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 /* ---- AD/ART (public) ---- */
-app.get("/adart", (req, res) => {
-  db.all("SELECT * FROM adarts ORDER BY id DESC", [], (err, adarts = []) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/adart", async (req, res) => {
+  try {
+    const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
     res.render("adart", { title: "AD/ART", active: "adart", adarts });
-  });
+  } catch (err) {
+    console.error("ADART list error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.get("/adart/:id", (req, res) => {
-  db.get("SELECT * FROM adarts WHERE id = ?", [req.params.id], (err, item) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/adart/:id", async (req, res) => {
+  try {
+    const item = await q1("SELECT * FROM adarts WHERE id = $1", [req.params.id]);
     if (!item) return res.status(404).send("Dokumen AD/ART tidak ditemukan");
     const fixed = { ...item, pdf_url: normalizePdfUrl(item.pdf_url) };
     res.render("adart_view", { title: item.title, active: "adart", item: fixed });
-  });
+  } catch (err) {
+    console.error("ADART view error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-/* ---- Menu statis lainnya ---- */
-app.get("/anggota", (req, res) => renderSafe(res, "anggota", { title: "Anggota", active: "anggota", anggota: [] }));
-app.get("/galeri",  (req, res) => renderSafe(res, "galeri",  { title: "Galeri",  active: "galeri",  fotos: [] }));
-app.get("/tentang", (req, res) => renderSafe(res, "tentang", { title: "Tentang", active: "tentang" }));
-app.get("/kontak",  (req, res) => renderSafe(res, "kontak",  { title: "Kontak",  active: "kontak"  }));
+/* ---- Menu statis ---- */
+app.get("/anggota", (req, res) =>
+  renderSafe(res, "anggota", { title: "Anggota", active: "anggota", anggota: [] })
+);
+app.get("/galeri", (req, res) =>
+  renderSafe(res, "galeri", { title: "Galeri", active: "galeri", fotos: [] })
+);
+app.get("/tentang", (req, res) =>
+  renderSafe(res, "tentang", { title: "Tentang", active: "tentang" })
+);
+app.get("/kontak", (req, res) =>
+  renderSafe(res, "kontak", { title: "Kontak", active: "kontak" })
+);
 
 /* ------------------------------------------------------------------
    Routes – Admin
@@ -253,124 +300,158 @@ app.get("/kontak",  (req, res) => renderSafe(res, "kontak",  { title: "Kontak", 
 app.get("/admin", (req, res) => res.render("admin/dashboard", { title: "Dashboard" }));
 
 // Admin: Artikel
-app.get("/admin/articles", (req, res) => {
-  db.all("SELECT * FROM articles ORDER BY id DESC", [], (err, articles = []) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/admin/articles", async (req, res) => {
+  try {
+    const articles = await q("SELECT * FROM articles ORDER BY id DESC");
     res.render("admin/articles", { title: "Kelola Artikel", articles });
-  });
+  } catch (err) {
+    console.error("Admin list articles error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.post("/admin/articles", uploadImage.single("image"), (req, res) => {
-  const { title, content } = req.body;
-  const image = req.file ? req.file.path : null;
-  if (!title) return res.status(400).send("Judul wajib diisi");
-  db.run(
-    "INSERT INTO articles (title, content, image) VALUES (?, ?, ?)",
-    [title.trim(), content || "", image],
-    (err) => {
-      if (err) return res.status(500).send(err.message);
-      res.redirect("/admin/articles");
-    }
-  );
-});
+app.post("/admin/articles", uploadImage.single("image"), async (req, res) => {
+  try {
+    const { title, content } = req.body;
+    const image = req.file ? req.file.path : null;
+    if (!title) return res.status(400).send("Judul wajib diisi");
 
-app.post("/admin/articles/:id/delete", (req, res) => {
-  db.run("DELETE FROM articles WHERE id = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).send(err.message);
+    await q(
+      "INSERT INTO articles (title, content, image) VALUES ($1, $2, $3)",
+      [title.trim(), content || "", image]
+    );
     res.redirect("/admin/articles");
-  });
+  } catch (err) {
+    console.error("Admin create article error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+app.post("/admin/articles/:id/delete", async (req, res) => {
+  try {
+    await q("DELETE FROM articles WHERE id = $1", [req.params.id]);
+    res.redirect("/admin/articles");
+  } catch (err) {
+    console.error("Admin delete article error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 // Admin: Banner
-app.get("/admin/banners", (req, res) => {
-  db.all("SELECT * FROM banners ORDER BY id DESC", [], (err, banners = []) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/admin/banners", async (req, res) => {
+  try {
+    const banners = await q("SELECT * FROM banners ORDER BY id DESC");
     res.render("admin/banners", { title: "Kelola Banner", banners });
-  });
+  } catch (err) {
+    console.error("Admin list banners error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.post("/admin/banners", uploadImage.single("image"), (req, res) => {
-  const image = req.file ? req.file.path : null;
-  if (!image) return res.status(400).send("File gambar belum dipilih");
-  db.run("INSERT INTO banners (image) VALUES (?)", [image], (err) => {
-    if (err) return res.status(500).send(err.message);
+app.post("/admin/banners", uploadImage.single("image"), async (req, res) => {
+  try {
+    const image = req.file ? req.file.path : null;
+    if (!image) return res.status(400).send("File gambar belum dipilih");
+
+    await q("INSERT INTO banners (image) VALUES ($1)", [image]);
     res.redirect("/admin/banners");
-  });
+  } catch (err) {
+    console.error("Admin create banner error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.post("/admin/banners/:id/delete", (req, res) => {
-  db.run("DELETE FROM banners WHERE id = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).send(err.message);
+app.post("/admin/banners/:id/delete", async (req, res) => {
+  try {
+    await q("DELETE FROM banners WHERE id = $1", [req.params.id]);
     res.redirect("/admin/banners");
-  });
+  } catch (err) {
+    console.error("Admin delete banner error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 // Admin: Reports
-app.get("/admin/reports", (req, res) => {
-  db.all("SELECT * FROM reports ORDER BY id DESC", [], (err, reports = []) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/admin/reports", async (req, res) => {
+  try {
+    const reports = await q("SELECT * FROM reports ORDER BY id DESC");
     res.render("admin/reports", { title: "Kelola Laporan", reports });
-  });
+  } catch (err) {
+    console.error("Admin list reports error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.post("/admin/reports", uploadImage.single("cover"), (req, res) => {
-  const { title, pdf_url } = req.body;
-  const cover = req.file ? req.file.path : null;
-  if (!title) return res.status(400).send("Judul wajib diisi");
+app.post("/admin/reports", uploadImage.single("cover"), async (req, res) => {
+  try {
+    const { title, pdf_url } = req.body;
+    const cover = req.file ? req.file.path : null;
+    if (!title) return res.status(400).send("Judul wajib diisi");
 
-  const fixedPdf = normalizePdfUrl(pdf_url || "");
-  db.run(
-    "INSERT INTO reports (title, cover, pdf_url) VALUES (?, ?, ?)",
-    [title.trim(), cover, fixedPdf],
-    (err) => {
-      if (err) return res.status(500).send(err.message);
-      res.redirect("/admin/reports");
-    }
-  );
-});
-
-app.post("/admin/reports/:id/delete", (req, res) => {
-  db.run("DELETE FROM reports WHERE id = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).send(err.message);
+    const fixedPdf = normalizePdfUrl(pdf_url || "");
+    await q(
+      "INSERT INTO reports (title, cover, pdf_url) VALUES ($1, $2, $3)",
+      [title.trim(), cover, fixedPdf]
+    );
     res.redirect("/admin/reports");
-  });
+  } catch (err) {
+    console.error("Admin create report error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+app.post("/admin/reports/:id/delete", async (req, res) => {
+  try {
+    await q("DELETE FROM reports WHERE id = $1", [req.params.id]);
+    res.redirect("/admin/reports");
+  } catch (err) {
+    console.error("Admin delete report error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 // Admin: AD/ART
-app.get("/admin/adart", (req, res) => {
-  db.all("SELECT * FROM adarts ORDER BY id DESC", [], (err, adarts = []) => {
-    if (err) return res.status(500).send(err.message);
+app.get("/admin/adart", async (req, res) => {
+  try {
+    const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
     res.render("admin/adart", { title: "Kelola AD/ART", adarts });
-  });
+  } catch (err) {
+    console.error("Admin list adart error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
-app.post("/admin/adart", uploadImage.single("cover"), (req, res) => {
-  const { title, pdf_url } = req.body;
-  const cover = req.file ? req.file.path : null;
-  if (!title) return res.status(400).send("Judul wajib diisi");
+app.post("/admin/adart", uploadImage.single("cover"), async (req, res) => {
+  try {
+    const { title, pdf_url } = req.body;
+    const cover = req.file ? req.file.path : null;
+    if (!title) return res.status(400).send("Judul wajib diisi");
 
-  const fixedPdf = normalizePdfUrl(pdf_url || "");
-  db.run(
-    "INSERT INTO adarts (title, cover, pdf_url) VALUES (?, ?, ?)",
-    [title.trim(), cover, fixedPdf],
-    (err) => {
-      if (err) return res.status(500).send(err.message);
-      res.redirect("/admin/adart");
-    }
-  );
-});
-
-app.post("/admin/adart/:id/delete", (req, res) => {
-  db.run("DELETE FROM adarts WHERE id = ?", [req.params.id], (err) => {
-    if (err) return res.status(500).send(err.message);
+    const fixedPdf = normalizePdfUrl(pdf_url || "");
+    await q(
+      "INSERT INTO adarts (title, cover, pdf_url) VALUES ($1, $2, $3)",
+      [title.trim(), cover, fixedPdf]
+    );
     res.redirect("/admin/adart");
-  });
+  } catch (err) {
+    console.error("Admin create adart error:", err);
+    res.status(500).send("Server error");
+  }
+});
+
+app.post("/admin/adart/:id/delete", async (req, res) => {
+  try {
+    await q("DELETE FROM adarts WHERE id = $1", [req.params.id]);
+    res.redirect("/admin/adart");
+  } catch (err) {
+    console.error("Admin delete adart error:", err);
+    res.status(500).send("Server error");
+  }
 });
 
 /* ------------------------------------------------------------------
    404 & Error handlers
 ------------------------------------------------------------------- */
-app.get("/health", (req, res) => res.status(200).send("OK")); // readiness
 app.use((req, res) => res.status(404).send("Not Found"));
 app.use((err, req, res, next) => {
   console.error("Unhandled error:", err?.stack || err);
