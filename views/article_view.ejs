@@ -1,8 +1,14 @@
+<% if (article.image) { %>
+  <figure class="media-preview" onclick="openLightbox('<%= article.image %>', '<%= article.title %>')">
+    <img class="media-fit" src="<%= article.image || 'https://via.placeholder.com/1200x800?text=Artikel' %>" alt="<%= article.title %>">
+    <figcaption class="media-caption">Klik gambar untuk memperbesar</figcaption>
+  </figure>
+<% } %>
+
 <article class="card">
-  <img src="<%= article.image||'https://via.placeholder.com/960x400?text=Artikel' %>" alt="<%= article.title %>"/>
   <div class="pad">
-    <h1><%= article.title %></h1>
+    <h1 class="hero-title"><%= article.title %></h1>
     <p class="meta">Dipublikasikan: <%= new Date(article.created_at).toLocaleString('id-ID') %></p>
-    <div><%- (article.content||'').replace(/\n/g,'<br/>') %></div>
+    <div><%- (article.content || '').replace(/\n/g,'<br/>') %></div>
   </div>
 </article>
