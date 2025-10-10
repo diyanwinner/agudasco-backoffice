@@ -62,7 +62,6 @@ main{ padding-top:8px }
 
 /* ===== Slider banner ===== */
 .banner-outer{
-  /* pembungkus agar gutter banner match container */
   width:100%;
   max-width:var(--wrap);
   margin-inline:auto;
@@ -180,7 +179,7 @@ main{ padding-top:8px }
 .label{ display:block; margin:8px 0 6px; font-weight:600 }
 .input,.textarea{
   width:100%; padding:12px 12px; border-radius:12px; border:1px solid var(--border);
-  background:#0b1322; color:#var(--text); outline:none;
+  background:#0b1322; color:var(--text); outline:none;
 }
 .input:focus,.textarea:focus{ border-color:#2b72ff; box-shadow:0 0 0 3px rgba(43,114,255,.15) }
 .textarea{ resize:vertical; min-height:120px }
@@ -219,7 +218,7 @@ main{ padding-top:8px }
 .help-row{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:6px }
 
 /* ======= Header responsive (Mobile Nav) ======= */
-.header-wrap{ display:flex; align-items:center; gap:16px } /* kalau dipakai */
+.header-wrap{ display:flex; align-items:center; gap:16px }
 
 .nav-toggle{
   display:none; position:relative; width:44px; height:38px; border:1px solid var(--border);
@@ -238,8 +237,6 @@ main{ padding-top:8px }
 
 @media (max-width: 860px){
   .nav-toggle{ display:inline-block; margin-left:auto }
-
-  /* Panel nav menempel tepat di bawah header container */
   .nav{
     position:absolute; left:0; right:0; top:calc(100% + 1px);
     display:none; flex-direction:column; gap:8px;
@@ -257,7 +254,6 @@ main{ padding-top:8px }
   }
   .nav a.active,.nav a:hover{ background:var(--blue); color:#fff }
 
-  /* Jaga keseimbangan layout mobile */
   .header .container,
   .banner-outer,
   .section,
@@ -267,4 +263,4 @@ main{ padding-top:8px }
   }
 
   .no-scroll, .no-scroll body{ overflow:hidden }
-             }
+}
