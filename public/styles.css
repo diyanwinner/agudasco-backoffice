@@ -24,7 +24,7 @@
 
 /* ===== Base ===== */
 *{ box-sizing:border-box }
-html{ scrollbar-gutter: stable both-edges; }
+html{ scrollbar-gutter: stable; }
 html,body{
   margin:0; padding:0;
   background:var(--navy); color:var(--text);
