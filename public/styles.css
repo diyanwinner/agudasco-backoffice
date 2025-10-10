@@ -94,7 +94,7 @@ main{ padding-top:8px }
 .banner-wrapper .next{ right:10px }
 @media (max-width:600px){ .banner-wrapper .nav{ display:none } }
 
-/* ===== Section Artikel Terbaru ===== */
+/* ===== Section ===== */
 .section{
   width:100%;
   max-width:var(--wrap);
@@ -117,7 +117,7 @@ main{ padding-top:8px }
   transition:transform .2s ease, box-shadow .2s ease;
 }
 .card:hover{ transform:translateY(-3px); box-shadow:0 10px 24px rgba(0,0,0,.25) }
-.card img{ width:100%; height:180px; object-fit:cover; display:block }
+.card img{ width:100%; height:180px; object-fit:cover; display:block } /* list/grid tetap cover */
 .card .pad{ padding:14px 14px 16px }
 .card h3{ margin:0 0 6px; font-size:18px }
 .meta{ color:var(--muted); font-size:13px; margin:0 0 12px }
@@ -263,4 +263,32 @@ main{ padding-top:8px }
   }
 
   .no-scroll, .no-scroll body{ overflow:hidden }
+}
+
+/* ========== Detail page media preview (lihat-utuh) ========== */
+.media-preview{
+  width:100%;
+  max-width:var(--wrap);
+  margin: 12px auto 14px;
+  padding: clamp(8px,1.6vw,14px);
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(0,0,0,.28);
+  cursor: zoom-in;
+}
+.media-preview .media-fit{
+  display:block;
+  width:100%;
+  height: clamp(260px,72vh,820px);
+  object-fit: contain;     /* tampil utuh, tidak crop */
+  object-position:center;
+  background:#0e1726;      /* letterbox rapi */
+  border-radius:12px;
+}
+.media-caption{
+  color:var(--muted);
+  font-size:.95rem;
+  margin-top:8px;
+  text-align:center;
 }
