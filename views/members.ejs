@@ -1,21 +1,28 @@
-<section class="section">
-  <div class="section-head">
-    <h2>Anggota</h2>
-  </div>
+<main>
+  <div class="container">
+    <section class="section">
+      <div class="section-head">
+        <h1>Anggota</h1>
+        <div class="muted">Klik nama untuk lihat detail.</div>
+      </div>
 
-  <% if (!members.length) { %>
-    <p class="muted">Belum ada data anggota.</p>
-  <% } else { %>
-    <div class="grid cards">
-      <% members.forEach(m => { %>
-        <a class="card rowlink" href="/anggota/<%= m.id %>">
-          <img src="<%= m.avatar || 'https://via.placeholder.com/960x400?text=Anggota' %>" alt="<%= m.name %>">
-          <div class="pad">
-            <h3><%= m.name %></h3>
-            <p class="meta">Bergabung: <%= new Date(m.created_at).toLocaleDateString('id-ID') %></p>
-          </div>
-        </a>
-      <% }) %>
-    </div>
-  <% } %>
-</section>
+      <!-- Daftar ala "Excel": bernomor, ringkas -->
+      <ol class="members-list">
+        <% (members||[]).forEach(function(m){ %>
+          <li class="member-item">
+            <a class="member-link" href="/anggota/<%= m.id %>">
+              <img loading="lazy"
+                   class="avatar avatar--sm"
+                   src="<%= m.avatar || 'https://via.placeholder.com/96x96?text=%20' %>"
+                   alt="<%= m.name %>"/>
+              <span class="member-name"><%= m.name %></span>
+              <small class="member-date">Bergabung:
+                <%= new Date(m.created_at).toLocaleDateString('id-ID') %>
+              </small>
+            </a>
+          </li>
+        <% }) %>
+      </ol>
+    </section>
+  </div>
+</main>
