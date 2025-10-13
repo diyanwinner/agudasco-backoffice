@@ -1,43 +1,57 @@
-<section class="section">
-  <div class="section-head">
-    <h2><%= member.name %></h2>
-  </div>
+<main>
+  <div class="container">
 
-  <div class="media-preview">
-    <img class="media-fit" src="<%= member.avatar || 'https://via.placeholder.com/1200x600?text=Foto+Anggota' %>" alt="<%= member.name %>">
-    <% if (member.bio) { %>
-      <p class="media-caption"><%= member.bio %></p>
-    <% } %>
-  </div>
-
-  <div class="grid" style="grid-template-columns:1fr 1fr; gap:20px">
-    <div>
-      <h3>Keluarga</h3>
-      <% if (!families.length) { %>
-        <p class="muted">Belum ada data keluarga.</p>
-      <% } else { %>
-        <ul>
-          <% families.forEach(f => { %>
-            <li><strong><%= f.fullname %></strong> <span class="muted">(<%= f.relation || '–' %>)</span></li>
-          <% }) %>
-        </ul>
+    <!-- Judul -->
+    <div class="section-head">
+      <h1><%= member.name %></h1>
+      <% if ((member.bio||'').trim()) { %>
+        <div class="muted"><%= member.bio %></div>
       <% } %>
     </div>
 
-    <div>
-      <h3>Galeri</h3>
-      <% if (!photos.length) { %>
-        <p class="muted">Belum ada foto.</p>
-      <% } else { %>
-        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px">
-          <% photos.forEach(p => { %>
-            <a href="<%= p.image_url %>" target="_blank" class="card">
-              <img src="<%= p.image_url %>" alt="<%= p.caption || member.name %>">
-              <% if (p.caption) { %><div class="pad"><p class="meta"><%= p.caption %></p></div><% } %>
-            </a>
-          <% }) %>
-        </div>
-      <% } %>
-    </div>
+    <!-- Foto header: ukuran moderat -->
+    <figure class="media-preview member">
+      <img class="media-fit"
+           src="<%= member.avatar || 'https://via.placeholder.com/960x540?text=Foto' %>"
+           alt="<%= member.name %>"/>
+      <figcaption class="hero-caption">Anggota</figcaption>
+    </figure>
+
+    <!-- 2 kolom: Keluarga | Galeri -->
+    <section class="grid grid--2">
+      <div>
+        <h2>Keluarga</h2>
+        <% if ((families||[]).length === 0) { %>
+          <p class="muted">Belum ada data keluarga.</p>
+        <% } else { %>
+          <ul class="fam-list">
+            <% families.forEach(f => { %>
+              <li>
+                <strong><%= f.fullname %></strong>
+                <% if ((f.relation||'').trim()) { %>
+                  <span class="muted">(<%= f.relation %>)</span>
+                <% } %>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+
+      <div>
+        <h2>Galeri</h2>
+        <% if ((photos||[]).length === 0) { %>
+          <p class="muted">Belum ada foto.</p>
+        <% } else { %>
+          <div class="photo-grid">
+            <% photos.forEach(p => { %>
+              <a href="<%= p.image_url %>"
+                 onclick="openLightbox('<%= p.image_url %>','<%= p.caption||'' %>'); return false;">
+                <img loading="lazy" src="<%= p.image_url %>" alt="<%= p.caption||member.name %>"/>
+              </a>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </section>
   </div>
-</section>
+</main>
