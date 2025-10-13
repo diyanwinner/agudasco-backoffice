@@ -465,3 +465,187 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+/* ------------------------------------------------------------------
+   ANGGOTA – PUBLIC PAGES
+------------------------------------------------------------------- */
+
+/** List publik: /anggota */
+app.get("/anggota", async (req, res) => {
+  try {
+    const { rows: members } = await pool.query(
+      "SELECT id, name, avatar, created_at FROM members ORDER BY name ASC"
+    );
+    res.render("members", {
+      title: "Anggota",
+      active: "anggota",
+      members
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat anggota");
+  }
+});
+
+/** Detail publik: /anggota/:id */
+app.get("/anggota/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const { rows: mrows } = await pool.query("SELECT * FROM members WHERE id=$1", [id]);
+    if (!mrows.length) return res.status(404).send("Anggota tidak ditemukan");
+
+    const member = mrows[0];
+    const { rows: families } = await pool.query(
+      "SELECT id, fullname, relation FROM member_families WHERE member_id=$1 ORDER BY id ASC",
+      [id]
+    );
+    const { rows: photos } = await pool.query(
+      "SELECT id, image_url, caption FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
+      [id]
+    );
+
+    res.render("member_view", {
+      title: member.name,
+      active: "anggota",
+      member,
+      families,
+      photos
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat detail anggota");
+  }
+});
+
+/* ------------------------------------------------------------------
+   ANGGOTA – ADMIN PAGES  (dilindungi Basic Auth via /admin middleware)
+------------------------------------------------------------------- */
+
+/** Admin list + form tambah anggota */
+app.get("/admin/members", async (req, res) => {
+  try {
+    const { rows: members } = await pool.query(
+      "SELECT id, name, avatar, created_at FROM members ORDER BY created_at DESC"
+    );
+    res.render("admin/members", { title: "Kelola Anggota", members });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat anggota");
+  }
+});
+
+/** Create anggota (name + avatar image) */
+app.post("/admin/members", uploadImage.single("avatar"), async (req, res) => {
+  const { name, bio } = req.body;
+  const avatar = req.file ? req.file.path : null;
+  if (!name) return res.status(400).send("Nama wajib diisi");
+
+  try {
+    await pool.query(
+      "INSERT INTO members (name, avatar, bio) VALUES ($1,$2,$3)",
+      [name.trim(), avatar, bio || ""]
+    );
+    res.redirect("/admin/members");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menambah anggota");
+  }
+});
+
+/** Hapus anggota */
+app.post("/admin/members/:id/delete", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM members WHERE id=$1", [Number(req.params.id)]);
+    res.redirect("/admin/members");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menghapus anggota");
+  }
+});
+
+/** Halaman kelola 1 anggota: keluarga + foto */
+app.get("/admin/members/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const { rows: mrows } = await pool.query("SELECT * FROM members WHERE id=$1", [id]);
+    if (!mrows.length) return res.status(404).send("Anggota tidak ditemukan");
+    const member = mrows[0];
+
+    const { rows: families } = await pool.query(
+      "SELECT * FROM member_families WHERE member_id=$1 ORDER BY id ASC",
+      [id]
+    );
+    const { rows: photos } = await pool.query(
+      "SELECT * FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
+      [id]
+    );
+
+    res.render("admin/member_detail", { title: `Kelola: ${member.name}`, member, families, photos });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat data anggota");
+  }
+});
+
+/** Tambah keluarga */
+app.post("/admin/members/:id/family", async (req, res) => {
+  const memberId = Number(req.params.id);
+  const { fullname, relation } = req.body;
+  if (!fullname) return res.status(400).send("Nama keluarga wajib diisi");
+
+  try {
+    await pool.query(
+      "INSERT INTO member_families (member_id, fullname, relation) VALUES ($1,$2,$3)",
+      [memberId, fullname.trim(), (relation || "").trim()]
+    );
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menambah keluarga");
+  }
+});
+
+/** Hapus keluarga */
+app.post("/admin/members/:id/family/:fid/delete", async (req, res) => {
+  const memberId = Number(req.params.id);
+  const fid = Number(req.params.fid);
+  try {
+    await pool.query("DELETE FROM member_families WHERE id=$1 AND member_id=$2", [fid, memberId]);
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menghapus data keluarga");
+  }
+});
+
+/** Upload foto anggota */
+app.post("/admin/members/:id/photo", uploadImage.single("photo"), async (req, res) => {
+  const memberId = Number(req.params.id);
+  const { caption } = req.body;
+  const imageUrl = req.file ? req.file.path : null;
+  if (!imageUrl) return res.status(400).send("Foto belum dipilih");
+
+  try {
+    await pool.query(
+      "INSERT INTO member_photos (member_id, image_url, caption) VALUES ($1,$2,$3)",
+      [memberId, imageUrl, caption || ""]
+    );
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menambah foto");
+  }
+});
+
+/** Hapus foto anggota */
+app.post("/admin/members/:id/photo/:pid/delete", async (req, res) => {
+  const memberId = Number(req.params.id);
+  const pid = Number(req.params.pid);
+  try {
+    await pool.query("DELETE FROM member_photos WHERE id=$1 AND member_id=$2", [pid, memberId]);
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menghapus foto");
+  }
+});
