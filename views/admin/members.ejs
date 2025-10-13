@@ -1,26 +1,50 @@
-<h2>Kelola Anggota</h2>
-<form method="post" enctype="multipart/form-data" class="card pad">
-  <div class="form-row cols-2">
-    <div><label>Nama</label><input name="name" type="text" required/></div>
-    <div><label>Peran/Jabatan</label><input name="role" type="text"/></div>
+<div class="admin-wrap">
+  <div class="admin-head">
+    <h1 class="admin-title">Kelola Anggota</h1>
   </div>
-  <div class="form-row"><label>Foto</label><input name="photo" type="file" accept="image/*"/></div>
-  <div class="form-row"><label>Bio</label><textarea name="bio" rows="4"></textarea></div>
-  <button class="btn">Simpan</button>
-</form>
 
-<div class="grid cards" style="margin-top:16px;">
-  <% (members||[]).forEach(m=>{ %>
-    <div class="card">
-      <img src="<%= m.photo %>" alt="<%= m.name %>"/>
-      <div class="pad">
-        <h3><%= m.name %></h3>
-        <p class="meta"><%= m.role||'' %></p>
-        <% if(m.bio){ %><p><%= m.bio %></p><% } %>
-        <form method="post" action="/admin/members/<%= m.id %>/delete" onsubmit="return confirm('Hapus anggota?')">
-          <button class="btn red">Hapus</button>
-        </form>
-      </div>
+  <div class="form-modern grid" style="display:grid; grid-template-columns:1.2fr .8fr; gap:18px">
+    <div>
+      <h3>Daftar Anggota</h3>
+      <% if (!members.length) { %>
+        <p class="muted">Belum ada anggota.</p>
+      <% } else { %>
+        <div class="grid cards">
+          <% members.forEach(m => { %>
+            <div class="card">
+              <img src="<%= m.avatar || 'https://via.placeholder.com/960x400?text=Anggota' %>" alt="<%= m.name %>">
+              <div class="pad">
+                <h3><a class="rowlink" href="/admin/members/<%= m.id %>"><%= m.name %></a></h3>
+                <div class="help-row">
+                  <form method="post" action="/admin/members/<%= m.id %>/delete" onsubmit="return confirm('Hapus anggota ini?')">
+                    <button class="btn red" type="submit">Hapus</button>
+                  </form>
+                  <a class="btn" href="/admin/members/<%= m.id %>">Kelola</a>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
     </div>
-  <% }) %>
+
+    <div>
+      <h3>Tambah Anggota</h3>
+      <form class="form-modern" method="post" action="/admin/members" enctype="multipart/form-data">
+        <label class="label">Nama*</label>
+        <input class="input" type="text" name="name" required>
+
+        <label class="label">Bio (opsional)</label>
+        <textarea class="textarea" name="bio" placeholder="Deskripsi singkat"></textarea>
+
+        <label class="label">Foto Profil</label>
+        <input class="input" type="file" name="avatar" accept="image/*">
+
+        <div class="form-bar">
+          <span class="muted">File gambar otomatis diunggah ke Cloudinary.</span>
+          <button class="btn" type="submit">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
