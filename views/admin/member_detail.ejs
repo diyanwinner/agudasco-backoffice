@@ -1,0 +1,97 @@
+<div class="admin-wrap">
+  <div class="admin-head">
+    <h1 class="admin-title">Kelola: <%= member.name %></h1>
+    <a class="btn" href="/admin/members">← Kembali</a>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr; gap:18px">
+    <!-- Profil -->
+    <div class="card">
+      <img src="<%= member.avatar || 'https://via.placeholder.com/960x400?text=Anggota' %>" alt="<%= member.name %>">
+      <div class="pad">
+        <% if (member.bio) { %><p><%= member.bio %></p><% } %>
+        <form method="post" action="/admin/members/<%= member.id %>/delete" onsubmit="return confirm('Hapus anggota ini beserta data terkait?')">
+          <button class="btn red">Hapus Anggota</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tambah Foto -->
+    <div class="card">
+      <div class="pad">
+        <h3>Tambah Foto</h3>
+        <form method="post" action="/admin/members/<%= member.id %>/photo" enctype="multipart/form-data">
+          <label class="label">File Foto*</label>
+          <input class="input" type="file" name="photo" accept="image/*" required>
+          <label class="label">Caption (opsional)</label>
+          <input class="input" type="text" name="caption" placeholder="Keterangan foto">
+          <div class="form-bar">
+            <span class="muted">Tersimpan di Cloudinary.</span>
+            <button class="btn">Upload</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keluarga -->
+  <div class="grid" style="grid-template-columns:1fr 1fr; gap:18px; margin-top:18px">
+    <div class="card">
+      <div class="pad">
+        <h3>Daftar Keluarga</h3>
+        <% if (!families.length) { %>
+          <p class="muted">Belum ada data keluarga.</p>
+        <% } else { %>
+          <ul>
+            <% families.forEach(f => { %>
+              <li style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+                <span><strong><%= f.fullname %></strong> <span class="muted">(<%= f.relation || '–' %>)</span></span>
+                <form method="post" action="/admin/members/<%= member.id %>/family/<%= f.id %>/delete" onsubmit="return confirm('Hapus data keluarga ini?')">
+                  <button class="btn red">Hapus</button>
+                </form>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="pad">
+        <h3>Tambah Keluarga</h3>
+        <form method="post" action="/admin/members/<%= member.id %>/family">
+          <label class="label">Nama Lengkap*</label>
+          <input class="input" type="text" name="fullname" required>
+          <label class="label">Hubungan (opsional)</label>
+          <input class="input" type="text" name="relation" placeholder="Istri/Suami/Anak/dll">
+          <div class="form-bar">
+            <span></span>
+            <button class="btn">Tambah</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Galeri foto -->
+  <section class="section" style="padding-top:0">
+    <h3>Galeri Foto</h3>
+    <% if (!photos.length) { %>
+      <p class="muted">Belum ada foto.</p>
+    <% } else { %>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px">
+        <% photos.forEach(p => { %>
+          <div class="card">
+            <img src="<%= p.image_url %>" alt="<%= p.caption || member.name %>">
+            <div class="pad" style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+              <span class="meta"><%= p.caption || '' %></span>
+              <form method="post" action="/admin/members/<%= member.id %>/photo/<%= p.id %>/delete" onsubmit="return confirm('Hapus foto ini?')">
+                <button class="btn red">Hapus</button>
+              </form>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</div>
