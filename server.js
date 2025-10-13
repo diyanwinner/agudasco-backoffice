@@ -4,12 +4,11 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
-// ❌ (hapus) import sqlite3 from "sqlite3";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-// ✅ Postgres (Neon)
+// Postgres (Neon)
 import pkg from "pg";
 const { Pool } = pkg;
 
@@ -23,7 +22,7 @@ const app = express();
 ------------------------------------------------------------------- */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // diperlukan untuk Neon
+  ssl: { rejectUnauthorized: false },
 });
 
 // helper query
@@ -36,9 +35,10 @@ async function q1(sql, params = []) {
   return rows[0] || null;
 }
 
-// (opsional) bootstrap tabel agar aman di env baru
+// buat tabel-tabel kalau belum ada (termasuk Anggota)
 async function ensureTables() {
   await pool.query(`
+    -- Articles
     CREATE TABLE IF NOT EXISTS articles (
       id         BIGSERIAL PRIMARY KEY,
       title      TEXT NOT NULL,
@@ -48,12 +48,14 @@ async function ensureTables() {
     );
     CREATE INDEX IF NOT EXISTS idx_articles_created_at ON articles (created_at DESC);
 
+    -- Banners
     CREATE TABLE IF NOT EXISTS banners (
       id         BIGSERIAL PRIMARY KEY,
       image      TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- Reports
     CREATE TABLE IF NOT EXISTS reports (
       id         BIGSERIAL PRIMARY KEY,
       title      TEXT NOT NULL,
@@ -62,6 +64,7 @@ async function ensureTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- AD/ART
     CREATE TABLE IF NOT EXISTS adarts (
       id         BIGSERIAL PRIMARY KEY,
       title      TEXT NOT NULL,
@@ -69,11 +72,36 @@ async function ensureTables() {
       pdf_url    TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    -- Members (Anggota)
+    CREATE TABLE IF NOT EXISTS members (
+      id         BIGSERIAL PRIMARY KEY,
+      name       TEXT NOT NULL,
+      avatar     TEXT,
+      bio        TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS idx_members_name ON members (name ASC);
+
+    -- Member Families
+    CREATE TABLE IF NOT EXISTS member_families (
+      id         BIGSERIAL PRIMARY KEY,
+      member_id  BIGINT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+      fullname   TEXT NOT NULL,
+      relation   TEXT
+    );
+
+    -- Member Photos
+    CREATE TABLE IF NOT EXISTS member_photos (
+      id         BIGSERIAL PRIMARY KEY,
+      member_id  BIGINT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+      image_url  TEXT NOT NULL,
+      caption    TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `);
 }
-ensureTables().catch((e) => {
-  console.error("ensureTables error:", e);
-});
+ensureTables().catch((e) => console.error("ensureTables error:", e));
 
 /* ------------------------------------------------------------------
    Cloudinary + Multer (image only)
@@ -103,7 +131,7 @@ const uploadImage = multer({ storage: imageStorage });
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// aset statis di /public
+// assets di /public
 app.use("/public", express.static(path.join(__dirname, "public")));
 
 // View engine
@@ -112,7 +140,7 @@ app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-// build id untuk cache busting
+// build id untuk cache-busting
 app.locals.buildId = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
 app.use((req, res, next) => {
   res.locals.buildId = app.locals.buildId;
@@ -121,7 +149,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// CSP (longgar agar Cloudinary bisa load)
+// CSP ramah Cloudinary
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -131,7 +159,7 @@ app.use((req, res, next) => {
 });
 
 /* ------------------------------------------------------------------
-   Basic Auth untuk /admin
+   Basic Auth untuk semua /admin/*
 ------------------------------------------------------------------- */
 function adminAuth(req, res, next) {
   const header = req.headers.authorization || "";
@@ -178,8 +206,6 @@ function normalizePdfUrl(url) {
     return url.trim();
   }
 }
-
-// render aman fallback
 function renderSafe(res, viewName, props = {}) {
   const full = path.join(__dirname, "views", `${viewName}.ejs`);
   if (fs.existsSync(full)) return res.render(viewName, props);
@@ -200,12 +226,7 @@ app.get("/", async (req, res) => {
   try {
     const banners = await q("SELECT * FROM banners ORDER BY id DESC LIMIT 10");
     const arts = await q("SELECT * FROM articles ORDER BY id DESC LIMIT 6");
-    res.render("home", {
-      title: "AGUDASCO – Beranda",
-      active: "home",
-      banners,
-      arts,
-    });
+    res.render("home", { title: "AGUDASCO – Beranda", active: "home", banners, arts });
   } catch (err) {
     console.error("Home error:", err);
     res.status(500).send("Server error");
@@ -222,7 +243,6 @@ app.get("/artikel", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.get("/artikel/:id", async (req, res) => {
   try {
     const article = await q1("SELECT * FROM articles WHERE id = $1", [req.params.id]);
@@ -244,7 +264,6 @@ app.get("/laporan", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.get("/laporan/:id", async (req, res) => {
   try {
     const report = await q1("SELECT * FROM reports WHERE id = $1", [req.params.id]);
@@ -257,7 +276,7 @@ app.get("/laporan/:id", async (req, res) => {
   }
 });
 
-/* ---- AD/ART (public) ---- */
+/* ---- AD/ART ---- */
 app.get("/adart", async (req, res) => {
   try {
     const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
@@ -267,7 +286,6 @@ app.get("/adart", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.get("/adart/:id", async (req, res) => {
   try {
     const item = await q1("SELECT * FROM adarts WHERE id = $1", [req.params.id]);
@@ -280,22 +298,55 @@ app.get("/adart/:id", async (req, res) => {
   }
 });
 
-/* ---- Menu statis ---- */
-app.get("/anggota", (req, res) =>
-  renderSafe(res, "anggota", { title: "Anggota", active: "anggota", anggota: [] })
-);
-app.get("/galeri", (req, res) =>
-  renderSafe(res, "galeri", { title: "Galeri", active: "galeri", fotos: [] })
-);
-app.get("/tentang", (req, res) =>
-  renderSafe(res, "tentang", { title: "Tentang", active: "tentang" })
-);
-app.get("/kontak", (req, res) =>
-  renderSafe(res, "kontak", { title: "Kontak", active: "kontak" })
-);
+/* ------------------------------------------------------------------
+   ANGGOTA – PUBLIC PAGES (DINAMIS)
+------------------------------------------------------------------- */
+app.get("/anggota", async (req, res) => {
+  try {
+    const members = await q(
+      "SELECT id, name, avatar, created_at FROM members ORDER BY name ASC"
+    );
+    res.render("members", { title: "Anggota", active: "anggota", members });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat anggota");
+  }
+});
+app.get("/anggota/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
+    if (!member) return res.status(404).send("Anggota tidak ditemukan");
+
+    const families = await q(
+      "SELECT id, fullname, relation FROM member_families WHERE member_id=$1 ORDER BY id ASC",
+      [id]
+    );
+    const photos = await q(
+      "SELECT id, image_url, caption FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
+      [id]
+    );
+
+    res.render("member_view", {
+      title: member.name,
+      active: "anggota",
+      member,
+      families,
+      photos,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat detail anggota");
+  }
+});
+
+/* ---- Menu statis lain (sementara) ---- */
+app.get("/galeri", (req, res) => renderSafe(res, "galeri", { title: "Galeri", active: "galeri" }));
+app.get("/tentang", (req, res) => renderSafe(res, "tentang", { title: "Tentang", active: "tentang" }));
+app.get("/kontak", (req, res) => renderSafe(res, "kontak", { title: "Kontak", active: "kontak" }));
 
 /* ------------------------------------------------------------------
-   Routes – Admin
+   Routes – Admin (Basic Auth aktif lewat app.use("/admin", adminAuth))
 ------------------------------------------------------------------- */
 app.get("/admin", (req, res) => res.render("admin/dashboard", { title: "Dashboard" }));
 
@@ -309,24 +360,22 @@ app.get("/admin/articles", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/articles", uploadImage.single("image"), async (req, res) => {
   try {
     const { title, content } = req.body;
     const image = req.file ? req.file.path : null;
     if (!title) return res.status(400).send("Judul wajib diisi");
-
-    await q(
-      "INSERT INTO articles (title, content, image) VALUES ($1, $2, $3)",
-      [title.trim(), content || "", image]
-    );
+    await q("INSERT INTO articles (title, content, image) VALUES ($1,$2,$3)", [
+      title.trim(),
+      content || "",
+      image,
+    ]);
     res.redirect("/admin/articles");
   } catch (err) {
     console.error("Admin create article error:", err);
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/articles/:id/delete", async (req, res) => {
   try {
     await q("DELETE FROM articles WHERE id = $1", [req.params.id]);
@@ -347,12 +396,10 @@ app.get("/admin/banners", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/banners", uploadImage.single("image"), async (req, res) => {
   try {
     const image = req.file ? req.file.path : null;
     if (!image) return res.status(400).send("File gambar belum dipilih");
-
     await q("INSERT INTO banners (image) VALUES ($1)", [image]);
     res.redirect("/admin/banners");
   } catch (err) {
@@ -360,7 +407,6 @@ app.post("/admin/banners", uploadImage.single("image"), async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/banners/:id/delete", async (req, res) => {
   try {
     await q("DELETE FROM banners WHERE id = $1", [req.params.id]);
@@ -381,25 +427,23 @@ app.get("/admin/reports", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/reports", uploadImage.single("cover"), async (req, res) => {
   try {
     const { title, pdf_url } = req.body;
     const cover = req.file ? req.file.path : null;
     if (!title) return res.status(400).send("Judul wajib diisi");
-
     const fixedPdf = normalizePdfUrl(pdf_url || "");
-    await q(
-      "INSERT INTO reports (title, cover, pdf_url) VALUES ($1, $2, $3)",
-      [title.trim(), cover, fixedPdf]
-    );
+    await q("INSERT INTO reports (title, cover, pdf_url) VALUES ($1,$2,$3)", [
+      title.trim(),
+      cover,
+      fixedPdf,
+    ]);
     res.redirect("/admin/reports");
   } catch (err) {
     console.error("Admin create report error:", err);
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/reports/:id/delete", async (req, res) => {
   try {
     await q("DELETE FROM reports WHERE id = $1", [req.params.id]);
@@ -420,25 +464,23 @@ app.get("/admin/adart", async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/adart", uploadImage.single("cover"), async (req, res) => {
   try {
     const { title, pdf_url } = req.body;
     const cover = req.file ? req.file.path : null;
     if (!title) return res.status(400).send("Judul wajib diisi");
-
     const fixedPdf = normalizePdfUrl(pdf_url || "");
-    await q(
-      "INSERT INTO adarts (title, cover, pdf_url) VALUES ($1, $2, $3)",
-      [title.trim(), cover, fixedPdf]
-    );
+    await q("INSERT INTO adarts (title, cover, pdf_url) VALUES ($1,$2,$3)", [
+      title.trim(),
+      cover,
+      fixedPdf,
+    ]);
     res.redirect("/admin/adart");
   } catch (err) {
     console.error("Admin create adart error:", err);
     res.status(500).send("Server error");
   }
 });
-
 app.post("/admin/adart/:id/delete", async (req, res) => {
   try {
     await q("DELETE FROM adarts WHERE id = $1", [req.params.id]);
@@ -449,8 +491,123 @@ app.post("/admin/adart/:id/delete", async (req, res) => {
   }
 });
 
+// Admin: Members (Anggota)
+app.get("/admin/members", async (req, res) => {
+  try {
+    const members = await q(
+      "SELECT id, name, avatar, created_at FROM members ORDER BY created_at DESC"
+    );
+    res.render("admin/members", { title: "Kelola Anggota", members });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat anggota");
+  }
+});
+app.post("/admin/members", uploadImage.single("avatar"), async (req, res) => {
+  const { name, bio } = req.body;
+  const avatar = req.file ? req.file.path : null;
+  if (!name) return res.status(400).send("Nama wajib diisi");
+  try {
+    await q("INSERT INTO members (name, avatar, bio) VALUES ($1,$2,$3)", [
+      name.trim(),
+      avatar,
+      bio || "",
+    ]);
+    res.redirect("/admin/members");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menambah anggota");
+  }
+});
+app.post("/admin/members/:id/delete", async (req, res) => {
+  try {
+    await q("DELETE FROM members WHERE id=$1", [Number(req.params.id)]);
+    res.redirect("/admin/members");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menghapus anggota");
+  }
+});
+app.get("/admin/members/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
+    if (!member) return res.status(404).send("Anggota tidak ditemukan");
+    const families = await q(
+      "SELECT * FROM member_families WHERE member_id=$1 ORDER BY id ASC",
+      [id]
+    );
+    const photos = await q(
+      "SELECT * FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
+      [id]
+    );
+    res.render("admin/member_detail", {
+      title: `Kelola: ${member.name}`,
+      member,
+      families,
+      photos,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat data anggota");
+  }
+});
+app.post("/admin/members/:id/family", async (req, res) => {
+  const memberId = Number(req.params.id);
+  const { fullname, relation } = req.body;
+  if (!fullname) return res.status(400).send("Nama keluarga wajib diisi");
+  try {
+    await q(
+      "INSERT INTO member_families (member_id, fullname, relation) VALUES ($1,$2,$3)",
+      [memberId, fullname.trim(), (relation || "").trim()]
+    );
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menambah keluarga");
+  }
+});
+app.post("/admin/members/:id/family/:fid/delete", async (req, res) => {
+  const memberId = Number(req.params.id);
+  const fid = Number(req.params.fid);
+  try {
+    await q("DELETE FROM member_families WHERE id=$1 AND member_id=$2", [fid, memberId]);
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menghapus data keluarga");
+  }
+});
+app.post("/admin/members/:id/photo", uploadImage.single("photo"), async (req, res) => {
+  const memberId = Number(req.params.id);
+  const { caption } = req.body;
+  const imageUrl = req.file ? req.file.path : null;
+  if (!imageUrl) return res.status(400).send("Foto belum dipilih");
+  try {
+    await q(
+      "INSERT INTO member_photos (member_id, image_url, caption) VALUES ($1,$2,$3)",
+      [memberId, imageUrl, caption || ""]
+    );
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menambah foto");
+  }
+});
+app.post("/admin/members/:id/photo/:pid/delete", async (req, res) => {
+  const memberId = Number(req.params.id);
+  const pid = Number(req.params.pid);
+  try {
+    await q("DELETE FROM member_photos WHERE id=$1 AND member_id=$2", [pid, memberId]);
+    res.redirect(`/admin/members/${memberId}`);
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menghapus foto");
+  }
+});
+
 /* ------------------------------------------------------------------
-   404 & Error handlers
+   404 & Error handlers (PASTIKAN PALING AKHIR)
 ------------------------------------------------------------------- */
 app.use((req, res) => res.status(404).send("Not Found"));
 app.use((err, req, res, next) => {
@@ -464,188 +621,4 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
-});
-
-/* ------------------------------------------------------------------
-   ANGGOTA – PUBLIC PAGES
-------------------------------------------------------------------- */
-
-/** List publik: /anggota */
-app.get("/anggota", async (req, res) => {
-  try {
-    const { rows: members } = await pool.query(
-      "SELECT id, name, avatar, created_at FROM members ORDER BY name ASC"
-    );
-    res.render("members", {
-      title: "Anggota",
-      active: "anggota",
-      members
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal memuat anggota");
-  }
-});
-
-/** Detail publik: /anggota/:id */
-app.get("/anggota/:id", async (req, res) => {
-  const id = Number(req.params.id);
-  try {
-    const { rows: mrows } = await pool.query("SELECT * FROM members WHERE id=$1", [id]);
-    if (!mrows.length) return res.status(404).send("Anggota tidak ditemukan");
-
-    const member = mrows[0];
-    const { rows: families } = await pool.query(
-      "SELECT id, fullname, relation FROM member_families WHERE member_id=$1 ORDER BY id ASC",
-      [id]
-    );
-    const { rows: photos } = await pool.query(
-      "SELECT id, image_url, caption FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
-      [id]
-    );
-
-    res.render("member_view", {
-      title: member.name,
-      active: "anggota",
-      member,
-      families,
-      photos
-    });
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal memuat detail anggota");
-  }
-});
-
-/* ------------------------------------------------------------------
-   ANGGOTA – ADMIN PAGES  (dilindungi Basic Auth via /admin middleware)
-------------------------------------------------------------------- */
-
-/** Admin list + form tambah anggota */
-app.get("/admin/members", async (req, res) => {
-  try {
-    const { rows: members } = await pool.query(
-      "SELECT id, name, avatar, created_at FROM members ORDER BY created_at DESC"
-    );
-    res.render("admin/members", { title: "Kelola Anggota", members });
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal memuat anggota");
-  }
-});
-
-/** Create anggota (name + avatar image) */
-app.post("/admin/members", uploadImage.single("avatar"), async (req, res) => {
-  const { name, bio } = req.body;
-  const avatar = req.file ? req.file.path : null;
-  if (!name) return res.status(400).send("Nama wajib diisi");
-
-  try {
-    await pool.query(
-      "INSERT INTO members (name, avatar, bio) VALUES ($1,$2,$3)",
-      [name.trim(), avatar, bio || ""]
-    );
-    res.redirect("/admin/members");
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal menambah anggota");
-  }
-});
-
-/** Hapus anggota */
-app.post("/admin/members/:id/delete", async (req, res) => {
-  try {
-    await pool.query("DELETE FROM members WHERE id=$1", [Number(req.params.id)]);
-    res.redirect("/admin/members");
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal menghapus anggota");
-  }
-});
-
-/** Halaman kelola 1 anggota: keluarga + foto */
-app.get("/admin/members/:id", async (req, res) => {
-  const id = Number(req.params.id);
-  try {
-    const { rows: mrows } = await pool.query("SELECT * FROM members WHERE id=$1", [id]);
-    if (!mrows.length) return res.status(404).send("Anggota tidak ditemukan");
-    const member = mrows[0];
-
-    const { rows: families } = await pool.query(
-      "SELECT * FROM member_families WHERE member_id=$1 ORDER BY id ASC",
-      [id]
-    );
-    const { rows: photos } = await pool.query(
-      "SELECT * FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
-      [id]
-    );
-
-    res.render("admin/member_detail", { title: `Kelola: ${member.name}`, member, families, photos });
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal memuat data anggota");
-  }
-});
-
-/** Tambah keluarga */
-app.post("/admin/members/:id/family", async (req, res) => {
-  const memberId = Number(req.params.id);
-  const { fullname, relation } = req.body;
-  if (!fullname) return res.status(400).send("Nama keluarga wajib diisi");
-
-  try {
-    await pool.query(
-      "INSERT INTO member_families (member_id, fullname, relation) VALUES ($1,$2,$3)",
-      [memberId, fullname.trim(), (relation || "").trim()]
-    );
-    res.redirect(`/admin/members/${memberId}`);
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal menambah keluarga");
-  }
-});
-
-/** Hapus keluarga */
-app.post("/admin/members/:id/family/:fid/delete", async (req, res) => {
-  const memberId = Number(req.params.id);
-  const fid = Number(req.params.fid);
-  try {
-    await pool.query("DELETE FROM member_families WHERE id=$1 AND member_id=$2", [fid, memberId]);
-    res.redirect(`/admin/members/${memberId}`);
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal menghapus data keluarga");
-  }
-});
-
-/** Upload foto anggota */
-app.post("/admin/members/:id/photo", uploadImage.single("photo"), async (req, res) => {
-  const memberId = Number(req.params.id);
-  const { caption } = req.body;
-  const imageUrl = req.file ? req.file.path : null;
-  if (!imageUrl) return res.status(400).send("Foto belum dipilih");
-
-  try {
-    await pool.query(
-      "INSERT INTO member_photos (member_id, image_url, caption) VALUES ($1,$2,$3)",
-      [memberId, imageUrl, caption || ""]
-    );
-    res.redirect(`/admin/members/${memberId}`);
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal menambah foto");
-  }
-});
-
-/** Hapus foto anggota */
-app.post("/admin/members/:id/photo/:pid/delete", async (req, res) => {
-  const memberId = Number(req.params.id);
-  const pid = Number(req.params.pid);
-  try {
-    await pool.query("DELETE FROM member_photos WHERE id=$1 AND member_id=$2", [pid, memberId]);
-    res.redirect(`/admin/members/${memberId}`);
-  } catch (e) {
-    console.error(e);
-    res.status(500).send("Gagal menghapus foto");
-  }
 });
