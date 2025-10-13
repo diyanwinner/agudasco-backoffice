@@ -312,3 +312,57 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   margin-top: 8px;
   text-align: center;
 }
+
+/* ====== Anggota: daftar ala Excel ====== */
+.members-list{
+  list-style: decimal;
+  margin: 0;
+  padding-left: 1.25rem; /* spasi nomor */
+  display: grid;
+  gap: 8px;
+}
+.member-item{ 
+  padding-left: .25rem;
+}
+.member-link{
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.06);
+}
+.member-link:hover{ background: rgba(255,255,255,.06) }
+.avatar{ display:block; object-fit:cover; border-radius:10px; }
+.avatar--sm{ width:48px; height:48px; }
+.member-name{ font-weight:600 }
+.member-date{ color:var(--muted) }
+
+/* ====== Detail anggota ====== */
+/* foto header: tidak terlalu besar */
+.media-preview.member .media-fit{
+  height: clamp(180px, 38vh, 440px);
+  object-fit: cover;     /* tetap rapi */
+}
+
+/* dua kolom pada desktop */
+.grid--2{
+  display:grid; gap:18px; margin-top: 14px;
+  grid-template-columns: 1.2fr 1fr;
+}
+@media (max-width: 860px){ .grid--2{ grid-template-columns: 1fr } }
+
+.fam-list{ margin: 6px 0 0; padding-left: 1.1rem; }
+.fam-list li{ margin:.35rem 0 }
+
+/* galeri foto kecil */
+.photo-grid{
+  display:grid; gap:10px;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+.photo-grid img{
+  width:100%; height:110px; object-fit:cover; display:block;
+  border-radius:10px; border:1px solid rgba(255,255,255,.08);
+}
