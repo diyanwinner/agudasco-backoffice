@@ -1,7 +1,24 @@
+ <!-- Judul -->
 <main>
   <div class="container">
 
+    <!-- Aksi halaman -->
+    <div class="page-actions">
+      <a class="btn ghost back"
+         href="/anggota"
+         onclick="if (history.length > 1) { history.back(); return false; }">
+        ← Kembali
+      </a>
+    </div>
+
     <!-- Judul -->
+    <div class="section-head">
+      <h1><%= member.name %></h1>
+      <% if ((member.bio||'').trim()) { %>
+        <div class="muted"><%= member.bio %></div>
+      <% } %>
+    </div>
+
     <div class="section-head">
       <h1><%= member.name %></h1>
       <% if ((member.bio||'').trim()) { %>
