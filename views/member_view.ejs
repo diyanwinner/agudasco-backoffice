@@ -19,14 +19,7 @@
       <% } %>
     </div>
 
-    <div class="section-head">
-      <h1><%= member.name %></h1>
-      <% if ((member.bio||'').trim()) { %>
-        <div class="muted"><%= member.bio %></div>
-      <% } %>
-    </div>
-
-    <!-- Foto header: ukuran moderat -->
+        <!-- Foto header: ukuran moderat -->
     <figure class="media-preview member">
       <img class="media-fit"
            src="<%= member.avatar || 'https://via.placeholder.com/960x540?text=Foto' %>"
