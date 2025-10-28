@@ -315,15 +315,14 @@ app.get("/anggota", async (req, res) => {
 app.get("/anggota/:id", async (req, res) => {
   const id = Number(req.params.id);
   try {
-    const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
-    if (!member) return res.status(404).send("Anggota tidak ditemukan");
+    const { rows } = await pool.query("SELECT * FROM members WHERE id=$1", [id]);
+    if (!rows.length) return res.status(404).send("Anggota tidak ditemukan");
+    const member = rows[0];
 
       res.render("member_view", {
       title: member.name,
       active: "anggota",
-      member,
-      families,
-      photos,
+      member,      
     });
   } catch (e) {
     console.error(e);
