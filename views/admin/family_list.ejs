@@ -1,91 +1,98 @@
+<%- include("../partials/admin_head", { title }) %>
+
 <div class="container admin-wrap">
   <div class="admin-head">
-    <h1 class="admin-title"><%= title || "Data Keluarga Anggota" %></h1>
-
-<%
-// fallback kalau selectedMemberId tidak dikirim dari server
-const selId = (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null)
-  ? String(selectedMemberId)
-  : "";
-%>
-
-    <form action="/admin/family" method="get" class="flex gap-2 items-center">
-      <select name="member_id" onchange="this.form.submit()" class="input" style="min-width:200px">
-        <option value="">— Semua Anggota —</option>
-        <% (members || []).forEach(m => { %>
-          <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>>
-            <%= m.name %>
-          </option>
-        <% }) %>
-      </select>
-      <% if (selectedMemberId) { %>
-        <a href="/admin/family" class="btn gray">Reset</a>
-      <% } %>
-    </form>
+    <h1 class="admin-title">Data Keluarga</h1>
   </div>
 
-  <!-- Form tambah keluarga -->
-  <div class="card mb-3">
-    <h2 class="h5 mb-2">Tambah Keluarga</h2>
-    <form action="/admin/family" method="post" class="flex gap-2 flex-wrap">
-      <div style="flex:1; min-width:180px">
-        <label>Anggota</label>
-        <select name="member_id" required class="input">
-          <option value="">Pilih...</option>
-          <% (members || []).forEach(m => { %>
-            <option value="<%= m.id %>"><%= m.name %></option>
-          <% }) %>
-        </select>
-      </div>
-      <div style="flex:1; min-width:180px">
-        <label>Nama Keluarga</label>
-        <input type="text" name="fullname" class="input" required placeholder="Nama Lengkap" />
-      </div>
-      <div style="flex:1; min-width:180px">
-        <label>Relasi</label>
-        <input type="text" name="relation" class="input" placeholder="Contoh: Istri, Anak, Suami" />
-      </div>
-      <div class="flex items-end">
-        <button class="btn primary" type="submit">+ Tambah</button>
-      </div>
-    </form>
-  </div>
+  <% // ==== Fallback agar aman walau server tak mengirim selectedMemberId ==== %>
+  <%
+    const selId = (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null && selectedMemberId !== false)
+      ? String(selectedMemberId)
+      : "";
+  %>
+
+  <!-- Filter anggota -->
+  <form method="get" action="/admin/family" class="card" style="padding:12px; display:flex; gap:10px; align-items:center">
+    <label for="member_id" style="margin-right:6px">Filter Anggota</label>
+    <select id="member_id" name="member_id" onchange="this.form.submit()" class="input" style="min-width:220px">
+      <option value="">— Semua Anggota —</option>
+      <% (members || []).forEach(m => { %>
+        <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>><%= m.name %></option>
+      <% }) %>
+    </select>
+
+    <% if (selId) { %>
+      <a class="btn ghost" href="/admin/family">Reset</a>
+    <% } %>
+  </form>
 
   <!-- Tabel keluarga -->
-  <div class="card table-wrap">
-    <table class="table" style="width:100%; border-collapse:collapse;">
+  <div class="table-wrap card" style="margin-top:12px">
+    <table class="table" style="width:100%; border-collapse:collapse">
       <thead>
         <tr>
           <th style="padding:10px; text-align:left">Anggota</th>
           <th style="padding:10px; text-align:left">Nama Keluarga</th>
           <th style="padding:10px; text-align:left">Relasi</th>
+          <th style="padding:10px; text-align:left">Dibuat</th>
           <th style="padding:10px; text-align:right">Aksi</th>
         </tr>
       </thead>
       <tbody>
-        <% if (!families || !families.length) { %>
-          <tr>
-            <td colspan="4" style="padding:12px; color:var(--muted)">Belum ada data keluarga.</td>
-          </tr>
+        <% if (!families || families.length === 0) { %>
+          <tr><td colspan="5" style="padding:12px; color:var(--muted)">Belum ada data.</td></tr>
+        <% } else { %>
+          <% families.forEach(f => { %>
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:10px">
+                <% if (f.member_id) { %>
+                  <a class="rowlink" href="/anggota/<%= f.member_id %>" target="_blank"><%= f.member_name || '—' %></a>
+                <% } else { %> — <% } %>
+              </td>
+              <td style="padding:10px"><strong><%= f.fullname %></strong></td>
+              <td style="padding:10px"><%= f.relation || '—' %></td>
+              <td style="padding:10px"><%= f.created_at ? new Date(f.created_at).toLocaleString('id-ID') : '—' %></td>
+              <td style="padding:10px; text-align:right; white-space:nowrap">
+                <a class="btn" href="/admin/families/<%= f.id %>">Edit</a>
+                <form action="/admin/family/<%= f.id %>/delete" method="post" style="display:inline" onsubmit="return confirm('Hapus data ini?')">
+                  <input type="hidden" name="back_to" value="/admin/family<%= selId ? ('?member_id=' + encodeURIComponent(selId)) : '' %>">
+                  <button class="btn red" type="submit">Hapus</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
         <% } %>
-        <% (families || []).forEach(f => { %>
-          <tr style="border-top:1px solid var(--border)">
-            <td style="padding:10px">
-              <% if (f.member_id) { %>
-                <a href="/anggota/<%= f.member_id %>" target="_blank"><%= f.member_name %></a>
-              <% } else { %> — <% } %>
-            </td>
-            <td style="padding:10px"><strong><%= f.fullname %></strong></td>
-            <td style="padding:10px"><%= f.relation || "—" %></td>
-            <td style="padding:10px; text-align:right; white-space:nowrap">
-              <form action="/admin/family/<%= f.id %>/delete" method="post" style="display:inline"
-                    onsubmit="return confirm('Yakin hapus data ini?')">
-                <button class="btn red" type="submit">Hapus</button>
-              </form>
-            </td>
-          </tr>
-        <% }) %>
       </tbody>
     </table>
   </div>
+
+  <!-- Form tambah cepat -->
+  <div class="card" style="margin-top:12px">
+    <h3 style="margin:0 0 10px 0">Tambah Keluarga</h3>
+    <form action="/admin/family" method="post" style="display:grid; gap:10px; grid-template-columns:1fr 1fr 1fr auto">
+      <div>
+        <label>Anggota</label>
+        <select name="member_id" class="input" required>
+          <% (members || []).forEach(m => { %>
+            <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>><%= m.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label>Nama Keluarga</label>
+        <input class="input" type="text" name="fullname" placeholder="mis. Novi Dwi" required>
+      </div>
+      <div>
+        <label>Relasi</label>
+        <input class="input" type="text" name="relation" placeholder="mis. Istri / Anak">
+      </div>
+      <div style="align-self:end">
+        <input type="hidden" name="back_to" value="/admin/family<%= selId ? ('?member_id=' + encodeURIComponent(selId)) : '' %>">
+        <button class="btn" type="submit">Simpan</button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<%- include("../partials/admin_foot") %>
