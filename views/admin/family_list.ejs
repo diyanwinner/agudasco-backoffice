@@ -1,7 +1,6 @@
 <%
 // Halaman single-page untuk kelola data keluarga.
 // Memakai layout default dari express-ejs-layouts (layout.ejs).
-// Tidak perlu include("../partials/admin_head") / admin_foot.
 %>
 
 <div class="container admin-wrap">
@@ -17,24 +16,30 @@
         : "";
   %>
 
-  <!-- Filter anggota -->
-  <form method="get" action="/admin/family" class="card" style="padding:12px; display:flex; gap:10px; align-items:center">
-    <label for="member_id" style="margin-right:6px">Filter Anggota</label>
-    <select id="member_id" name="member_id" onchange="this.form.submit()" class="input" style="min-width:220px">
-      <option value="">— Semua Anggota —</option>
-      <% (members || []).forEach(m => { %>
-        <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>><%= m.name %></option>
-      <% }) %>
-    </select>
+  <!-- Filter anggota + Search teks -->
+  <div class="card" style="padding:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+    <form method="get" action="/admin/family" style="display:flex; gap:10px; align-items:center">
+      <label for="member_id" style="margin-right:6px">Filter Anggota</label>
+      <select id="member_id" name="member_id" onchange="this.form.submit()" class="input" style="min-width:220px">
+        <option value="">— Semua Anggota —</option>
+        <% (members || []).forEach(m => { %>
+          <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>><%= m.name %></option>
+        <% }) %>
+      </select>
+      <% if (selId) { %>
+        <a class="btn ghost" href="/admin/family">Reset</a>
+      <% } %>
+    </form>
 
-    <% if (selId) { %>
-      <a class="btn ghost" href="/admin/family">Reset</a>
-    <% } %>
-  </form>
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
+      <label for="textFilter" class="muted">Cari</label>
+      <input id="textFilter" class="input" type="text" placeholder="ketik nama keluarga / relasi / anggota…" style="min-width:280px">
+    </div>
+  </div>
 
   <!-- Tabel keluarga -->
   <div class="table-wrap card" style="margin-top:12px">
-    <table class="table" style="width:100%; border-collapse:collapse">
+    <table class="table" id="familyTable" style="width:100%; border-collapse:collapse">
       <thead>
         <tr>
           <th style="padding:10px; text-align:left">Anggota</th>
@@ -51,7 +56,13 @@
           </tr>
         <% } else { %>
           <% families.forEach(f => { %>
-            <tr style="border-top:1px solid var(--border)">
+            <!-- BARIS DATA -->
+            <tr class="data-row" data-search="<%= [
+                  (f.member_name||''),
+                  (f.fullname||''),
+                  (f.relation||'')
+                ].join(' ').toLowerCase() %>"
+                style="border-top:1px solid var(--border)">
               <td style="padding:10px">
                 <% if (f.member_id) { %>
                   <a class="rowlink" href="/anggota/<%= f.member_id %>" target="_blank">
@@ -67,13 +78,42 @@
                 <%= f.created_at ? new Date(f.created_at).toLocaleString('id-ID') : '—' %>
               </td>
               <td style="padding:10px; text-align:right; white-space:nowrap">
-                <!-- Hapus (Edit dihapus karena konsep single-page tanpa form terpisah) -->
+                <button class="btn" type="button" onclick="toggleEdit('<%= f.id %>')">Edit</button>
                 <form action="/admin/family/<%= f.id %>/delete" method="post"
                       style="display:inline"
                       onsubmit="return confirm('Hapus data ini?')">
                   <input type="hidden" name="back_to"
                          value="/admin/family<%= selId ? ('?member_id=' + encodeURIComponent(selId)) : '' %>">
                   <button class="btn red" type="submit">Hapus</button>
+                </form>
+              </td>
+            </tr>
+
+            <!-- BARIS EDIT (collapse) -->
+            <tr id="edit-<%= f.id %>" class="edit-row" style="display:none; background:rgba(255,255,255,0.02)">
+              <td colspan="5" style="padding:12px 10px">
+                <form action="/admin/families/<%= f.id %>" method="post"
+                      style="display:grid; gap:10px; grid-template-columns:1fr 1fr 1fr auto">
+                  <div>
+                    <label>Anggota</label>
+                    <select name="member_id" class="input" required>
+                      <% (members || []).forEach(m => { %>
+                        <option value="<%= m.id %>" <%= Number(m.id)===Number(f.member_id) ? 'selected' : '' %>><%= m.name %></option>
+                      <% }) %>
+                    </select>
+                  </div>
+                  <div>
+                    <label>Nama Keluarga</label>
+                    <input class="input" type="text" name="fullname" value="<%= f.fullname || '' %>" required>
+                  </div>
+                  <div>
+                    <label>Relasi</label>
+                    <input class="input" type="text" name="relation" value="<%= f.relation || '' %>">
+                  </div>
+                  <div style="align-self:end; display:flex; gap:8px">
+                    <button class="btn" type="submit">Simpan</button>
+                    <button class="btn ghost" type="button" onclick="toggleEdit('<%= f.id %>')">Batal</button>
+                  </div>
                 </form>
               </td>
             </tr>
@@ -117,3 +157,36 @@
     <% } %>
   </div>
 </div>
+
+<script>
+  // Toggle baris edit
+  function toggleEdit(id) {
+    const row = document.getElementById('edit-' + id);
+    if (!row) return;
+    row.style.display = (row.style.display === 'none' || row.style.display === '') ? 'table-row' : 'none';
+  }
+
+  // Pencarian teks (client-side)
+  (function () {
+    const input = document.getElementById('textFilter');
+    const rows  = Array.from(document.querySelectorAll('#familyTable tbody tr.data-row'));
+    if (!input || !rows.length) return;
+
+    input.addEventListener('input', function () {
+      const q = input.value.trim().toLowerCase();
+      rows.forEach(r => {
+        const text = r.getAttribute('data-search') || '';
+        r.style.display = text.includes(q) ? '' : 'none';
+
+        // Sembunyikan juga baris edit jika baris data disembunyikan
+        const id = (r.nextElementSibling && r.nextElementSibling.classList.contains('edit-row'))
+          ? r.nextElementSibling.id.replace('edit-', '')
+          : null;
+        if (id) {
+          const editRow = document.getElementById('edit-' + id);
+          if (editRow && r.style.display === 'none') editRow.style.display = 'none';
+        }
+      });
+    });
+  })();
+</script>
