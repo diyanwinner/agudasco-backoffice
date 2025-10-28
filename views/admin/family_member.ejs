@@ -1,0 +1,88 @@
+<%- include("../partials/head", { title }) %>
+
+<main class="admin-wrap">
+  <div class="container">
+
+    <div class="page-actions" style="margin-bottom:8px">
+      <a class="btn ghost" href="/admin/family"
+         onclick="if(history.length>1){history.back();return false;}">← Kembali</a>
+    </div>
+
+    <div class="section-head">
+      <h1><%= member.name %></h1>
+      <% if ((member.bio||'').trim()) { %>
+        <div class="muted"><%= member.bio %></div>
+      <% } %>
+    </div>
+
+    <!-- Profil ringkas -->
+    <div class="card" style="margin-bottom:18px">
+      <img style="height:220px;object-fit:cover" src="<%= member.avatar || 'https://via.placeholder.com/960x540?text=Foto' %>" alt="<%= member.name %>">
+      <div class="pad">
+        <p class="meta" style="margin:0">ID: <%= member.id %></p>
+      </div>
+    </div>
+
+    <!-- Grid: Form tambah & daftar -->
+    <div class="grid" style="grid-template-columns:1fr 1.2fr;gap:18px">
+      <!-- Form tambah keluarga -->
+      <section class="card">
+        <div class="pad">
+          <h2 style="margin-top:0">Tambah Keluarga</h2>
+          <form class="form-modern" method="post" action="/admin/family/<%= member.id %>">
+            <label class="label" for="fullname">Nama Lengkap*</label>
+            <input class="input" id="fullname" name="fullname" placeholder="Mis. Novi Dwi" required>
+
+            <label class="label" for="relation">Hubungan</label>
+            <input class="input" id="relation" name="relation" placeholder="Mis. Istri / Anak / Orang tua">
+
+            <div class="form-bar">
+              <span class="muted">Nama wajib diisi</span>
+              <button class="btn" type="submit">Simpan</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Daftar keluarga -->
+      <section class="card">
+        <div class="pad">
+          <h2 style="margin-top:0">Keluarga</h2>
+
+          <% if ((families||[]).length === 0) { %>
+            <p class="muted">Belum ada data keluarga.</p>
+          <% } else { %>
+            <div class="table-wrap">
+              <table class="table" style="width:100%">
+                <thead>
+                  <tr>
+                    <th style="text-align:left">Nama</th>
+                    <th style="text-align:left">Hubungan</th>
+                    <th style="width:120px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% families.forEach(f => { %>
+                    <tr>
+                      <td><strong><%= f.fullname %></strong></td>
+                      <td><%= f.relation || '-' %></td>
+                      <td>
+                        <form method="post" action="/admin/family/<%= member.id %>/<%= f.id %>/delete"
+                              onsubmit="return confirm('Hapus data keluarga ini?');">
+                          <button class="btn red" type="submit">Hapus</button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</main>
+
+<%- include("../partials/foot") %>
