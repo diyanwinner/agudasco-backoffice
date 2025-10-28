@@ -26,27 +26,7 @@
            alt="<%= member.name %>"/>
       <figcaption class="hero-caption">Anggota</figcaption>
     </figure>
-
-    <!-- 2 kolom: Keluarga | Galeri -->
-    <section class="grid grid--2">
-      <div>
-        <h2>Keluarga</h2>
-        <% if ((families||[]).length === 0) { %>
-          <p class="muted">Belum ada data keluarga.</p>
-        <% } else { %>
-          <ul class="fam-list">
-            <% families.forEach(f => { %>
-              <li>
-                <strong><%= f.fullname %></strong>
-                <% if ((f.relation||'').trim()) { %>
-                  <span class="muted">(<%= f.relation %>)</span>
-                <% } %>               
-              </li>
-            <% }) %>
-          </ul>
-        <% } %>
-      </div>
-
+    
       <div>
         <h2>Galeri</h2>
         <% if ((photos||[]).length === 0) { %>
