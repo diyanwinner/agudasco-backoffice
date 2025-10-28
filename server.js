@@ -491,6 +491,109 @@ app.post("/admin/adart/:id/delete", async (req, res) => {
   }
 });
 
+/* ------------------------------------------------------------------
+   ADMIN – KELUARGA (page baru, terpisah dari publik)
+------------------------------------------------------------------- */
+
+/** List semua keluarga */
+app.get("/admin/families", async (req, res) => {
+  try {
+    const { rows: families } = await pool.query(`
+      SELECT f.id, f.fullname, f.relation, f.created_at,
+             m.id AS member_id, m.name AS member_name, m.avatar
+      FROM member_families f
+      LEFT JOIN members m ON m.id = f.member_id
+      ORDER BY f.created_at DESC, f.id DESC
+    `);
+    res.render("admin/families", { title: "Kelola Keluarga", families });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat data keluarga");
+  }
+});
+
+/** Form tambah keluarga */
+app.get("/admin/families/new", async (req, res) => {
+  try {
+    const { rows: members } = await pool.query(
+      "SELECT id, name FROM members ORDER BY name ASC"
+    );
+    res.render("admin/family_add", { title: "Tambah Keluarga", members });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat form");
+  }
+});
+
+/** Simpan keluarga baru */
+app.post("/admin/families", async (req, res) => {
+  const { member_id, fullname, relation } = req.body;
+  if (!member_id || !fullname) return res.status(400).send("Data belum lengkap");
+  try {
+    await pool.query(
+      "INSERT INTO member_families (member_id, fullname, relation) VALUES ($1,$2,$3)",
+      [Number(member_id), fullname.trim(), (relation || "").trim()]
+    );
+    res.redirect("/admin/families");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menyimpan keluarga");
+  }
+});
+
+/** Detail & edit keluarga */
+app.get("/admin/families/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    const { rows: itemRows } = await pool.query(
+      "SELECT * FROM member_families WHERE id=$1",
+      [id]
+    );
+    if (!itemRows.length) return res.status(404).send("Data tidak ditemukan");
+
+    const { rows: members } = await pool.query(
+      "SELECT id, name FROM members ORDER BY name ASC"
+    );
+    res.render("admin/family_detail", {
+      title: "Edit Keluarga",
+      family: itemRows[0],
+      members,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal memuat detail");
+  }
+});
+
+/** Update keluarga */
+app.post("/admin/families/:id", async (req, res) => {
+  const id = Number(req.params.id);
+  const { member_id, fullname, relation } = req.body;
+  if (!member_id || !fullname) return res.status(400).send("Data belum lengkap");
+  try {
+    await pool.query(
+      "UPDATE member_families SET member_id=$1, fullname=$2, relation=$3 WHERE id=$4",
+      [Number(member_id), fullname.trim(), (relation || "").trim(), id]
+    );
+    res.redirect("/admin/families");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal mengubah data");
+  }
+});
+
+/** Hapus keluarga */
+app.post("/admin/families/:id/delete", async (req, res) => {
+  const id = Number(req.params.id);
+  try {
+    await pool.query("DELETE FROM member_families WHERE id=$1", [id]);
+    res.redirect("/admin/families");
+  } catch (e) {
+    console.error(e);
+    res.status(500).send("Gagal menghapus data");
+  }
+});
+
 // Admin: Members (Anggota)
 app.get("/admin/members", async (req, res) => {
   try {
