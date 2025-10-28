@@ -1,0 +1,37 @@
+<%- include("../partials/admin_head", { title }) %>
+
+<div class="container admin-wrap">
+  <div class="admin-head">
+    <h1 class="admin-title"><%= title %></h1>
+    <a class="btn ghost" href="/admin/family">← Kembali</a>
+  </div>
+
+  <form class="card" action="/admin/family" method="post">
+    <div class="field">
+      <label>Anggota</label>
+      <select name="member_id" required>
+        <option value="">— Pilih Anggota —</option>
+        <% (members||[]).forEach(m => { %>
+          <option value="<%= m.id %>"><%= m.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Nama Keluarga</label>
+      <input type="text" name="fullname" placeholder="mis. Siti Aminah" required>
+    </div>
+
+    <div class="field">
+      <label>Relasi</label>
+      <input type="text" name="relation" placeholder="mis. Istri / Anak / Suami">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" type="submit">Simpan</button>
+      <a class="btn ghost" href="/admin/family">Batal</a>
+    </div>
+  </form>
+</div>
+
+<%- include("../partials/admin_foot") %>
