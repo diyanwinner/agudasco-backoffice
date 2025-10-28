@@ -1,0 +1,42 @@
+<%- include("../partials/admin_head", { title }) %>
+
+<div class="container admin-wrap">
+  <div class="admin-head">
+    <h1 class="admin-title">Edit Keluarga</h1>
+    <a href="/admin/families" class="btn ghost">← Kembali</a>
+  </div>
+
+  <form class="form-modern" action="/admin/families/<%= family.id %>" method="post">
+    <div class="form-grid-2">
+      <div>
+        <label class="label">Anggota*</label>
+        <select name="member_id" class="input" required>
+          <% members.forEach(m => { %>
+            <option value="<%= m.id %>" <%= m.id === family.member_id ? 'selected' : '' %>><%= m.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="label">Nama Keluarga*</label>
+        <input class="input" name="fullname" value="<%- family.fullname %>" required />
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label class="label">Relasi</label>
+      <input class="input" name="relation" value="<%- family.relation || '' %>" />
+    </div>
+
+    <div class="form-bar">
+      <span class="muted">Terakhir diperbarui akan tercatat pada sistem.</span>
+      <div style="display:flex; gap:8px">
+        <button class="btn" type="submit">Simpan</button>
+        <form action="/admin/families/<%= family.id %>/delete" method="post" onsubmit="return confirm('Hapus data ini?')">
+          <button class="btn red" type="submit">Hapus</button>
+        </form>
+      </div>
+    </div>
+  </form>
+</div>
+
+<%- include("../partials/admin_foot") %>
