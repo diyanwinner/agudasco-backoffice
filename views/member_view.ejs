@@ -40,8 +40,7 @@
                 <strong><%= f.fullname %></strong>
                 <% if ((f.relation||'').trim()) { %>
                   <span class="muted">(<%= f.relation %>)</span>
-                <% } %>
-                <% /* Bagian keluarga disembunyikan, hanya admin yang bisa melihat dan mengelola */ %>
+                <% } %>               
               </li>
             <% }) %>
           </ul>
