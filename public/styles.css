@@ -375,3 +375,10 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
 .btn.back{
   line-height:1; padding:8px 12px;
 }
+
+/* Foto member publik: tinggi moderat */
+.media-preview.member .media-fit {
+  max-height: 360px;
+  object-fit: cover;   /* isi kotak tapi tetap rapi */
+}
+
