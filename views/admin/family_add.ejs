@@ -1,0 +1,38 @@
+<%- include("../partials/admin_head", { title }) %>
+
+<div class="container admin-wrap">
+  <div class="admin-head">
+    <h1 class="admin-title">Tambah Keluarga</h1>
+    <a href="/admin/families" class="btn ghost">← Kembali</a>
+  </div>
+
+  <form class="form-modern" action="/admin/families" method="post">
+    <div class="form-grid-2">
+      <div>
+        <label class="label">Anggota*</label>
+        <select name="member_id" class="input" required>
+          <option value="">— Pilih Anggota —</option>
+          <% members.forEach(m => { %>
+            <option value="<%= m.id %>"><%= m.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div>
+        <label class="label">Nama Keluarga*</label>
+        <input class="input" name="fullname" placeholder="Nama lengkap" required />
+      </div>
+    </div>
+
+    <div style="margin-top:12px">
+      <label class="label">Relasi (mis. Istri, Suami, Anak)</label>
+      <input class="input" name="relation" placeholder="Contoh: Istri" />
+    </div>
+
+    <div class="form-bar">
+      <span class="muted">Pastikan memilih anggota yang tepat.</span>
+      <button class="btn" type="submit">Simpan</button>
+    </div>
+  </form>
+</div>
+
+<%- include("../partials/admin_foot") %>
