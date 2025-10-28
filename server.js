@@ -703,12 +703,10 @@ app.post("/admin/members/:id/photo/:pid/delete", async (req, res) => {
    ADMIN: FAMILY (KELUARGA)
    ======================= */
 
-/** List + filter by member (opsional) */
 app.get("/admin/family", async (req, res) => {
   try {
     const memberId = req.query.member_id ? Number(req.query.member_id) : null;
 
-    // daftar anggota (untuk filter & form tambah)
     const { rows: members } = await pool.query(
       "SELECT id, name FROM members ORDER BY name ASC"
     );
@@ -716,7 +714,7 @@ app.get("/admin/family", async (req, res) => {
     let families = [];
     if (memberId) {
       const { rows } = await pool.query(
-        `SELECT f.id, f.member_id, f.name, f.relation, m.name AS member_name
+        `SELECT f.id, f.member_id, f.fullname, f.relation, m.name AS member_name
          FROM member_families f
          LEFT JOIN members m ON f.member_id = m.id
          WHERE f.member_id = $1
@@ -726,7 +724,7 @@ app.get("/admin/family", async (req, res) => {
       families = rows;
     } else {
       const { rows } = await pool.query(
-        `SELECT f.id, f.member_id, f.name, f.relation, m.name AS member_name
+        `SELECT f.id, f.member_id, f.fullname, f.relation, m.name AS member_name
          FROM member_families f
          LEFT JOIN members m ON f.member_id = m.id
          ORDER BY m.name ASC, f.id ASC`
@@ -747,23 +745,21 @@ app.get("/admin/family", async (req, res) => {
   }
 });
 
-/** Tambah keluarga */
 app.post("/admin/family", async (req, res) => {
   try {
     const member_id = Number(req.body.member_id);
-    const name = (req.body.name || "").trim();
+    const fullname = (req.body.name || req.body.fullname || "").trim(); // dukung name/fullname dari form
     const relation = (req.body.relation || "").trim();
 
-    if (!member_id || !name) {
+    if (!member_id || !fullname) {
       return res.status(400).send("Member dan Nama keluarga wajib diisi");
     }
 
     await pool.query(
-      "INSERT INTO member_families (member_id, name, relation) VALUES ($1,$2,$3)",
-      [member_id, name, relation]
+      "INSERT INTO member_families (member_id, fullname, relation) VALUES ($1,$2,$3)",
+      [member_id, fullname, relation]
     );
 
-    // kalau datang dari filter, redirect dengan query tetap
     const backTo = req.body.back_to || "/admin/family";
     res.redirect(backTo);
   } catch (e) {
@@ -772,7 +768,6 @@ app.post("/admin/family", async (req, res) => {
   }
 });
 
-/** Hapus keluarga */
 app.post("/admin/family/:id/delete", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -784,7 +779,6 @@ app.post("/admin/family/:id/delete", async (req, res) => {
     res.status(500).send("Gagal menghapus data keluarga");
   }
 });
-
 
 /* ------------------------------------------------------------------
    404 & Error handlers (PASTIKAN PALING AKHIR)
