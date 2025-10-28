@@ -2,11 +2,18 @@
   <div class="admin-head">
     <h1 class="admin-title"><%= title || "Data Keluarga Anggota" %></h1>
 
+<%
+// fallback kalau selectedMemberId tidak dikirim dari server
+const selId = (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null)
+  ? String(selectedMemberId)
+  : "";
+%>
+
     <form action="/admin/family" method="get" class="flex gap-2 items-center">
       <select name="member_id" onchange="this.form.submit()" class="input" style="min-width:200px">
         <option value="">— Semua Anggota —</option>
         <% (members || []).forEach(m => { %>
-          <option value="<%= m.id %>" <%= String(m.id) === String(selectedMemberId || "") ? "selected" : "" %>>
+          <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>>
             <%= m.name %>
           </option>
         <% }) %>
