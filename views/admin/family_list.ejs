@@ -1,0 +1,94 @@
+<%- include("../partials/admin_head", { title }) %>
+
+<div class="admin-wrap container">
+  <div class="admin-head">
+    <h1 class="admin-title"><%= title %></h1>
+  </div>
+
+  <!-- Filter berdasarkan anggota -->
+  <div class="card" style="padding:16px; margin-bottom:16px;">
+    <form method="get" action="/admin/family" class="form-modern">
+      <label class="label">Filter Anggota</label>
+      <select name="member_id" class="input" style="max-width:420px">
+        <option value="">— Semua Anggota —</option>
+        <% members.forEach(m => { %>
+          <option value="<%= m.id %>" <%= String(selectedMemberId)===String(m.id) ? 'selected' : '' %>><%= m.name %></option>
+        <% }) %>
+      </select>
+      <div class="form-bar">
+        <span class="muted">Pilih anggota untuk melihat hanya keluarganya.</span>
+        <button class="btn">Terapkan</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabel data keluarga -->
+  <div class="card table-wrap" style="padding:16px; margin-bottom:18px;">
+    <h2 style="margin-top:0">Daftar Keluarga</h2>
+    <% if ((families||[]).length === 0) { %>
+      <p class="muted">Belum ada data keluarga.</p>
+    <% } else { %>
+      <table class="table" style="width:100%; border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="text-align:left; padding:8px">Anggota</th>
+            <th style="text-align:left; padding:8px">Nama Keluarga</th>
+            <th style="text-align:left; padding:8px">Hubungan</th>
+            <th style="text-align:right; padding:8px">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% families.forEach(f => { %>
+            <tr>
+              <td style="padding:8px;"><%= f.member_name %></td>
+              <td style="padding:8px;"><strong><%= f.name %></strong></td>
+              <td style="padding:8px;"><%= f.relation || '-' %></td>
+              <td style="padding:8px; text-align:right;">
+                <form method="post" action="/admin/family/<%= f.id %>/delete" onsubmit="return confirm('Hapus data ini?')">
+                  <% if (selectedMemberId) { %>
+                    <input type="hidden" name="back_to" value="/admin/family?member_id=<%= selectedMemberId %>">
+                  <% } else { %>
+                    <input type="hidden" name="back_to" value="/admin/family">
+                  <% } %>
+                  <button class="btn red">Hapus</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+
+  <!-- Form tambah data keluarga -->
+  <div class="card" style="padding:16px;">
+    <h2 style="margin-top:0">Tambah Keluarga</h2>
+    <form method="post" action="/admin/family" class="form-modern" style="max-width:680px">
+      <label class="label">Pilih Anggota*</label>
+      <select name="member_id" class="input" required>
+        <% members.forEach(m => { %>
+          <option value="<%= m.id %>" <%= String(selectedMemberId)===String(m.id) ? 'selected' : '' %>><%= m.name %></option>
+        <% }) %>
+      </select>
+
+      <label class="label">Nama Keluarga*</label>
+      <input class="input" type="text" name="name" placeholder="mis. Novi Dwi" required>
+
+      <label class="label">Hubungan (opsional)</label>
+      <input class="input" type="text" name="relation" placeholder="Istri / Suami / Anak">
+
+      <% if (selectedMemberId) { %>
+        <input type="hidden" name="back_to" value="/admin/family?member_id=<%= selectedMemberId %>">
+      <% } else { %>
+        <input type="hidden" name="back_to" value="/admin/family">
+      <% } %>
+
+      <div class="form-bar">
+        <span class="muted">Data akan langsung tersimpan ke tabel <code>member_families</code>.</span>
+        <button class="btn">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include("../partials/admin_foot") %>
