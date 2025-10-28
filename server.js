@@ -318,16 +318,7 @@ app.get("/anggota/:id", async (req, res) => {
     const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
     if (!member) return res.status(404).send("Anggota tidak ditemukan");
 
-    const families = await q(
-      "SELECT id, fullname, relation FROM member_families WHERE member_id=$1 ORDER BY id ASC",
-      [id]
-    );
-    const photos = await q(
-      "SELECT id, image_url, caption FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
-      [id]
-    );
-
-    res.render("member_view", {
+      res.render("member_view", {
       title: member.name,
       active: "anggota",
       member,
