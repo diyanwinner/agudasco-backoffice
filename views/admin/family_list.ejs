@@ -1,8 +1,11 @@
-<%- include("../partials/admin_head", { title }) %>
+<%
+// Pakai layout default ("layout.ejs") dari express-ejs-layouts.
+// Tidak perlu include("../partials/admin_head") / admin_foot.
+%>
 
 <div class="container admin-wrap">
   <div class="admin-head">
-    <h1 class="admin-title">Data Keluarga</h1>
+    <h1 class="admin-title"><%= title || 'Data Keluarga' %></h1>
   </div>
 
   <% // ==== Fallback agar aman walau server tak mengirim selectedMemberId ==== %>
@@ -94,5 +97,3 @@
     </form>
   </div>
 </div>
-
-<%- include("../partials/admin_foot") %>
