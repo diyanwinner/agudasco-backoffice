@@ -1,14 +1,12 @@
-<%- include("../partials/admin_head", { title }) %>
-
 <div class="container admin-wrap">
   <div class="admin-head">
-    <h1 class="admin-title">Data Keluarga Anggota</h1>
+    <h1 class="admin-title"><%= title || "Data Keluarga Anggota" %></h1>
 
     <form action="/admin/family" method="get" class="flex gap-2 items-center">
       <select name="member_id" onchange="this.form.submit()" class="input" style="min-width:200px">
         <option value="">— Semua Anggota —</option>
-        <% members.forEach(m => { %>
-          <option value="<%= m.id %>" <%= m.id == selectedMemberId ? "selected" : "" %>>
+        <% (members || []).forEach(m => { %>
+          <option value="<%= m.id %>" <%= String(m.id) === String(selectedMemberId || "") ? "selected" : "" %>>
             <%= m.name %>
           </option>
         <% }) %>
@@ -27,7 +25,7 @@
         <label>Anggota</label>
         <select name="member_id" required class="input">
           <option value="">Pilih...</option>
-          <% members.forEach(m => { %>
+          <% (members || []).forEach(m => { %>
             <option value="<%= m.id %>"><%= m.name %></option>
           <% }) %>
         </select>
@@ -58,12 +56,12 @@
         </tr>
       </thead>
       <tbody>
-        <% if (!families.length) { %>
+        <% if (!families || !families.length) { %>
           <tr>
             <td colspan="4" style="padding:12px; color:var(--muted)">Belum ada data keluarga.</td>
           </tr>
         <% } %>
-        <% families.forEach(f => { %>
+        <% (families || []).forEach(f => { %>
           <tr style="border-top:1px solid var(--border)">
             <td style="padding:10px">
               <% if (f.member_id) { %>
@@ -73,7 +71,8 @@
             <td style="padding:10px"><strong><%= f.fullname %></strong></td>
             <td style="padding:10px"><%= f.relation || "—" %></td>
             <td style="padding:10px; text-align:right; white-space:nowrap">
-              <form action="/admin/family/<%= f.id %>/delete" method="post" style="display:inline" onsubmit="return confirm('Yakin hapus data ini?')">
+              <form action="/admin/family/<%= f.id %>/delete" method="post" style="display:inline"
+                    onsubmit="return confirm('Yakin hapus data ini?')">
                 <button class="btn red" type="submit">Hapus</button>
               </form>
             </td>
@@ -83,5 +82,3 @@
     </table>
   </div>
 </div>
-
-<%- include("../partials/admin_foot") %>
