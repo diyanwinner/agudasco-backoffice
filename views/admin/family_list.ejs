@@ -41,7 +41,7 @@
           <% families.forEach(f => { %>
             <tr>
               <td style="padding:8px;"><%= f.member_name %></td>
-              <td style="padding:8px;"><strong><%= f.name %></strong></td>
+              <td style="padding:8px;"><strong><%= f.fullname %></strong></td>
               <td style="padding:8px;"><%= f.relation || '-' %></td>
               <td style="padding:8px; text-align:right;">
                 <form method="post" action="/admin/family/<%= f.id %>/delete" onsubmit="return confirm('Hapus data ini?')">
