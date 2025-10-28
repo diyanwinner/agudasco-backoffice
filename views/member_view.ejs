@@ -1,9 +1,8 @@
- <!-- Judul -->
 <main>
   <div class="container">
 
     <!-- Aksi halaman -->
-    <div class="page-actions">
+    <div class="page-actions" style="margin:8px 0 12px">
       <a class="btn ghost back"
          href="/anggota"
          onclick="if (history.length > 1) { history.back(); return false; }">
@@ -13,35 +12,22 @@
 
     <!-- Judul -->
     <div class="section-head">
-      <h1><%= member.name %></h1>
+      <h1 style="margin:0"><%= member.name %></h1>
       <% if ((member.bio||'').trim()) { %>
         <div class="muted"><%= member.bio %></div>
       <% } %>
     </div>
 
-        <!-- Foto header: ukuran moderat -->
-    <figure class="media-preview member">
-      <img class="media-fit"
-           src="<%= member.avatar || 'https://via.placeholder.com/960x540?text=Foto' %>"
-           alt="<%= member.name %>"/>
+    <!-- Foto profil (ukuran moderat, tidak memenuhi layar) -->
+    <figure class="media-preview member" style="margin-top:12px;">
+      <img
+        class="media-fit"
+        src="<%= member.avatar || 'https://via.placeholder.com/960x540?text=Foto' %>"
+        alt="<%= member.name %>"
+        style="max-height:360px; object-fit:cover;"
+      />
       <figcaption class="hero-caption">Anggota</figcaption>
     </figure>
-    
-      <div>
-        <h2>Galeri</h2>
-        <% if ((photos||[]).length === 0) { %>
-          <p class="muted">Belum ada foto.</p>
-        <% } else { %>
-          <div class="photo-grid">
-            <% photos.forEach(p => { %>
-              <a href="<%= p.image_url %>"
-                 onclick="openLightbox('<%= p.image_url %>','<%= p.caption||'' %>'); return false;">
-                <img loading="lazy" src="<%= p.image_url %>" alt="<%= p.caption||member.name %>"/>
-              </a>
-            <% }) %>
-          </div>
-        <% } %>
-      </div>
-    </section>
+
   </div>
 </main>
