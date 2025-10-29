@@ -1,86 +1,41 @@
-<!-- views/kontak.ejs -->
 <%
-  // Guard: kalau 'contact' tidak dikirim, jadikan objek kosong
-  const c = (typeof contact !== 'undefined' && contact) ? contact : {};
-
-  function val(x){ return (x || '').toString().trim(); }
-
-  const org_name = val(c.org_name);
-  const address  = val(c.address);
-  const email    = val(c.email);
-  const phone    = val(c.phone);
-  const whatsapp = val(c.whatsapp);
-  const instagram= val(c.instagram);
-  const facebook = val(c.facebook);
-  const x_handle = val(c.x_handle);
-  const maps_url = val(c.maps_url);
-
-  // links
-  const telDigits = phone.replace(/[^0-9+]/g,'');
-  const telLink   = telDigits ? `tel:${telDigits}` : '';
-
-  const waDigits  = whatsapp.replace(/[^0-9]/g,'');
-  const waLink    = waDigits ? `https://wa.me/${waDigits}` : '';
-
-  let xLink = '';
-  if (x_handle) {
-    xLink = /^https?:\/\//i.test(x_handle) ? x_handle : ('https://twitter.com/' + x_handle.replace(/^@/,''));
-  }
-
-  // format alamat (newline -> <br>)
-  const addrHtml = address ? address.replace(/\n/g,'<br>') : '';
+// Amanin object
+const c = contact || {};
+const safe = v => (v && String(v).trim()) ? v : null;
 %>
 
-<section class="section">
-  <h1 class="page-title"><%= title || 'Kontak' %></h1>
+<div class="container section">
+  <h1>Kontak</h1>
 
   <div class="card" style="padding:16px">
-    <h3 style="margin:.2rem 0"><%= org_name || '—' %></h3>
+    <h3 class="muted"><%= safe(c.org_name) || '—' %></h3>
 
-    <h4 style="margin:12px 0 6px">Alamat</h4>
+    <h4>Alamat</h4>
+    <p><%= safe(c.address) || 'Belum diisi' %></p>
+
+    <h4>Email</h4>
+    <p><%= safe(c.email) || 'Belum diisi' %></p>
+
+    <h4>Telepon/WA</h4>
     <p>
-      <% if (addrHtml) { %>
-        <span><%- addrHtml %></span>
-      <% } else { %>
-        <span class="muted">Belum diisi</span>
-      <% } %>
+      <% if (safe(c.phone)) { %><div>Telp: <%= c.phone %></div><% } %>
+      <% if (safe(c.whatsapp)) { %><div>WA: <%= c.whatsapp %></div><% } %>
+      <% if (!safe(c.phone) && !safe(c.whatsapp)) { %>Belum diisi<% } %>
     </p>
 
-    <h4 style="margin:12px 0 6px">Email</h4>
-    <% if (email) { %>
-      <p><a href="mailto:<%= email %>"><%= email %></a></p>
-    <% } else { %>
-      <p class="muted">Belum diisi</p>
-    <% } %>
-
-    <h4 style="margin:12px 0 6px">Telepon/WA</h4>
-    <p>
-      <% if (telLink) { %>
-        <a href="<%= telLink %>"><%= phone %></a>
-      <% } else { %>
-        <span class="muted">Belum diisi</span>
-      <% } %>
-      <% if (waLink) { %>
-        · <a href="<%= waLink %>" target="_blank" rel="noopener">WhatsApp</a>
-      <% } %>
-    </p>
-
-    <% if (instagram || facebook || x_handle) { %>
-      <h4 style="margin:12px 0 6px">Media Sosial</h4>
-      <ul style="margin:0; padding-left:18px">
-        <% if (instagram) { %><li><a href="<%= instagram %>" target="_blank" rel="noopener">Instagram</a></li><% } %>
-        <% if (facebook)  { %><li><a href="<%= facebook %>"  target="_blank" rel="noopener">Facebook</a></li><% } %>
-        <% if (x_handle)  { %><li><a href="<%= xLink %>"     target="_blank" rel="noopener">X/Twitter</a></li><% } %>
+    <% if (safe(c.instagram) || safe(c.facebook) || safe(c.x_handle)) { %>
+      <h4>Sosial</h4>
+      <ul>
+        <% if (safe(c.instagram)) { %><li>Instagram: <a href="<%= c.instagram %>" target="_blank" rel="noopener"><%= c.instagram %></a></li><% } %>
+        <% if (safe(c.facebook)) { %><li>Facebook: <a href="<%= c.facebook %>" target="_blank" rel="noopener"><%= c.facebook %></a></li><% } %>
+        <% if (safe(c.x_handle))  { %><li>X/Twitter: <a href="<%= c.x_handle.startsWith('http') ? c.x_handle : ('https://x.com/' + c.x_handle.replace('@','')) %>" target="_blank" rel="noopener"><%= c.x_handle %></a></li><% } %>
       </ul>
     <% } %>
 
-    <% if (maps_url) { %>
-      <div style="border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-top:14px">
-        <iframe
-          src="<%= maps_url %>"
-          width="100%" height="320" style="border:0"
-          loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <% if (safe(c.maps_url)) { %>
+      <div style="border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-top:12px">
+        <iframe src="<%= c.maps_url %>" width="100%" height="320" style="border:0" loading="lazy"></iframe>
       </div>
     <% } %>
   </div>
-</section>
+</div>
