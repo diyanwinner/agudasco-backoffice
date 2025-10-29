@@ -215,5 +215,48 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(backTo);
   });
 
+  /* ===================== ADMIN: KONTAK ===================== */
+router.get("/contact", async (req, res) => {
+  const info = await q1("SELECT * FROM site_info WHERE id=1", []);
+  res.render("admin/contact", {
+    title: "Kelola Kontak",
+    info: info || {}
+  });
+});
+
+router.post("/contact", async (req, res) => {
+  const {
+    org_name = "",
+    email = "",
+    phone = "",
+    whatsapp = "",
+    address = "",
+    maps_url = "",
+    instagram = "",
+    facebook = "",
+    x_handle = ""
+  } = req.body;
+
+  await q(
+    `UPDATE site_info
+     SET org_name=$1, email=$2, phone=$3, whatsapp=$4, address=$5,
+         maps_url=$6, instagram=$7, facebook=$8, x_handle=$9, updated_at=now()
+     WHERE id=1`,
+    [
+      org_name.trim(),
+      email.trim(),
+      phone.trim(),
+      whatsapp.trim(),
+      address.trim(),
+      maps_url.trim(),
+      instagram.trim(),
+      facebook.trim(),
+      x_handle.trim()
+    ]
+  );
+
+  res.redirect("/admin/contact");
+});
+
   return router;
 }
