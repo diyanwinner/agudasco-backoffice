@@ -1,50 +1,47 @@
-<div class="admin-wrap">
-  <div class="admin-head">
-    <h1 class="admin-title">Kelola Anggota</h1>
+<% /* ADMIN: Tambah Anggota Saja */ %>
+<div class="container admin-wrap">
+  <div class="admin-head" style="align-items:center; gap:12px">
+    <h1 class="admin-title">Tambah Anggota</h1>
+
+    <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
+      <a class="btn ghost" href="/admin">← Dashboard</a>
+      <a class="btn" href="/admin/family">Kelola Data Keluarga</a>
+    </div>
   </div>
 
-  <div class="form-modern grid" style="display:grid; grid-template-columns:1.2fr .8fr; gap:18px">
-    <div>
-      <h3>Daftar Anggota</h3>
-      <% if (!members.length) { %>
-        <p class="muted">Belum ada anggota.</p>
-      <% } else { %>
-        <div class="grid cards">
-          <% members.forEach(m => { %>
-            <div class="card">
-              <img src="<%= m.avatar || 'https://via.placeholder.com/960x400?text=Anggota' %>" alt="<%= m.name %>">
-              <div class="pad">
-                <h3><a class="rowlink" href="/admin/members/<%= m.id %>"><%= m.name %></a></h3>
-                <div class="help-row">
-                  <form method="post" action="/admin/members/<%= m.id %>/delete" onsubmit="return confirm('Hapus anggota ini?')">
-                    <button class="btn red" type="submit">Hapus</button>
-                  </form>
-                  <a class="btn" href="/admin/members/<%= m.id %>">Kelola</a>
-                </div>
-              </div>
-            </div>
-          <% }) %>
-        </div>
-      <% } %>
-    </div>
+  <div class="card" style="max-width:760px; margin-inline:auto">
+    <form action="/admin/members" method="post" enctype="multipart/form-data" style="display:grid; gap:14px">
+      <div>
+        <label for="name">Nama<span style="color:#e66">*</span></label>
+        <input id="name" name="name" type="text" class="input" placeholder="mis. Dedi" required>
+      </div>
 
-    <div>
-      <h3>Tambah Anggota</h3>
-      <form class="form-modern" method="post" action="/admin/members" enctype="multipart/form-data">
-        <label class="label">Nama*</label>
-        <input class="input" type="text" name="name" required>
+      <div>
+        <label for="bio">Bio (opsional)</label>
+        <textarea id="bio" name="bio" class="input" rows="4" placeholder="Deskripsi singkat"></textarea>
+      </div>
 
-        <label class="label">Bio (opsional)</label>
-        <textarea class="textarea" name="bio" placeholder="Deskripsi singkat"></textarea>
+      <div class="hint muted">
+        File gambar otomatis di-upload ke Cloudinary.
+      </div>
 
-        <label class="label">Foto Profil</label>
-        <input class="input" type="file" name="avatar" accept="image/*">
+      <div>
+        <label for="avatar">Foto (opsional)</label>
+        <input id="avatar" name="avatar" type="file" accept="image/*" class="input">
+      </div>
 
-        <div class="form-bar">
-          <span class="muted">File gambar otomatis diunggah ke Cloudinary.</span>
-          <button class="btn" type="submit">Simpan</button>
-        </div>
-      </form>
-    </div>
+      <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end">
+        <button class="btn" type="submit">Simpan Anggota</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="muted" style="text-align:center; margin-top:16px">
+    Butuh mengisi keluarga untuk anggota yang sudah ada? → 
+    <a class="rowlink" href="/admin/family">Buka Data Keluarga</a>
   </div>
 </div>
+
+<style>
+  .hint{ font-size:.9rem }
+</style>
