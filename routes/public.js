@@ -134,5 +134,20 @@ export default function (q, q1) {
     });
   });
 
+  // Kontak (dinamis dari site_info)
+router.get("/kontak", async (req, res) => {
+  try {
+    const info = await q1("SELECT * FROM site_info WHERE id=1", []);
+    res.render("kontak", {
+      title: "Kontak",
+      active: "kontak",
+      info: info || {}
+    });
+  } catch (e) {
+    console.error("Kontak error:", e);
+    res.render("kontak", { title: "Kontak", active: "kontak", info: {} });
+  }
+});
+
   return router;
 }
