@@ -1,22 +1,16 @@
-<%
-// Halaman single-page untuk kelola data keluarga.
-// Memakai layout default dari express-ejs-layouts (layout.ejs).
-%>
+<% /* FAMILY LIST: tampilan cards horizontal, hanya tombol Detail. */ %>
 
 <div class="container admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title"><%= title || 'Data Keluarga' %></h1>
   </div>
 
-  <% /* ==== Fallback agar aman walau server tidak mengirim selectedMemberId ==== */ %>
-  <%
-    const selId =
-      (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null && selectedMemberId !== false)
-        ? String(selectedMemberId)
-        : "";
+  <% // fallback selectedMemberId aman
+     const selId = (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null && selectedMemberId !== false)
+       ? String(selectedMemberId) : "";
   %>
 
-  <!-- Filter anggota + Search teks -->
+  <!-- Filter + cari -->
   <div class="card" style="padding:12px; display:flex; gap:12px; align-items:center; flex-wrap:wrap">
     <form method="get" action="/admin/family" style="display:flex; gap:10px; align-items:center">
       <label for="member_id" style="margin-right:6px">Filter Anggota</label>
@@ -26,166 +20,89 @@
           <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>><%= m.name %></option>
         <% }) %>
       </select>
-      <% if (selId) { %>
-        <a class="btn ghost" href="/admin/family">Reset</a>
-      <% } %>
+      <% if (selId) { %><a class="btn ghost" href="/admin/family">Reset</a><% } %>
     </form>
 
     <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
       <label for="textFilter" class="muted">Cari</label>
-      <input id="textFilter" class="input" type="text" placeholder="ketik nama keluarga / relasi / anggota…" style="min-width:280px">
+      <input id="textFilter" class="input" type="text"
+             placeholder="ketik nama anggota/keluarga/relasi…" style="min-width:280px">
     </div>
   </div>
 
-  <!-- Tabel keluarga -->
-  <div class="table-wrap card" style="margin-top:12px">
-    <table class="table" id="familyTable" style="width:100%; border-collapse:collapse">
-      <thead>
-        <tr>
-          <th style="padding:10px; text-align:left">Anggota</th>
-          <th style="padding:10px; text-align:left">Nama Keluarga</th>
-          <th style="padding:10px; text-align:left">Relasi</th>
-          <th style="padding:10px; text-align:left">Dibuat</th>
-          <th style="padding:10px; text-align:right">Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% if (!families || families.length === 0) { %>
-          <tr>
-            <td colspan="5" style="padding:12px; color:var(--muted)">Belum ada data.</td>
-          </tr>
-        <% } else { %>
-          <% families.forEach(f => { %>
-            <!-- BARIS DATA -->
-            <tr class="data-row" data-search="<%= [
-                  (f.member_name||''),
-                  (f.fullname||''),
-                  (f.relation||'')
-                ].join(' ').toLowerCase() %>"
-                style="border-top:1px solid var(--border)">
-              <td style="padding:10px">
-                <% if (f.member_id) { %>
-                  <a class="rowlink" href="/anggota/<%= f.member_id %>" target="_blank">
-                    <%= f.member_name || '—' %>
-                  </a>
-                <% } else { %>
-                  —
-                <% } %>
-              </td>
-              <td style="padding:10px"><strong><%= f.fullname %></strong></td>
-              <td style="padding:10px"><%= f.relation || '—' %></td>
-              <td style="padding:10px">
-                <%= f.created_at ? new Date(f.created_at).toLocaleString('id-ID') : '—' %>
-              </td>
-              <td style="padding:10px; text-align:right; white-space:nowrap">
-                <button class="btn" type="button" onclick="toggleEdit('<%= f.id %>')">Edit</button>
-                <form action="/admin/family/<%= f.id %>/delete" method="post"
-                      style="display:inline"
-                      onsubmit="return confirm('Hapus data ini?')">
-                  <input type="hidden" name="back_to"
-                         value="/admin/family<%= selId ? ('?member_id=' + encodeURIComponent(selId)) : '' %>">
-                  <button class="btn red" type="submit">Hapus</button>
-                </form>
-              </td>
-            </tr>
+  <% /* Group keluarga per member */ %>
+  <%
+    const famMap = {};
+    (families || []).forEach(f => {
+      const mid = Number(f.member_id);
+      (famMap[mid] ||= []).push(f);
+    });
+    const list = (members || []).filter(m => !selId || String(m.id) === selId);
+    const placeholder = 'https://via.placeholder.com/400x400?text=Foto';
+  %>
 
-            <!-- BARIS EDIT (collapse) -->
-            <tr id="edit-<%= f.id %>" class="edit-row" style="display:none; background:rgba(255,255,255,0.02)">
-              <td colspan="5" style="padding:12px 10px">
-                <form action="/admin/families/<%= f.id %>" method="post"
-                      style="display:grid; gap:10px; grid-template-columns:1fr 1fr 1fr auto">
-                  <div>
-                    <label>Anggota</label>
-                    <select name="member_id" class="input" required>
-                      <% (members || []).forEach(m => { %>
-                        <option value="<%= m.id %>" <%= Number(m.id)===Number(f.member_id) ? 'selected' : '' %>><%= m.name %></option>
-                      <% }) %>
-                    </select>
-                  </div>
-                  <div>
-                    <label>Nama Keluarga</label>
-                    <input class="input" type="text" name="fullname" value="<%= f.fullname || '' %>" required>
-                  </div>
-                  <div>
-                    <label>Relasi</label>
-                    <input class="input" type="text" name="relation" value="<%= f.relation || '' %>">
-                  </div>
-                  <div style="align-self:end; display:flex; gap:8px">
-                    <button class="btn" type="submit">Simpan</button>
-                    <button class="btn ghost" type="button" onclick="toggleEdit('<%= f.id %>')">Batal</button>
-                  </div>
-                </form>
-              </td>
-            </tr>
-          <% }) %>
-        <% } %>
-      </tbody>
-    </table>
-  </div>
+  <!-- SCROLLER horizontal -->
+  <div class="hscroll">
+    <% list.forEach(m => { 
+         const fams = famMap[Number(m.id)] || [];
+         const searchBlob = (m.name + ' ' + fams.map(x => (x.fullname||'') + ' ' + (x.relation||'')).join(' ')).toLowerCase();
+    %>
+      <div class="mini-card" data-search="<%= searchBlob %>">
+        <img src="<%= m.avatar || placeholder %>" alt="<%= m.name %>">
+        <div class="mini-name"><%= m.name %></div>
 
-  <!-- Form tambah cepat -->
-  <div class="card" style="margin-top:12px">
-    <h3 style="margin:0 0 10px 0">Tambah Keluarga</h3>
-
-    <% if ((members || []).length === 0) { %>
-      <p class="muted">Belum ada anggota. Tambahkan anggota terlebih dahulu di menu <strong>Admin → Anggota</strong>.</p>
-    <% } else { %>
-      <form action="/admin/family" method="post"
-            style="display:grid; gap:10px; grid-template-columns:1fr 1fr 1fr auto">
-        <div>
-          <label>Anggota</label>
-          <select name="member_id" class="input" required>
-            <% (members || []).forEach(m => { %>
-              <option value="<%= m.id %>" <%= String(m.id) === selId ? "selected" : "" %>><%= m.name %></option>
+        <ul class="mini-fam">
+          <% if (fams.length === 0) { %>
+            <li class="muted">Belum ada data keluarga</li>
+          <% } else { %>
+            <% fams.slice(0,3).forEach(f => { %>
+              <li><strong><%= f.fullname %></strong> <span class="muted">(<%= f.relation || '—' %>)</span></li>
             <% }) %>
-          </select>
-        </div>
-        <div>
-          <label>Nama Keluarga</label>
-          <input class="input" type="text" name="fullname" placeholder="mis. Novi Dwi" required>
-        </div>
-        <div>
-          <label>Relasi</label>
-          <input class="input" type="text" name="relation" placeholder="mis. Istri / Anak">
-        </div>
-        <div style="align-self:end">
-          <input type="hidden" name="back_to"
-                 value="/admin/family<%= selId ? ('?member_id=' + encodeURIComponent(selId)) : '' %>">
-          <button class="btn" type="submit">Simpan</button>
-        </div>
-      </form>
-    <% } %>
+            <% if (fams.length > 3) { %>
+              <li class="muted">+<%= fams.length - 3 %> lainnya</li>
+            <% } %>
+          <% } %>
+        </ul>
+
+        <a class="btn w-full" href="/admin/members/<%= m.id %>">Detail</a>
+      </div>
+    <% }) %>
   </div>
 </div>
 
-<script>
-  // Toggle baris edit
-  function toggleEdit(id) {
-    const row = document.getElementById('edit-' + id);
-    if (!row) return;
-    row.style.display = (row.style.display === 'none' || row.style.display === '') ? 'table-row' : 'none';
+<style>
+  .hscroll{
+    display:flex; gap:12px; overflow:auto; padding:12px 4px 4px;
+    scroll-snap-type:x mandatory;
   }
+  .hscroll::-webkit-scrollbar{ height:8px }
+  .mini-card{
+    scroll-snap-align:start;
+    min-width:180px; max-width:180px;
+    border:1px solid var(--border); border-radius:16px;
+    background:var(--card-bg, rgba(255,255,255,.03));
+    padding:10px; box-shadow:var(--shadow-sm, 0 1px 2px rgba(0,0,0,.15));
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .mini-card img{
+    width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:12px; background:#111;
+  }
+  .mini-name{ font-weight:700; line-height:1.2 }
+  .mini-fam{ list-style:disc; margin:0 0 6px 16px; padding:0 }
+  .w-full{ width:100%; text-align:center }
+</style>
 
-  // Pencarian teks (client-side)
+<script>
+  // Filter teks untuk card horizontal
   (function () {
     const input = document.getElementById('textFilter');
-    const rows  = Array.from(document.querySelectorAll('#familyTable tbody tr.data-row'));
-    if (!input || !rows.length) return;
-
+    const cards = Array.from(document.querySelectorAll('.mini-card'));
+    if (!input || !cards.length) return;
     input.addEventListener('input', function () {
       const q = input.value.trim().toLowerCase();
-      rows.forEach(r => {
-        const text = r.getAttribute('data-search') || '';
-        r.style.display = text.includes(q) ? '' : 'none';
-
-        // Sembunyikan juga baris edit jika baris data disembunyikan
-        const id = (r.nextElementSibling && r.nextElementSibling.classList.contains('edit-row'))
-          ? r.nextElementSibling.id.replace('edit-', '')
-          : null;
-        if (id) {
-          const editRow = document.getElementById('edit-' + id);
-          if (editRow && r.style.display === 'none') editRow.style.display = 'none';
-        }
+      cards.forEach(c => {
+        const t = c.getAttribute('data-search') || '';
+        c.style.display = t.includes(q) ? '' : 'none';
       });
     });
   })();
