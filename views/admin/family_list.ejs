@@ -1,11 +1,10 @@
-<% /* FAMILY LIST: tampilan cards horizontal, hanya tombol Detail. */ %>
-
+<% /* FAMILY LIST (GRID + image fallback) */ %>
 <div class="container admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title"><%= title || 'Data Keluarga' %></h1>
   </div>
 
-  <% // fallback selectedMemberId aman
+  <% // selectedMemberId fallback aman
      const selId = (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null && selectedMemberId !== false)
        ? String(selectedMemberId) : "";
   %>
@@ -38,17 +37,27 @@
       (famMap[mid] ||= []).push(f);
     });
     const list = (members || []).filter(m => !selId || String(m.id) === selId);
-    const placeholder = 'https://via.placeholder.com/400x400?text=Foto';
+    const placeholder = 'https://via.placeholder.com/600x600.png?text=Foto';
   %>
 
-  <!-- SCROLLER horizontal -->
-  <div class="hscroll">
+  <!-- GRID (wrap ke bawah) -->
+  <div class="card-grid">
     <% list.forEach(m => { 
          const fams = famMap[Number(m.id)] || [];
+         const raw = (m.avatar || '').trim();
+         // pilih src awal: hanya pakai yang mulai dengan http(s), selain itu anggap kosong
+         const initialSrc = (/^https?:\/\//i.test(raw) ? raw : '') || placeholder;
          const searchBlob = (m.name + ' ' + fams.map(x => (x.fullname||'') + ' ' + (x.relation||'')).join(' ')).toLowerCase();
     %>
       <div class="mini-card" data-search="<%= searchBlob %>">
-        <img src="<%= m.avatar || placeholder %>" alt="<%= m.name %>">
+        <div class="img-wrap">
+          <img
+            loading="lazy"
+            src="<%= initialSrc %>"
+            alt="<%= m.name %>"
+            onerror="this.onerror=null; this.src='<%= placeholder %>';">
+        </div>
+
         <div class="mini-name"><%= m.name %></div>
 
         <ul class="mini-fam">
@@ -71,21 +80,30 @@
 </div>
 
 <style>
-  .hscroll{
-    display:flex; gap:12px; overflow:auto; padding:12px 4px 4px;
-    scroll-snap-type:x mandatory;
+  .card-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
+    gap:12px;
+    margin-top:12px;
   }
-  .hscroll::-webkit-scrollbar{ height:8px }
   .mini-card{
-    scroll-snap-align:start;
-    min-width:180px; max-width:180px;
-    border:1px solid var(--border); border-radius:16px;
+    border:1px solid var(--border);
+    border-radius:16px;
     background:var(--card-bg, rgba(255,255,255,.03));
-    padding:10px; box-shadow:var(--shadow-sm, 0 1px 2px rgba(0,0,0,.15));
+    padding:10px;
+    box-shadow:var(--shadow-sm, 0 1px 2px rgba(0,0,0,.15));
     display:flex; flex-direction:column; gap:8px;
   }
-  .mini-card img{
-    width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:12px; background:#111;
+  .img-wrap{
+    width:100%;
+    aspect-ratio: 1 / 1;
+    border-radius:12px;
+    overflow:hidden;
+    background:#0e0e0e;
+  }
+  .img-wrap img{
+    width:100%; height:100%;
+    object-fit:cover; display:block;
   }
   .mini-name{ font-weight:700; line-height:1.2 }
   .mini-fam{ list-style:disc; margin:0 0 6px 16px; padding:0 }
@@ -93,7 +111,7 @@
 </style>
 
 <script>
-  // Filter teks untuk card horizontal
+  // Filter teks untuk card
   (function () {
     const input = document.getElementById('textFilter');
     const cards = Array.from(document.querySelectorAll('.mini-card'));
