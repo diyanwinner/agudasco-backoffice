@@ -51,6 +51,12 @@ async function ensureTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- Settings sederhana untuk info situs (kontak, dll)
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
+
     -- Reports
     CREATE TABLE IF NOT EXISTS reports (
       id BIGSERIAL PRIMARY KEY,
