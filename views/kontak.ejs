@@ -1,0 +1,26 @@
+<div class="container">
+  <div class="admin-head">
+    <h1 class="admin-title">Kontak</h1>
+  </div>
+
+  <div class="card" style="max-width:720px;margin:auto">
+    <div class="pad">
+      <h3>Alamat</h3>
+      <p><%= address || '<span class="muted">Belum diisi</span>' %></p>
+
+      <h3 style="margin-top:16px">Email</h3>
+      <% if (email) { %>
+        <p><a href="mailto:<%= email %>"><%= email %></a></p>
+      <% } else { %>
+        <p class="muted">Belum diisi</p>
+      <% } %>
+
+      <h3 style="margin-top:16px">Telepon/WA</h3>
+      <% if (phone) { %>
+        <p><a href="tel:<%= phone %>"><%= phone %></a></p>
+      <% } else { %>
+        <p class="muted">Belum diisi</p>
+      <% } %>
+    </div>
+  </div>
+</div>
