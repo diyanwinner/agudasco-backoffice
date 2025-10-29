@@ -1,12 +1,38 @@
-<% /* FAMILY LIST (GRID + image fallback) */ %>
+<% /* FAMILY LIST (GRID + robust image fallback) */ %>
 <div class="container admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title"><%= title || 'Data Keluarga' %></h1>
   </div>
 
-  <% // selectedMemberId fallback aman
-     const selId = (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null && selectedMemberId !== false)
-       ? String(selectedMemberId) : "";
+  <% /* ========= Helpers ========= */ %>
+  <%
+    // selectedMemberId fallback aman
+    const selId = (typeof selectedMemberId !== 'undefined' && selectedMemberId !== null && selectedMemberId !== false)
+      ? String(selectedMemberId) : "";
+
+    // Cloudinary base dari app.locals (opsional). Kalau belum ada, biarin kosong.
+    const cloudBase = (typeof CLOUD_BASE !== 'undefined' && CLOUD_BASE) ? CLOUD_BASE : '';
+
+    // Placeholder inline (data URI) supaya pasti tampil tanpa host eksternal
+    const DATA_PHOTO =
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600">
+        <rect width="100%" height="100%" fill="#0b2233"/>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle"
+              fill="#6b7c8a" font-size="28" font-family="Arial, sans-serif">Foto</text>
+      </svg>`);
+
+    // Rakit URL avatar: jika bukan http(s) dan ada CLOUD_BASE, prefiks otomatis.
+    function resolveAvatar(raw) {
+      if (!raw) return '';
+      const r = String(raw).trim();
+      if (/^https?:\/\//i.test(r)) return r; // sudah full URL
+      if (cloudBase) {
+        if (r.startsWith('/')) return cloudBase + r;
+        return `${cloudBase}/${r}`;
+      }
+      return ''; // tidak bisa dirakit => pakai placeholder nantinya
+    }
   %>
 
   <!-- Filter + cari -->
@@ -37,16 +63,13 @@
       (famMap[mid] ||= []).push(f);
     });
     const list = (members || []).filter(m => !selId || String(m.id) === selId);
-    const placeholder = 'https://via.placeholder.com/600x600.png?text=Foto';
   %>
 
   <!-- GRID (wrap ke bawah) -->
   <div class="card-grid">
-    <% list.forEach(m => { 
+    <% list.forEach(m => {
          const fams = famMap[Number(m.id)] || [];
-         const raw = (m.avatar || '').trim();
-         // pilih src awal: hanya pakai yang mulai dengan http(s), selain itu anggap kosong
-         const initialSrc = (/^https?:\/\//i.test(raw) ? raw : '') || placeholder;
+         const initialSrc = resolveAvatar(m.avatar || '') || DATA_PHOTO;
          const searchBlob = (m.name + ' ' + fams.map(x => (x.fullname||'') + ' ' + (x.relation||'')).join(' ')).toLowerCase();
     %>
       <div class="mini-card" data-search="<%= searchBlob %>">
@@ -55,7 +78,9 @@
             loading="lazy"
             src="<%= initialSrc %>"
             alt="<%= m.name %>"
-            onerror="this.onerror=null; this.src='<%= placeholder %>';">
+            referrerpolicy="no-referrer"
+            crossorigin="anonymous"
+            onerror="this.onerror=null; this.src='<%= DATA_PHOTO %>';">
         </div>
 
         <div class="mini-name"><%= m.name %></div>
@@ -122,6 +147,19 @@
         const t = c.getAttribute('data-search') || '';
         c.style.display = t.includes(q) ? '' : 'none';
       });
+    });
+  })();
+
+  // Pastikan fallback placeholder aktif walau 'load' complete tapi gagal render
+  (function () {
+    const PH = `<%= DATA_PHOTO %>`;
+    document.querySelectorAll('.img-wrap img').forEach(img => {
+      function ensure() {
+        if (!img.naturalWidth) img.src = PH;
+      }
+      img.addEventListener('load', ensure, { once: true });
+      img.addEventListener('error', () => { img.src = PH; }, { once: true });
+      if (img.complete) ensure();
     });
   })();
 </script>
