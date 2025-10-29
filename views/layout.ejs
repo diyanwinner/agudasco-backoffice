@@ -5,19 +5,91 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
-  <!-- Favicon pakai Cloudinary (auto format & kompresi) -->
+  <!-- Favicon (Cloudinary) -->
   <link rel="icon"
         href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png"/>
 
   <!-- Styles -->
   <link rel="stylesheet" href="/public/styles.css" />
+
+  <!-- Patch cepat agar menu mobile tak kepotong -->
+  <style>
+    :root{
+      --header-h: 64px;           /* tinggi header, sesuaikan kalau beda */
+      --bg: #0b1220;
+      --border: #223241;
+    }
+
+    /* Header selalu di atas */
+    .header{
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-wrap{ min-height: var(--header-h); display:flex; align-items:center; gap:12px; }
+
+    /* Pastikan konten tidak memotong elemen di atasnya */
+    main, .container, .admin-wrap, .card { overflow: visible !important; }
+
+    /* Backdrop untuk menu */
+    .nav-backdrop{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 1995;
+      opacity: 0; pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .nav-backdrop.active{ opacity: 1; pointer-events: auto; }
+
+    /* Default nav (desktop) biarkan seperti biasa */
+    .nav a.active{ font-weight: 700; }
+
+    /* Mobile menu overlay (<= 992px) */
+    @media (max-width: 992px){
+      .nav{
+        position: fixed;
+        left: 0; right: 0;
+        top: var(--header-h);
+        max-height: calc(100vh - var(--header-h));
+        overflow: auto;
+        background: var(--bg);
+        border-top: 1px solid var(--border);
+        z-index: 2000;
+        transform: translateY(-8px);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform .18s ease, opacity .18s ease;
+      }
+      .nav.is-open{
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+      /* Kunci scroll halaman ketika menu terbuka */
+      .no-scroll{
+        overflow: hidden;
+        height: 100vh;
+      }
+      /* Spasi link biar enak dipencet */
+      .nav a{ display:block; padding:14px 16px; border-bottom:1px solid var(--border); }
+    }
+
+    /* Tombol hamburger (biar kelihatan aktif) */
+    .nav-toggle{ display:inline-flex; flex-direction:column; gap:4px; padding:8px 10px; }
+    .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; transition:transform .18s ease, opacity .18s ease; }
+    .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
+    .nav-toggle.is-open span:nth-child(2){ opacity:0; }
+    .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
+  </style>
 </head>
 <body>
   <!-- Header -->
   <header class="header">
     <div class="container header-wrap">
-      <!-- Brand: jadikan link -->
-      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
+      <!-- Brand -->
+      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO" style="display:flex;align-items:center;gap:10px">
         <img
           class="logo"
           src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png"
@@ -51,6 +123,9 @@
     </div>
   </header>
 
+  <!-- Backdrop untuk menu mobile -->
+  <div class="nav-backdrop" id="navBackdrop"></div>
+
   <!-- Main -->
   <main>
     <div class="container">
@@ -83,18 +158,35 @@
       }
     }
 
-    // Toggle mobile nav
+    // Toggle mobile nav + backdrop + lock scroll
     (function(){
       const btn = document.querySelector('.nav-toggle');
       const nav = document.getElementById('main-nav');
       const root = document.documentElement;
-      if(!btn || !nav) return;
+      const backdrop = document.getElementById('navBackdrop');
+
+      if(!btn || !nav || !backdrop) return;
+
+      function openMenu(){
+        nav.classList.add('is-open');
+        btn.classList.add('is-open');
+        btn.setAttribute('aria-expanded', 'true');
+        backdrop.classList.add('active');
+        root.classList.add('no-scroll');
+      }
+      function closeMenu(){
+        nav.classList.remove('is-open');
+        btn.classList.remove('is-open');
+        btn.setAttribute('aria-expanded', 'false');
+        backdrop.classList.remove('active');
+        root.classList.remove('no-scroll');
+      }
+
       btn.addEventListener('click', () => {
-        const open = nav.classList.toggle('is-open');
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        btn.classList.toggle('is-open', open);
-        root.classList.toggle('no-scroll', open);
+        if (nav.classList.contains('is-open')) closeMenu(); else openMenu();
       });
+      backdrop.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
     })();
   </script>
 </body>
