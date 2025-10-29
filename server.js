@@ -102,6 +102,25 @@ async function ensureTables() {
       caption TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    -- Site Info (single row)
+    CREATE TABLE IF NOT EXISTS site_info (
+     id INT PRIMARY KEY DEFAULT 1,
+     org_name   TEXT,
+     email      TEXT,
+     phone      TEXT,
+     whatsapp   TEXT,
+     address    TEXT,
+     maps_url   TEXT,
+     instagram  TEXT,
+     facebook   TEXT,
+     x_handle   TEXT,
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+   -- seed row (id=1)
+     INSERT INTO site_info (id) VALUES (1)
+     ON CONFLICT (id) DO NOTHING;
   `);
 }
 ensureTables().catch(err => console.error("ensureTables error:", err));
