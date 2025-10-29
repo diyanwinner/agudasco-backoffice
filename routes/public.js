@@ -55,17 +55,29 @@ export default function (q, q1) {
     res.render("member_view", { title: member.name, active: "anggota", member });
   });
 
-  router.get("/galeri", (req, res) =>
-    res.render("galeri", { title: "Galeri", active: "galeri" })
-  );
+  // ================= PUBLIC PAGES =================
+export default function (q, q1) {
+  const router = require('express').Router?.() || (await import('express')).Router();
 
-  router.get("/tentang", (req, res) =>
-    res.render("tentang", { title: "Tentang", active: "tentang" })
-  );
+  // ... route lain yang sudah ada
 
-  router.get("/kontak", (req, res) =>
-    res.render("kontak", { title: "Kontak", active: "kontak" })
-  );
+  // K O N T A K
+  router.get("/kontak", async (req, res) => {
+    const address = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_ADDRESS'"))?.value || "";
+    const email   = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_EMAIL'"))?.value || "";
+    const phone   = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_PHONE'"))?.value || "";
+    res.render("kontak", { title: "Kontak", active: "kontak", address, email, phone });
+  });
+
+  // T E N T A N G (sementara statis / bisa kamu isi)
+  router.get("/tentang", (req, res) => {
+    res.render("tentang", { title: "Tentang", active: "tentang" });
+  });
+
+  // G A L E R I (placeholder)
+  router.get("/galeri", (req, res) => {
+    res.render("galeri", { title: "Galeri", active: "galeri" });
+  });
 
   return router;
 }
