@@ -152,6 +152,25 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(`/admin/members/${memberId}`);
   });
 
+  // ================= ADMIN: KONTAK =================
+  router.get("/kontak", async (req, res) => {
+    const address = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_ADDRESS'"))?.value || "";
+    const email   = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_EMAIL'"))?.value || "";
+    const phone   = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_PHONE'"))?.value || "";
+  res.render("admin/kontak", { title: "Kelola Kontak", address, email, phone });
+});
+
+  router.post("/kontak", async (req, res) => {
+    const { address = "", email = "", phone = "" } = req.body;
+
+  // UPSERT sederhana
+    await q("INSERT INTO site_settings(key,value) VALUES('CONTACT_ADDRESS',$1) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value", [address.trim()]);
+    await q("INSERT INTO site_settings(key,value) VALUES('CONTACT_EMAIL',$1)   ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value", [email.trim()]);
+    await q("INSERT INTO site_settings(key,value) VALUES('CONTACT_PHONE',$1)   ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value", [phone.trim()]);
+
+  res.redirect("/admin/kontak");
+});
+
   /* ===================== FAMILY ====================== */
   // Grid Family (filter member_id opsional + selectedMemberId untuk view)
   router.get("/family", async (req, res) => {
