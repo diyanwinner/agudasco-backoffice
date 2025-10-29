@@ -123,6 +123,10 @@ app.set("layout", "layout");
 
 app.locals.buildId = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
 
+app.locals.CLOUD_BASE = process.env.CLOUDINARY_CLOUD_NAME
+  ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}`
+  : '';
+
 app.use((req, res, next) => {
   res.locals.buildId = app.locals.buildId;
   res.locals.active = "";
