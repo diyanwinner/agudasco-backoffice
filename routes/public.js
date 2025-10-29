@@ -3,10 +3,12 @@ import express from "express";
 
 /**
  * Public routes
- * Catatan:
- * - Gunakan EJS views: home, articles, article_view, reports, report_view,
- *   adart, adart_view, members, member_view, kontak, tentang, galeri
- * - Pastikan nav highlighting pakai `active` di res.locals
+ * View yang dipakai:
+ * - home, articles, article_view
+ * - reports, report_view
+ * - adart, adart_view
+ * - members, member_view
+ * - kontak, tentang, galeri
  */
 export default function (q, q1) {
   const router = express.Router();
@@ -24,7 +26,7 @@ export default function (q, q1) {
   });
 
   /* ===================== ARTIKEL ===================== */
-  router.get("/artikel", async (req, res) => {
+  router.get("/artikel", async (_req, res) => {
     const articles = await q("SELECT * FROM articles ORDER BY id DESC");
     res.render("articles", {
       title: "Artikel",
@@ -44,7 +46,7 @@ export default function (q, q1) {
   });
 
   /* ===================== LAPORAN ===================== */
-  router.get("/laporan", async (req, res) => {
+  router.get("/laporan", async (_req, res) => {
     const reports = await q("SELECT * FROM reports ORDER BY id DESC");
     res.render("reports", {
       title: "Laporan Keuangan",
@@ -64,7 +66,7 @@ export default function (q, q1) {
   });
 
   /* ====================== AD/ART ===================== */
-  router.get("/adart", async (req, res) => {
+  router.get("/adart", async (_req, res) => {
     const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
     res.render("adart", {
       title: "AD/ART",
@@ -84,8 +86,10 @@ export default function (q, q1) {
   });
 
   /* ===================== ANGGOTA ===================== */
-  router.get("/anggota", async (req, res) => {
-    const members = await q("SELECT id, name, avatar FROM members ORDER BY name ASC");
+  router.get("/anggota", async (_req, res) => {
+    const members = await q(
+      "SELECT id, name, avatar FROM members ORDER BY name ASC"
+    );
     res.render("members", {
       title: "Anggota",
       active: "anggota",
@@ -104,47 +108,30 @@ export default function (q, q1) {
   });
 
   /* ================== HALAMAN PUBLIK ================= */
-  // Kontak (ambil dari site_settings)
-  router.get("/kontak", async (req, res) => {
-    const address = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_ADDRESS'"))?.value || "";
-    const email   = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_EMAIL'"))?.value || "";
-    const phone   = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_PHONE'"))?.value || "";
-    res.render("kontak", {
-      title: "Kontak",
-      active: "kontak",
-      address,
-      email,
-      phone,
-    });
+  // Kontak – ambil dari table site_contact (single row id=1)
+  router.get("/kontak", async (_req, res) => {
+    try {
+      const contact = await q1("SELECT * FROM site_contact WHERE id=1");
+      res.render("kontak", {
+        title: "Kontak",
+        active: "kontak",
+        contact: contact || {}, // aman kalau null
+      });
+    } catch (e) {
+      console.error("Kontak error:", e);
+      res.render("kontak", { title: "Kontak", active: "kontak", contact: {} });
+    }
   });
 
-  // Tentang (sementara statis)
+  // Tentang (statis sementara)
   router.get("/tentang", (_req, res) => {
-    res.render("tentang", {
-      title: "Tentang",
-      active: "tentang",
-    });
+    res.render("tentang", { title: "Tentang", active: "tentang" });
   });
 
   // Galeri (placeholder)
   router.get("/galeri", (_req, res) => {
-    res.render("galeri", {
-      title: "Galeri",
-      active: "galeri",
-    });
+    res.render("galeri", { title: "Galeri", active: "galeri" });
   });
-
-  // Kontak (dinamis dari site_info)
-// --- PUBLIK: KONTAK ---
-  router.get("/kontak", async (req, res) => {
-   const contact = await q1("SELECT * FROM site_contact WHERE id=1");
-   res.render("kontak", { title: "Kontak", active: "kontak", contact });
-    });
-  } catch (e) {
-    console.error("Kontak error:", e);
-    res.render("kontak", { title: "Kontak", active: "kontak", info: {} });
-  }
-});
 
   return router;
 }
