@@ -1,65 +1,174 @@
+<!-- views/admin/contact.ejs -->
 <div class="admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title">Kelola Kontak</h1>
     <a class="btn ghost" href="/admin">← Dashboard</a>
   </div>
 
+  <%
+// Safety helpers
+function valOf(obj, key) {
+  return (obj && obj[key]) ? String(obj[key]) : '';
+}
+const org_name = valOf(info, 'org_name');
+const email    = valOf(info, 'email');
+const phone    = valOf(info, 'phone');
+const whatsapp = valOf(info, 'whatsapp');
+const instagram= valOf(info, 'instagram');
+const facebook = valOf(info, 'facebook');
+const x_handle = valOf(info, 'x_handle');   // boleh handle atau URL
+const maps_url = valOf(info, 'maps_url');
+const address  = valOf(info, 'address');
+
+const updatedAt = (info && info.updated_at) ? new Date(info.updated_at).toLocaleString('id-ID') : '—';
+
+// buat tautan WA aman: ambil angka saja
+const waDigits  = whatsapp.replace(/[^0-9]/g, '');
+const waLink    = waDigits ? ('https://wa.me/' + waDigits) : '';
+
+// tel link (boleh + dan angka)
+const telDigits = phone.replace(/[^0-9+]/g, '');
+const telLink   = telDigits ? ('tel:' + telDigits) : '';
+
+// x/twitter: jika bukan URL tapi handle, buat jadi https://twitter.com/HANDLE
+let xLink = '';
+if (x_handle) {
+  if (/^https?:\/\//i.test(x_handle)) xLink = x_handle;
+  else xLink = 'https://twitter.com/' + x_handle.replace(/^@/, '');
+}
+  %>
+
   <form class="card" method="post" action="/admin/contact" style="display:grid; gap:12px; padding:16px">
     <div class="grid" style="grid-template-columns:1fr 1fr; gap:12px">
       <div>
         <label class="label">Nama Organisasi</label>
-        <input class="input" type="text" name="org_name" value="<%= (info && info.org_name) || '' %>" placeholder="AGUDASCO">
+        <input class="input" type="text" name="org_name" value="<%= org_name %>" placeholder="AGUDASCO">
       </div>
       <div>
         <label class="label">Email</label>
-        <input class="input" type="email" name="email" value="<%= (info && info.email) || '' %>" placeholder="info@agudasco.org">
+        <input class="input" type="email" name="email" value="<%= email %>" placeholder="info@agudasco.org">
       </div>
       <div>
         <label class="label">Telepon</label>
-        <input class="input" type="text" name="phone" value="<%= (info && info.phone) || '' %>" placeholder="+62 8xx xxxx">
+        <input class="input" type="text" name="phone" value="<%= phone %>" placeholder="+62 8xx xxxx">
       </div>
       <div>
         <label class="label">WhatsApp</label>
-        <input class="input" type="text" name="whatsapp" value="<%= (info && info.whatsapp) || '' %>" placeholder="628xxxx (angka saja/tautan)">
+        <input class="input" type="text" name="whatsapp" value="<%= whatsapp %>" placeholder="628xxxx (angka saja/tautan)">
       </div>
       <div>
         <label class="label">Instagram (URL)</label>
-        <input class="input" type="text" name="instagram" value="<%= (info && info.instagram) || '' %>" placeholder="https://instagram.com/...">
+        <input class="input" type="text" name="instagram" value="<%= instagram %>" placeholder="https://instagram.com/...">
       </div>
       <div>
         <label class="label">Facebook (URL)</label>
-        <input class="input" type="text" name="facebook" value="<%= (info && info.facebook) || '' %>" placeholder="https://facebook.com/...">
+        <input class="input" type="text" name="facebook" value="<%= facebook %>" placeholder="https://facebook.com/...">
       </div>
       <div>
         <label class="label">X/Twitter (handle atau URL)</label>
-        <input class="input" type="text" name="x_handle" value="<%= (info && info.x_handle) || '' %>" placeholder="@agudasco">
+        <input class="input" type="text" name="x_handle" value="<%= x_handle %>" placeholder="@agudasco atau https://x.com/...">
       </div>
       <div>
         <label class="label">Maps URL (embed/share link)</label>
-        <input class="input" type="text" name="maps_url" value="<%= (info && info.maps_url) || '' %>" placeholder="https://maps.google.com/...">
+        <input class="input" type="text" name="maps_url" value="<%= maps_url %>" placeholder="https://maps.google.com/...">
       </div>
     </div>
 
     <div>
       <label class="label">Alamat</label>
-      <textarea class="input" name="address" rows="3" placeholder="Alamat lengkap"><%= (info && info.address) || '' %></textarea>
+      <textarea class="input" name="address" rows="3" placeholder="Alamat lengkap"><%= address %></textarea>
     </div>
 
     <div class="form-bar">
-      <span class="muted">Terakhir diperbarui: <%= info?.updated_at ? new Date(info.updated_at).toLocaleString('id-ID') : '—' %></span>
+      <span class="muted">Terakhir diperbarui: <%= updatedAt %></span>
       <button class="btn">Simpan</button>
     </div>
   </form>
 
+  <!-- Pratinjau -->
   <div class="card" style="padding:16px; margin-top:12px">
     <h3 style="margin-top:0">Pratinjau</h3>
-    <p><strong><%= info?.org_name || '—' %></strong></p>
-    <p>Email: <%= info?.email || '—' %> · Telp: <%= info?.phone || '—' %> · WA: <%= info?.whatsapp || '—' %></p>
-    <p>Alamat: <%= info?.address || '—' %></p>
-    <% if (info?.maps_url) { %>
-      <div style="border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-top:8px">
-        <iframe src="<%= info.maps_url %>" width="100%" height="300" style="border:0" loading="lazy"></iframe>
+
+    <p style="margin:.25rem 0">
+      <strong><%= org_name || '—' %></strong>
+    </p>
+
+    <p class="<%= address ? '' : 'muted' %>" style="margin:.25rem 0">
+      <%= address || 'Alamat belum diisi' %>
+    </p>
+
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px; margin-top:8px">
+      <div>
+        <div class="muted" style="font-size:.9rem">Email</div>
+        <% if (email) { %>
+          <a href="mailto:<%= email %>"><%= email %></a>
+        <% } else { %>
+          <span class="muted">—</span>
+        <% } %>
+      </div>
+
+      <div>
+        <div class="muted" style="font-size:.9rem">Telepon</div>
+        <% if (telDigits) { %>
+          <a href="<%= telLink %>"><%= phone %></a>
+        <% } else { %>
+          <span class="muted">—</span>
+        <% } %>
+      </div>
+
+      <div>
+        <div class="muted" style="font-size:.9rem">WhatsApp</div>
+        <% if (waDigits) { %>
+          <a href="<%= waLink %>" target="_blank" rel="noopener"><%= whatsapp %></a>
+        <% } else { %>
+          <span class="muted">—</span>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Sosial -->
+    <% if (instagram || facebook || x_handle) { %>
+      <hr style="border:none;border-top:1px solid var(--border); margin:12px 0">
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px">
+        <div>
+          <div class="muted" style="font-size:.9rem">Instagram</div>
+          <% if (instagram) { %>
+            <a href="<%= instagram %>" target="_blank" rel="noopener"><%= instagram %></a>
+          <% } else { %>
+            <span class="muted">—</span>
+          <% } %>
+        </div>
+        <div>
+          <div class="muted" style="font-size:.9rem">Facebook</div>
+          <% if (facebook) { %>
+            <a href="<%= facebook %>" target="_blank" rel="noopener"><%= facebook %></a>
+          <% } else { %>
+            <span class="muted">—</span>
+          <% } %>
+        </div>
+        <div>
+          <div class="muted" style="font-size:.9rem">X/Twitter</div>
+          <% if (x_handle) { %>
+            <a href="<%= xLink %>" target="_blank" rel="noopener"><%= x_handle %></a>
+          <% } else { %>
+            <span class="muted">—</span>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Maps -->
+    <% if (maps_url) { %>
+      <div style="border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-top:12px">
+        <iframe src="<%= maps_url %>" width="100%" height="300" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
       </div>
     <% } %>
   </div>
 </div>
+
+<style>
+  @media (max-width: 720px){
+    /* grid form jadi satu kolom saat mobile */
+    form.card > .grid { grid-template-columns: 1fr !important; }
+  }
+</style>
