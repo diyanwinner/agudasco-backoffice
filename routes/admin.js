@@ -16,19 +16,19 @@ export default function (q, q1, uploadImage, pool) {
   });
 
   router.post("/articles", uploadImage.single("image"), async (req, res) => {
-    const { title, content } = req.body;
+    const { title = "", content = "" } = req.body;
     const image = req.file ? req.file.path : null;
-    if (!title) return res.status(400).send("Judul wajib diisi");
+    if (!title.trim()) return res.status(400).send("Judul wajib diisi");
     await q("INSERT INTO articles (title,content,image) VALUES ($1,$2,$3)", [
       title.trim(),
-      content || "",
+      content,
       image,
     ]);
     res.redirect("/admin/articles");
   });
 
   router.post("/articles/:id/delete", async (req, res) => {
-    await q("DELETE FROM articles WHERE id=$1", [req.params.id]);
+    await q("DELETE FROM articles WHERE id=$1", [Number(req.params.id)]);
     res.redirect("/admin/articles");
   });
 
@@ -46,22 +46,20 @@ export default function (q, q1, uploadImage, pool) {
   });
 
   router.post("/banners/:id/delete", async (req, res) => {
-    await q("DELETE FROM banners WHERE id=$1", [req.params.id]);
+    await q("DELETE FROM banners WHERE id=$1", [Number(req.params.id)]);
     res.redirect("/admin/banners");
   });
 
   /* ==================== ANGGOTA ====================== */
-  // HANYA FORM TAMBAH + LINK KE FAMILY
+  // Halaman khusus input + link ke Family (tanpa list anggota)
   router.get("/members", async (req, res) => {
-    // Tidak SELECT * FROM members lagi – halaman ini fokus input saja
     res.render("admin/members_add", {
       title: "Tambah Anggota",
-      // optionally bisa kirim target redirect setelah submit
-      nextUrl: "/admin/family",
+      nextUrl: "/admin/family", // target setelah submit
     });
   });
 
-  // Simpan anggota baru -> lanjut ke /admin/family
+  // Simpan anggota baru -> lanjut ke /admin/family (default)
   router.post("/members", uploadImage.single("avatar"), async (req, res) => {
     const { name = "", bio = "" } = req.body;
     if (!name.trim()) return res.status(400).send("Nama wajib diisi");
@@ -77,7 +75,15 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(redirectTo);
   });
 
-  // Detail anggota (untuk tombol "Detail" dari halaman Family)
+  // >>> NEW: Hapus anggota (POST) — ini yang bikin 404 kalau belum ada
+  router.post("/members/:id/delete", async (req, res) => {
+    const id = Number(req.params.id);
+    await q("DELETE FROM members WHERE id=$1", [id]);
+    // NOTE: Tabel family & photos sudah ON DELETE CASCADE di schema kamu
+    res.redirect("/admin/members");
+  });
+
+  // Detail anggota (diakses dari tombol "Detail" di Family)
   router.get("/members/:id", async (req, res) => {
     const id = Number(req.params.id);
     const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
@@ -185,7 +191,7 @@ export default function (q, q1, uploadImage, pool) {
   });
 
   router.post("/family/:id/delete", async (req, res) => {
-    await pool.query("DELETE FROM member_families WHERE id=$1", [req.params.id]);
+    await pool.query("DELETE FROM member_families WHERE id=$1", [Number(req.params.id)]);
     const backTo = req.body.back_to || "/admin/family";
     res.redirect(backTo);
   });
