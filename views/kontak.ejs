@@ -1,52 +1,86 @@
+<!-- views/kontak.ejs -->
 <%
-// Ambil nilai dari server (pastikan route kirim object 'contact' – boleh null/undefined)
-const addr  = (contact && contact.address || '').trim();
-const email = (contact && contact.email   || '').trim();
-const phone = (contact && contact.phone   || '').trim();
+  // Guard: kalau 'contact' tidak dikirim, jadikan objek kosong
+  const c = (typeof contact !== 'undefined' && contact) ? contact : {};
+
+  function val(x){ return (x || '').toString().trim(); }
+
+  const org_name = val(c.org_name);
+  const address  = val(c.address);
+  const email    = val(c.email);
+  const phone    = val(c.phone);
+  const whatsapp = val(c.whatsapp);
+  const instagram= val(c.instagram);
+  const facebook = val(c.facebook);
+  const x_handle = val(c.x_handle);
+  const maps_url = val(c.maps_url);
+
+  // links
+  const telDigits = phone.replace(/[^0-9+]/g,'');
+  const telLink   = telDigits ? `tel:${telDigits}` : '';
+
+  const waDigits  = whatsapp.replace(/[^0-9]/g,'');
+  const waLink    = waDigits ? `https://wa.me/${waDigits}` : '';
+
+  let xLink = '';
+  if (x_handle) {
+    xLink = /^https?:\/\//i.test(x_handle) ? x_handle : ('https://twitter.com/' + x_handle.replace(/^@/,''));
+  }
+
+  // format alamat (newline -> <br>)
+  const addrHtml = address ? address.replace(/\n/g,'<br>') : '';
 %>
 
 <section class="section">
-  <h1>Kontak</h1>
+  <h1 class="page-title"><%= title || 'Kontak' %></h1>
 
-  <div class="card" style="max-width:880px">
-    <div class="pad">
-      <h3>Alamat</h3>
-      <p class="<%= addr ? '' : 'muted' %>"><%= addr || 'Belum diisi' %></p>
+  <div class="card" style="padding:16px">
+    <h3 style="margin:.2rem 0"><%= org_name || '—' %></h3>
 
-      <h3>Email</h3>
-      <p class="<%= email ? '' : 'muted' %>">
-        <% if (email) { %>
-          <a href="mailto:<%= email %>"><%= email %></a>
-        <% } else { %>
-          Belum diisi
-        <% } %>
-      </p>
-
-      <h3>Telepon/WA</h3>
-      <p class="<%= phone ? '' : 'muted' %>">
-        <% if (phone) { %>
-          <a href="https://wa.me/<%= phone.replace(/[^0-9]/g,'') %>" target="_blank" rel="noopener"> <%= phone %> </a>
-        <% } else { %>
-          Belum diisi
-        <% } %>
-      </p>
-
-      <% // Opsional: Socials, hanya tampil kalau ada %>
-      <% const ig = (contact && contact.instagram || '').trim();
-         const fb = (contact && contact.facebook || '').trim();
-         const tw = (contact && contact.twitter  || '').trim();
-         const map = (contact && contact.map_url  || '').trim();
-      %>
-
-      <% if (ig || fb || tw || map) { %>
-        <hr/>
-        <div class="grid" style="grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px">
-          <% if (ig) { %><div>Instagram: <a href="<%= ig %>" target="_blank" rel="noopener"><%= ig %></a></div><% } %>
-          <% if (fb) { %><div>Facebook: <a href="<%= fb %>" target="_blank" rel="noopener"><%= fb %></a></div><% } %>
-          <% if (tw) { %><div>X/Twitter: <a href="<%= tw %>" target="_blank" rel="noopener"><%= tw %></a></div><% } %>
-          <% if (map) { %><div>Maps: <a href="<%= map %>" target="_blank" rel="noopener">Lihat peta</a></div><% } %>
-        </div>
+    <h4 style="margin:12px 0 6px">Alamat</h4>
+    <p>
+      <% if (addrHtml) { %>
+        <span><%- addrHtml %></span>
+      <% } else { %>
+        <span class="muted">Belum diisi</span>
       <% } %>
-    </div>
+    </p>
+
+    <h4 style="margin:12px 0 6px">Email</h4>
+    <% if (email) { %>
+      <p><a href="mailto:<%= email %>"><%= email %></a></p>
+    <% } else { %>
+      <p class="muted">Belum diisi</p>
+    <% } %>
+
+    <h4 style="margin:12px 0 6px">Telepon/WA</h4>
+    <p>
+      <% if (telLink) { %>
+        <a href="<%= telLink %>"><%= phone %></a>
+      <% } else { %>
+        <span class="muted">Belum diisi</span>
+      <% } %>
+      <% if (waLink) { %>
+        · <a href="<%= waLink %>" target="_blank" rel="noopener">WhatsApp</a>
+      <% } %>
+    </p>
+
+    <% if (instagram || facebook || x_handle) { %>
+      <h4 style="margin:12px 0 6px">Media Sosial</h4>
+      <ul style="margin:0; padding-left:18px">
+        <% if (instagram) { %><li><a href="<%= instagram %>" target="_blank" rel="noopener">Instagram</a></li><% } %>
+        <% if (facebook)  { %><li><a href="<%= facebook %>"  target="_blank" rel="noopener">Facebook</a></li><% } %>
+        <% if (x_handle)  { %><li><a href="<%= xLink %>"     target="_blank" rel="noopener">X/Twitter</a></li><% } %>
+      </ul>
+    <% } %>
+
+    <% if (maps_url) { %>
+      <div style="border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-top:14px">
+        <iframe
+          src="<%= maps_url %>"
+          width="100%" height="320" style="border:0"
+          loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+      </div>
+    <% } %>
   </div>
 </section>
