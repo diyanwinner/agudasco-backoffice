@@ -1,7 +1,7 @@
 // server.js
 import express from "express";
 import path from "path";
-import fs from "fs";
+// import fs from "fs"; // (tidak dipakai)
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
 import multer from "multer";
@@ -51,7 +51,7 @@ async function ensureTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
-    -- Settings sederhana untuk info situs (kontak, dll)
+    -- Settings (legacy key-value)
     CREATE TABLE IF NOT EXISTS site_settings (
       key TEXT PRIMARY KEY,
       value TEXT
@@ -83,7 +83,7 @@ async function ensureTables() {
       bio TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
-    CREATE INDEX IF NOT EXISTS idx_members_name ON members (name ASC);
+    CREATE INDEX IF NOT EXISTS idx_members_name ON members (name);
 
     -- Member Families
     CREATE TABLE IF NOT EXISTS member_families (
@@ -103,24 +103,70 @@ async function ensureTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
-    -- Site Info (single row)
+    -- Legacy single-row (dibiarkan untuk kompatibilitas)
     CREATE TABLE IF NOT EXISTS site_info (
-     id INT PRIMARY KEY DEFAULT 1,
-     org_name   TEXT,
-     email      TEXT,
-     phone      TEXT,
-     whatsapp   TEXT,
-     address    TEXT,
-     maps_url   TEXT,
-     instagram  TEXT,
-     facebook   TEXT,
-     x_handle   TEXT,
-     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      id INT PRIMARY KEY DEFAULT 1,
+      org_name   TEXT,
+      email      TEXT,
+      phone      TEXT,
+      whatsapp   TEXT,
+      address    TEXT,
+      maps_url   TEXT,
+      instagram  TEXT,
+      facebook   TEXT,
+      x_handle   TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    INSERT INTO site_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
-   -- seed row (id=1)
-     INSERT INTO site_info (id) VALUES (1)
-     ON CONFLICT (id) DO NOTHING;
+    -- New canonical table for contact (dipakai publik/admin)
+    CREATE TABLE IF NOT EXISTS site_contact (
+      id INT PRIMARY KEY DEFAULT 1,
+      org_name   TEXT,
+      email      TEXT,
+      phone      TEXT,
+      whatsapp   TEXT,
+      address    TEXT,
+      maps_url   TEXT,
+      instagram  TEXT,
+      facebook   TEXT,
+      x_handle   TEXT,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    INSERT INTO site_contact (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+  `);
+
+  // Migrasi ringan: copy dari site_info -> site_contact bila contact kosong
+  await pool.query(`
+    DO $$
+    DECLARE
+      has_contact boolean;
+      si record;
+    BEGIN
+      SELECT EXISTS(SELECT 1 FROM site_contact WHERE id=1
+                    AND (org_name IS NOT NULL OR email IS NOT NULL OR phone IS NOT NULL
+                         OR whatsapp IS NOT NULL OR address IS NOT NULL OR maps_url IS NOT NULL
+                         OR instagram IS NOT NULL OR facebook IS NOT NULL OR x_handle IS NOT NULL))
+      INTO has_contact;
+
+      IF NOT has_contact THEN
+        SELECT * INTO si FROM site_info WHERE id=1;
+        IF FOUND THEN
+          UPDATE site_contact SET
+            org_name  = COALESCE(si.org_name,  site_contact.org_name),
+            email     = COALESCE(si.email,     site_contact.email),
+            phone     = COALESCE(si.phone,     site_contact.phone),
+            whatsapp  = COALESCE(si.whatsapp,  site_contact.whatsapp),
+            address   = COALESCE(si.address,   site_contact.address),
+            maps_url  = COALESCE(si.maps_url,  site_contact.maps_url),
+            instagram = COALESCE(si.instagram, site_contact.instagram),
+            facebook  = COALESCE(si.facebook,  site_contact.facebook),
+            x_handle  = COALESCE(si.x_handle,  site_contact.x_handle),
+            updated_at = now()
+          WHERE id = 1;
+        END IF;
+      END IF;
+    END $$;
   `);
 }
 ensureTables().catch(err => console.error("ensureTables error:", err));
@@ -151,7 +197,7 @@ const uploadImage = multer({ storage: imageStorage });
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(express.json({ limit: "5mb" }));
 
-// static assets (cache aggressively; busting via buildId)
+// static assets (cache; cache-busting via buildId)
 app.use(
   "/public",
   express.static(path.join(__dirname, "public"), {
@@ -166,21 +212,21 @@ app.use(expressLayouts);
 app.set("layout", "layout");
 
 // globals
-app.locals.buildId   = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
+app.locals.buildId    = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
 app.locals.CLOUD_BASE = process.env.CLOUDINARY_CLOUD_NAME
   ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}`
   : "";
 
 // per-request locals
 app.use((req, res, next) => {
-  res.locals.buildId = app.locals.buildId;
-  res.locals.active  = "";            // nav highlight (set dalam route)
-  res.locals.title   = "AGUDASCO";    // default title
+  res.locals.buildId   = app.locals.buildId;
+  res.locals.active    = "";          // nav highlight (set di routes)
+  res.locals.title     = "AGUDASCO";  // default title
   res.locals.CLOUD_BASE = app.locals.CLOUD_BASE;
   next();
 });
 
-// CSP yang ramah image/CDN
+// CSP yang ramah CDN/image (Cloudinary dll)
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -226,11 +272,11 @@ function adminAuth(req, res, next) {
 import publicRoutes from "./routes/public.js";
 import adminRoutes  from "./routes/admin.js";
 
-// healthcheck ringan
+// healthcheck
 app.get("/health", (_req, res) => res.status(200).send("OK"));
 
-app.use("/",       publicRoutes(q, q1));
-app.use("/admin",  adminAuth, adminRoutes(q, q1, uploadImage, pool));
+app.use("/",      publicRoutes(q, q1));
+app.use("/admin", adminAuth, adminRoutes(q, q1, uploadImage, pool));
 
 /* ------------------------------------------------------------
    ERROR HANDLERS
