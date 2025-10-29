@@ -6,137 +6,131 @@
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
   <!-- Favicon (Cloudinary) -->
-  <link rel="icon"
-        href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png"/>
+  <link rel="icon" href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png"/>
 
   <!-- Styles -->
   <link rel="stylesheet" href="/public/styles.css" />
 
-  <!-- Patch cepat agar menu mobile tak kepotong -->
+  <!-- FIX: header & mobile overlay -->
   <style>
     :root{
-      --header-h: 64px;           /* tinggi header, sesuaikan kalau beda */
+      --header-h: 64px;             /* sesuaikan tinggi header */
       --bg: #0b1220;
       --border: #223241;
+      --text: #fff;
     }
 
-    /* Header selalu di atas */
-    .header{
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
+    /* ===== Header fixed di atas, body diberi padding ===== */
+    body{ padding-top: var(--header-h); background: var(--bg); color: var(--text); }
+    .site-header{
+      position: fixed; inset: 0 0 auto 0; height: var(--header-h);
+      z-index: 3000; background: var(--bg); border-bottom: 1px solid var(--border);
     }
-    .header-wrap{ min-height: var(--header-h); display:flex; align-items:center; gap:12px; }
+    .header-wrap{ height: 100%; display:flex; align-items:center; gap:12px; }
+    .brand{ color: inherit; text-decoration:none; font-weight:700; }
 
-    /* Pastikan konten tidak memotong elemen di atasnya */
-    main, .container, .admin-wrap, .card { overflow: visible !important; }
+    /* ===== Desktop nav di dalam header ===== */
+    .nav-desktop a{ color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; }
+    .nav-desktop a.active{ font-weight:700; }
 
-    /* Backdrop untuk menu */
-    .nav-backdrop{
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.35);
-      z-index: 1995;
-      opacity: 0; pointer-events: none;
-      transition: opacity .18s ease;
-    }
-    .nav-backdrop.active{ opacity: 1; pointer-events: auto; }
-
-    /* Default nav (desktop) biarkan seperti biasa */
-    .nav a.active{ font-weight: 700; }
-
-    /* Mobile menu overlay (<= 992px) */
-    @media (max-width: 992px){
-      .nav{
-        position: fixed;
-        left: 0; right: 0;
-        top: var(--header-h);
-        max-height: calc(100vh - var(--header-h));
-        overflow: auto;
-        background: var(--bg);
-        border-top: 1px solid var(--border);
-        z-index: 2000;
-        transform: translateY(-8px);
-        opacity: 0;
-        pointer-events: none;
-        transition: transform .18s ease, opacity .18s ease;
-      }
-      .nav.is-open{
-        transform: translateY(0);
-        opacity: 1;
-        pointer-events: auto;
-      }
-      /* Kunci scroll halaman ketika menu terbuka */
-      .no-scroll{
-        overflow: hidden;
-        height: 100vh;
-      }
-      /* Spasi link biar enak dipencet */
-      .nav a{ display:block; padding:14px 16px; border-bottom:1px solid var(--border); }
-    }
-
-    /* Tombol hamburger (biar kelihatan aktif) */
-    .nav-toggle{ display:inline-flex; flex-direction:column; gap:4px; padding:8px 10px; }
-    .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; transition:transform .18s ease, opacity .18s ease; }
+    /* ===== Tombol hamburger ===== */
+    .nav-toggle{ display:none; margin-left:auto; border:0; background:transparent; padding:10px; }
+    .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
     .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
     .nav-toggle.is-open span:nth-child(2){ opacity:0; }
     .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
+
+    /* ===== Mobile overlay nav (di luar header) ===== */
+    .mobile-nav{ position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
+    .mobile-nav.active{ display:block; }
+    .mobile-nav__list{ list-style:none; padding:12px; margin:0; display:grid; gap:8px; }
+    .mobile-nav__list a{
+      display:block; padding:14px 16px; border:1px solid var(--border);
+      border-radius:12px; text-decoration:none; color:#fff; background: rgba(255,255,255,.04);
+    }
+
+    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998;
+      background: rgba(0,0,0,.4); display:none; }
+    .nav-backdrop.active{ display:block; }
+
+    /* Kunci scroll saat menu buka */
+    .body--lock{ overflow:hidden; height:100vh; }
+
+    /* ===== Responsif ===== */
+    @media (max-width: 992px){
+      .nav-desktop{ display:none; }
+      .nav-toggle{ display:inline-flex; flex-direction:column; margin-left:auto; }
+    }
+    @media (min-width: 993px){
+      .mobile-nav, .nav-backdrop{ display:none !important; }
+      .nav-toggle{ display:none; }
+    }
+
+    /* Konten tidak memotong overlay */
+    main, .container, .admin-wrap, .card, .page-wrap{ overflow:visible !important; }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="header">
+  <!-- ===== Header (desktop nav di dalam sini) ===== -->
+  <header class="site-header">
     <div class="container header-wrap">
-      <!-- Brand -->
       <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO" style="display:flex;align-items:center;gap:10px">
-        <img
-          class="logo"
+        <img class="logo"
           src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png"
-          srcset="
-            https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png 1x,
-            https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_88/v1760066670/AgudascoLogo_resize_injtq2.png 2x
-          "
-          alt="Logo AGUDASCO"
-          width="44" height="44"
-          loading="eager" decoding="async" />
+          srcset="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png 1x,
+                  https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_88/v1760066670/AgudascoLogo_resize_injtq2.png 2x"
+          alt="Logo AGUDASCO" width="44" height="44" loading="eager" decoding="async"/>
         <div class="title">AGUDASCO</div>
       </a>
 
-      <!-- Tombol hamburger (mobile) -->
-      <button class="nav-toggle" aria-controls="main-nav" aria-expanded="false" aria-label="Buka navigasi">
+      <!-- Desktop nav -->
+      <nav class="nav-desktop" aria-label="Navigasi utama">
+        <a href="/"        class="<%= (locals.active==='home')     ? 'active' : '' %>">Beranda</a>
+        <a href="/artikel" class="<%= (locals.active==='artikel')  ? 'active' : '' %>">Artikel</a>
+        <a href="/laporan" class="<%= (locals.active==='laporan')  ? 'active' : '' %>">Laporan</a>
+        <a href="/adart"   class="<%= (locals.active==='adart')    ? 'active' : '' %>">AD/ART</a>
+        <a href="/anggota" class="<%= (locals.active==='anggota')  ? 'active' : '' %>">Anggota</a>
+        <a href="/galeri"  class="<%= (locals.active==='galeri')   ? 'active' : '' %>">Galeri</a>
+        <a href="/tentang" class="<%= (locals.active==='tentang')  ? 'active' : '' %>">Tentang</a>
+        <a href="/kontak"  class="<%= (locals.active==='kontak')   ? 'active' : '' %>">Kontak</a>
+        <a href="/admin"   class="<%= (locals.active==='admin')    ? 'active' : '' %>">Admin</a>
+      </nav>
+
+      <!-- Tombol hamburger (muncul hanya di mobile) -->
+      <button id="navToggle" class="nav-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Buka navigasi">
         <span></span><span></span><span></span>
       </button>
-
-      <!-- Nav -->
-      <nav id="main-nav" class="nav" aria-label="Navigasi utama">
-        <a href="/" class="<%= (locals.active==='home') ? 'active' : '' %>">Beranda</a>
-        <a href="/artikel" class="<%= (locals.active==='artikel') ? 'active' : '' %>">Artikel</a>
-        <a href="/laporan" class="<%= (locals.active==='laporan') ? 'active' : '' %>">Laporan</a>
-        <a href="/adart" class="<%= (locals.active==='adart') ? 'active' : '' %>">AD/ART</a>
-        <a href="/anggota" class="<%= (locals.active==='anggota') ? 'active' : '' %>">Anggota</a>
-        <a href="/galeri" class="<%= (locals.active==='galeri') ? 'active' : '' %>">Galeri</a>
-        <a href="/tentang" class="<%= (locals.active==='tentang') ? 'active' : '' %>">Tentang</a>
-        <a href="/kontak" class="<%= (locals.active==='kontak') ? 'active' : '' %>">Kontak</a>
-        <a href="/admin" class="<%= (locals.active==='admin') ? 'active' : '' %>">Admin</a>
-      </nav>
     </div>
   </header>
 
-  <!-- Backdrop untuk menu mobile -->
-  <div class="nav-backdrop" id="navBackdrop"></div>
+  <!-- ===== Mobile overlay nav (DI LUAR HEADER) ===== -->
+  <nav id="mobileNav" class="mobile-nav" aria-label="Navigasi utama (mobile)">
+    <ul class="mobile-nav__list">
+      <li><a href="/"        class="<%= (locals.active==='home')     ? 'active' : '' %>">Beranda</a></li>
+      <li><a href="/artikel" class="<%= (locals.active==='artikel')  ? 'active' : '' %>">Artikel</a></li>
+      <li><a href="/laporan" class="<%= (locals.active==='laporan')  ? 'active' : '' %>">Laporan</a></li>
+      <li><a href="/adart"   class="<%= (locals.active==='adart')    ? 'active' : '' %>">AD/ART</a></li>
+      <li><a href="/anggota" class="<%= (locals.active==='anggota')  ? 'active' : '' %>">Anggota</a></li>
+      <li><a href="/galeri"  class="<%= (locals.active==='galeri')   ? 'active' : '' %>">Galeri</a></li>
+      <li><a href="/tentang" class="<%= (locals.active==='tentang')  ? 'active' : '' %>">Tentang</a></li>
+      <li><a href="/kontak"  class="<%= (locals.active==='kontak')   ? 'active' : '' %>">Kontak</a></li>
+      <li><a href="/admin"   class="<%= (locals.active==='admin')    ? 'active' : '' %>">Admin</a></li>
+    </ul>
+  </nav>
+  <div id="navBackdrop" class="nav-backdrop"></div>
 
-  <!-- Main -->
+  <!-- ===== Main ===== -->
   <main>
     <div class="container">
       <%- body %>
     </div>
   </main>
 
-  <!-- Footer partial -->
+  <!-- ===== Footer partial ===== -->
   <%- include('partials/footer') %>
 
-  <!-- Lightbox -->
+  <!-- ===== Lightbox ===== -->
   <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
     <div>
       <img id="lightbox-img" class="lightbox-img" src="" alt=""/>
@@ -145,7 +139,7 @@
   </div>
 
   <script>
-    // Lightbox
+    /* Lightbox */
     function openLightbox(src, cap){
       const b = document.getElementById('lightbox');
       document.getElementById('lightbox-img').src = src;
@@ -158,35 +152,34 @@
       }
     }
 
-    // Toggle mobile nav + backdrop + lock scroll
+    /* Toggle Mobile Nav Overlay */
     (function(){
-      const btn = document.querySelector('.nav-toggle');
-      const nav = document.getElementById('main-nav');
-      const root = document.documentElement;
+      const btn = document.getElementById('navToggle');
+      const panel = document.getElementById('mobileNav');
       const backdrop = document.getElementById('navBackdrop');
 
-      if(!btn || !nav || !backdrop) return;
+      if(!btn || !panel || !backdrop) return;
 
       function openMenu(){
-        nav.classList.add('is-open');
         btn.classList.add('is-open');
-        btn.setAttribute('aria-expanded', 'true');
+        btn.setAttribute('aria-expanded','true');
+        panel.classList.add('active');
         backdrop.classList.add('active');
-        root.classList.add('no-scroll');
+        document.body.classList.add('body--lock');
       }
       function closeMenu(){
-        nav.classList.remove('is-open');
         btn.classList.remove('is-open');
-        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-expanded','false');
+        panel.classList.remove('active');
         backdrop.classList.remove('active');
-        root.classList.remove('no-scroll');
+        document.body.classList.remove('body--lock');
       }
 
       btn.addEventListener('click', () => {
-        if (nav.classList.contains('is-open')) closeMenu(); else openMenu();
+        panel.classList.contains('active') ? closeMenu() : openMenu();
       });
       backdrop.addEventListener('click', closeMenu);
-      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+      document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
     })();
   </script>
 </body>
