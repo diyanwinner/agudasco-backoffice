@@ -11,11 +11,13 @@ import pkg from "pg";
 const { Pool } = pkg;
 
 /* ------------------------------------------------------------
-   SETUP DASAR
+   PATH / APP SETUP
 ------------------------------------------------------------ */
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname  = path.dirname(__filename);
+
 const app = express();
+app.set("trust proxy", true); // Render/Reverse proxy friendly
 
 /* ------------------------------------------------------------
    DATABASE (Postgres / Neon)
@@ -25,12 +27,14 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-const q = async (sql, params = []) => (await pool.query(sql, params)).rows;
+// query helpers
+const q  = async (sql, params = []) => (await pool.query(sql, params)).rows;
 const q1 = async (sql, params = []) => (await pool.query(sql, params)).rows[0] || null;
 
-/* Buat tabel kalau belum ada */
+// ensure tables
 async function ensureTables() {
   await pool.query(`
+    -- Articles
     CREATE TABLE IF NOT EXISTS articles (
       id BIGSERIAL PRIMARY KEY,
       title TEXT NOT NULL,
@@ -40,12 +44,14 @@ async function ensureTables() {
     );
     CREATE INDEX IF NOT EXISTS idx_articles_created_at ON articles (created_at DESC);
 
+    -- Banners
     CREATE TABLE IF NOT EXISTS banners (
       id BIGSERIAL PRIMARY KEY,
       image TEXT NOT NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- Reports
     CREATE TABLE IF NOT EXISTS reports (
       id BIGSERIAL PRIMARY KEY,
       title TEXT NOT NULL,
@@ -54,6 +60,7 @@ async function ensureTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- AD/ART
     CREATE TABLE IF NOT EXISTS adarts (
       id BIGSERIAL PRIMARY KEY,
       title TEXT NOT NULL,
@@ -62,6 +69,7 @@ async function ensureTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- Members
     CREATE TABLE IF NOT EXISTS members (
       id BIGSERIAL PRIMARY KEY,
       name TEXT NOT NULL,
@@ -69,7 +77,9 @@ async function ensureTables() {
       bio TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    CREATE INDEX IF NOT EXISTS idx_members_name ON members (name ASC);
 
+    -- Member Families
     CREATE TABLE IF NOT EXISTS member_families (
       id BIGSERIAL PRIMARY KEY,
       member_id BIGINT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -78,6 +88,7 @@ async function ensureTables() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
 
+    -- Member Photos
     CREATE TABLE IF NOT EXISTS member_photos (
       id BIGSERIAL PRIMARY KEY,
       member_id BIGINT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -87,14 +98,14 @@ async function ensureTables() {
     );
   `);
 }
-ensureTables().catch(e => console.error("ensureTables error:", e));
+ensureTables().catch(err => console.error("ensureTables error:", err));
 
 /* ------------------------------------------------------------
-   CLOUDINARY + MULTER
+   CLOUDINARY + MULTER (image only)
 ------------------------------------------------------------ */
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
@@ -110,73 +121,97 @@ const imageStorage = new CloudinaryStorage({
 const uploadImage = multer({ storage: imageStorage });
 
 /* ------------------------------------------------------------
-   APP CONFIG & MIDDLEWARE
+   APP MIDDLEWARE & VIEW ENGINE
 ------------------------------------------------------------ */
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
-app.use("/public", express.static(path.join(__dirname, "public")));
+app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(express.json({ limit: "5mb" }));
+
+// static assets (cache aggressively; busting via buildId)
+app.use(
+  "/public",
+  express.static(path.join(__dirname, "public"), {
+    maxAge: "7d",
+    immutable: true,
+  })
+);
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
 app.set("layout", "layout");
 
-app.locals.buildId = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
-
+// globals
+app.locals.buildId   = process.env.RAILWAY_GIT_COMMIT_SHA || Date.now().toString();
 app.locals.CLOUD_BASE = process.env.CLOUDINARY_CLOUD_NAME
   ? `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}`
-  : '';
+  : "";
 
+// per-request locals
 app.use((req, res, next) => {
   res.locals.buildId = app.locals.buildId;
-  res.locals.active = "";
-  res.locals.title = "AGUDASCO";
+  res.locals.active  = "";            // nav highlight (set dalam route)
+  res.locals.title   = "AGUDASCO";    // default title
+  res.locals.CLOUD_BASE = app.locals.CLOUD_BASE;
   next();
 });
 
+// CSP yang ramah image/CDN
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self' https:; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; object-src 'none'"
+    [
+      "default-src 'self' https:",
+      "img-src 'self' https: data:",
+      "script-src 'self' 'unsafe-inline' https:",
+      "style-src 'self' 'unsafe-inline' https:",
+      "object-src 'none'",
+    ].join("; ")
   );
   next();
 });
 
 /* ------------------------------------------------------------
-   BASIC AUTH UNTUK ADMIN
+   BASIC AUTH UNTUK /admin/*
 ------------------------------------------------------------ */
 function adminAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  if (!header.startsWith("Basic ")) {
-    res.set("WWW-Authenticate", 'Basic realm="Admin Area"');
-    return res.status(401).send("Authentication required");
-  }
   try {
-    const decoded = Buffer.from(header.split(" ")[1], "base64").toString("utf8");
-    const [user, pass] = decoded.split(":");
-    if (
+    const header = req.headers.authorization || "";
+    if (!header.startsWith("Basic ")) throw new Error("no basic");
+
+    const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
+    const sep = decoded.indexOf(":");
+    const user = decoded.slice(0, sep);
+    const pass = decoded.slice(sep + 1);
+
+    const ok =
       user === (process.env.ADMIN_USERNAME || "") &&
-      pass === (process.env.ADMIN_PASSWORD || "")
-    ) return next();
-  } catch {}
-  res.set("WWW-Authenticate", 'Basic realm="Admin Area"');
-  return res.status(401).send("Unauthorized");
+      pass === (process.env.ADMIN_PASSWORD || "");
+
+    if (!ok) throw new Error("bad cred");
+    return next();
+  } catch {
+    res.set("WWW-Authenticate", 'Basic realm="Admin Area"');
+    return res.status(401).send("Unauthorized");
+  }
 }
 
 /* ------------------------------------------------------------
-   IMPORT ROUTES
+   ROUTES (pisah: public & admin)
 ------------------------------------------------------------ */
 import publicRoutes from "./routes/public.js";
-import adminRoutes from "./routes/admin.js";
+import adminRoutes  from "./routes/admin.js";
 
-app.use("/", publicRoutes(q, q1));
-app.use("/admin", adminAuth, adminRoutes(q, q1, uploadImage, pool));
+// healthcheck ringan
+app.get("/health", (_req, res) => res.status(200).send("OK"));
+
+app.use("/",       publicRoutes(q, q1));
+app.use("/admin",  adminAuth, adminRoutes(q, q1, uploadImage, pool));
 
 /* ------------------------------------------------------------
-   ERROR HANDLER
+   ERROR HANDLERS
 ------------------------------------------------------------ */
 app.use((req, res) => res.status(404).send("Not Found"));
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error("Unhandled error:", err);
   res.status(500).send(err?.message || "Server Error");
 });
@@ -185,6 +220,6 @@ app.use((err, req, res, next) => {
    START SERVER
 ------------------------------------------------------------ */
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () =>
-  console.log(`🚀 Server running at http://localhost:${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
