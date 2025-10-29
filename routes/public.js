@@ -1,4 +1,4 @@
-// routes/public.js  — ESM only, single default export
+// routes/public.js — ESM only, single default export
 import express from "express";
 
 export default function (q, q1) {
@@ -58,7 +58,7 @@ export default function (q, q1) {
     res.render("member_view", { title: member.name, active: "anggota", member });
   });
 
-  // Halaman statis yang baru
+  // Halaman statis: Kontak / Tentang / Galeri
   router.get("/kontak", async (req, res) => {
     const address = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_ADDRESS'"))?.value || "";
     const email   = (await q1("SELECT value FROM site_settings WHERE key='CONTACT_EMAIL'"))?.value || "";
