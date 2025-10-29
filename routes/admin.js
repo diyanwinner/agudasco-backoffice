@@ -4,9 +4,12 @@ import express from "express";
 export default function (q, q1, uploadImage, pool) {
   const router = express.Router();
 
-  router.get("/", (req, res) => res.render("admin/dashboard", { title: "Dashboard" }));
+  /* -------------------- DASHBOARD -------------------- */
+  router.get("/", (req, res) =>
+    res.render("admin/dashboard", { title: "Dashboard" })
+  );
 
-  // === ARTIKEL ===
+  /* -------------------- ARTIKEL ---------------------- */
   router.get("/articles", async (req, res) => {
     const articles = await q("SELECT * FROM articles ORDER BY id DESC");
     res.render("admin/articles", { title: "Kelola Artikel", articles });
@@ -17,8 +20,8 @@ export default function (q, q1, uploadImage, pool) {
     const image = req.file ? req.file.path : null;
     if (!title) return res.status(400).send("Judul wajib diisi");
     await q("INSERT INTO articles (title,content,image) VALUES ($1,$2,$3)", [
-      title,
-      content,
+      title.trim(),
+      content || "",
       image,
     ]);
     res.redirect("/admin/articles");
@@ -29,7 +32,7 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect("/admin/articles");
   });
 
-  // === BANNER ===
+  /* -------------------- BANNER ----------------------- */
   router.get("/banners", async (req, res) => {
     const banners = await q("SELECT * FROM banners ORDER BY id DESC");
     res.render("admin/banners", { title: "Kelola Banner", banners });
@@ -47,74 +50,144 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect("/admin/banners");
   });
 
-  // === MEMBERS + FAMILY + PHOTOS ===
+  /* ==================== ANGGOTA ====================== */
+  // HANYA FORM TAMBAH + LINK KE FAMILY
   router.get("/members", async (req, res) => {
-    const members = await q("SELECT * FROM members ORDER BY created_at DESC");
-    res.render("admin/members", { title: "Kelola Anggota", members });
+    // Tidak SELECT * FROM members lagi – halaman ini fokus input saja
+    res.render("admin/members_add", {
+      title: "Tambah Anggota",
+      // optionally bisa kirim target redirect setelah submit
+      nextUrl: "/admin/family",
+    });
   });
 
+  // Simpan anggota baru -> lanjut ke /admin/family
   router.post("/members", uploadImage.single("avatar"), async (req, res) => {
-    const { name, bio } = req.body;
+    const { name = "", bio = "" } = req.body;
+    if (!name.trim()) return res.status(400).send("Nama wajib diisi");
     const avatar = req.file ? req.file.path : null;
+
     await q("INSERT INTO members (name,avatar,bio) VALUES ($1,$2,$3)", [
-      name,
+      name.trim(),
       avatar,
-      bio,
+      bio || "",
     ]);
-    res.redirect("/admin/members");
+
+    const redirectTo = req.body.redirect_to || "/admin/family";
+    res.redirect(redirectTo);
   });
 
+  // Detail anggota (untuk tombol "Detail" dari halaman Family)
   router.get("/members/:id", async (req, res) => {
-    const id = req.params.id;
+    const id = Number(req.params.id);
     const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
-    const families = await q("SELECT * FROM member_families WHERE member_id=$1", [id]);
-    const photos = await q("SELECT * FROM member_photos WHERE member_id=$1", [id]);
-    res.render("admin/member_detail", { title: `Kelola: ${member.name}`, member, families, photos });
+    if (!member) return res.status(404).send("Anggota tidak ditemukan");
+
+    const families = await q(
+      "SELECT * FROM member_families WHERE member_id=$1 ORDER BY id ASC",
+      [id]
+    );
+    const photos = await q(
+      "SELECT * FROM member_photos WHERE member_id=$1 ORDER BY id DESC",
+      [id]
+    );
+
+    res.render("admin/member_detail", {
+      title: `Kelola: ${member.name}`,
+      member,
+      families,
+      photos,
+    });
   });
 
+  // Tambah keluarga dari halaman detail anggota (opsional)
   router.post("/members/:id/family", async (req, res) => {
-    const { fullname, relation } = req.body;
+    const memberId = Number(req.params.id);
+    const { fullname = "", relation = "" } = req.body;
+    if (!fullname.trim()) return res.status(400).send("Nama keluarga wajib diisi");
     await q(
       "INSERT INTO member_families (member_id, fullname, relation) VALUES ($1,$2,$3)",
-      [req.params.id, fullname, relation]
+      [memberId, fullname.trim(), relation.trim()]
     );
-    res.redirect(`/admin/members/${req.params.id}`);
+    res.redirect(`/admin/members/${memberId}`);
   });
 
   router.post("/members/:id/family/:fid/delete", async (req, res) => {
-    await q("DELETE FROM member_families WHERE id=$1", [req.params.fid]);
-    res.redirect(`/admin/members/${req.params.id}`);
+    const memberId = Number(req.params.id);
+    const fid = Number(req.params.fid);
+    await q("DELETE FROM member_families WHERE id=$1 AND member_id=$2", [
+      fid,
+      memberId,
+    ]);
+    res.redirect(`/admin/members/${memberId}`);
   });
 
+  // Upload foto anggota (opsional)
   router.post("/members/:id/photo", uploadImage.single("photo"), async (req, res) => {
-    const { caption } = req.body;
+    const memberId = Number(req.params.id);
+    const { caption = "" } = req.body;
+    const imageUrl = req.file ? req.file.path : null;
+    if (!imageUrl) return res.status(400).send("Foto belum dipilih");
+
     await q(
       "INSERT INTO member_photos (member_id, image_url, caption) VALUES ($1,$2,$3)",
-      [req.params.id, req.file.path, caption]
+      [memberId, imageUrl, caption]
     );
-    res.redirect(`/admin/members/${req.params.id}`);
+    res.redirect(`/admin/members/${memberId}`);
   });
 
   router.post("/members/:id/photo/:pid/delete", async (req, res) => {
-    await q("DELETE FROM member_photos WHERE id=$1", [req.params.pid]);
-    res.redirect(`/admin/members/${req.params.id}`);
+    const memberId = Number(req.params.id);
+    const pid = Number(req.params.pid);
+    await q("DELETE FROM member_photos WHERE id=$1 AND member_id=$2", [
+      pid,
+      memberId,
+    ]);
+    res.redirect(`/admin/members/${memberId}`);
   });
 
-  // === FAMILY PAGE ===
+  /* ===================== FAMILY ====================== */
+  // Grid Family (filter member_id opsional + selectedMemberId untuk view)
   router.get("/family", async (req, res) => {
-    const { rows: members } = await pool.query("SELECT id,name FROM members ORDER BY name ASC");
-    const { rows: families } = await pool.query(`
-      SELECT f.*, m.name AS member_name
-      FROM member_families f
-      LEFT JOIN members m ON m.id=f.member_id
-      ORDER BY m.name ASC, f.id ASC
-    `);
-    res.render("admin/family_list", { title: "Data Keluarga", members, families });
+    const memberId = req.query.member_id ? Number(req.query.member_id) : null;
+
+    const { rows: members } = await pool.query(
+      "SELECT id,name,avatar FROM members ORDER BY name ASC"
+    );
+
+    let families = [];
+    if (memberId) {
+      const { rows } = await pool.query(
+        `SELECT f.*, m.name AS member_name
+         FROM member_families f
+         LEFT JOIN members m ON m.id=f.member_id
+         WHERE f.member_id=$1
+         ORDER BY f.id ASC`,
+        [memberId]
+      );
+      families = rows;
+    } else {
+      const { rows } = await pool.query(
+        `SELECT f.*, m.name AS member_name
+         FROM member_families f
+         LEFT JOIN members m ON m.id=f.member_id
+         ORDER BY m.name ASC, f.id ASC`
+      );
+      families = rows;
+    }
+
+    res.render("admin/family_list", {
+      title: "Data Keluarga",
+      members,
+      families,
+      selectedMemberId: memberId || "",
+    });
   });
 
   router.post("/family/:id/delete", async (req, res) => {
     await pool.query("DELETE FROM member_families WHERE id=$1", [req.params.id]);
-    res.redirect("/admin/family");
+    const backTo = req.body.back_to || "/admin/family";
+    res.redirect(backTo);
   });
 
   return router;
