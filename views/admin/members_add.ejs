@@ -1,0 +1,88 @@
+<% /* views/admin/members_add.ejs
+     Halaman khusus tambah anggota + link ke /admin/family
+     Pakai layout default (express-ejs-layouts) */ %>
+
+<div class="container admin-wrap">
+  <div class="admin-head">
+    <h1 class="admin-title"><%= title || 'Tambah Anggota' %></h1>
+
+    <div class="actions" style="margin-left:auto; display:flex; gap:10px; flex-wrap:wrap">
+      <a class="btn" href="/admin/family">Lihat Data Keluarga</a>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Tips singkat -->
+    <div class="card">
+      <h3 style="margin:0 0 8px 0">Panduan Singkat</h3>
+      <ul class="muted" style="margin:0 0 6px 18px">
+        <li>Isi <strong>Nama</strong> (wajib) dan <strong>Bio</strong> jika perlu.</li>
+        <li>Upload <strong>Foto</strong> opsional (otomatis ke Cloudinary).</li>
+        <li>Setelah disimpan, kamu akan diarahkan ke <strong>Data Keluarga</strong> untuk menambahkan keluarga.</li>
+      </ul>
+    </div>
+
+    <!-- Form tambah -->
+    <div class="card">
+      <form action="/admin/members" method="post" enctype="multipart/form-data" style="display:grid; gap:12px">
+        <div>
+          <label for="name">Nama*</label>
+          <input id="name" name="name" class="input" type="text" placeholder="mis. Diyan Nurpriyanto" required>
+        </div>
+
+        <div>
+          <label for="bio">Bio (opsional)</label>
+          <textarea id="bio" name="bio" class="input" rows="4" placeholder="Deskripsi singkat"></textarea>
+        </div>
+
+        <div>
+          <label for="avatar">Foto (opsional)</label>
+          <input id="avatar" name="avatar" class="input" type="file" accept="image/*">
+          <small class="muted">Format: JPG/PNG/WebP – akan dioptimasi otomatis.</small>
+
+          <!-- preview -->
+          <div id="previewWrap" style="margin-top:10px; display:none">
+            <div class="img-wrap" style="width:200px; aspect-ratio:1/1; border-radius:12px; overflow:hidden; background:#0e0e0e">
+              <img id="previewImg" alt="Preview" style="width:100%; height:100%; object-fit:cover">
+            </div>
+          </div>
+        </div>
+
+        <!-- Redirect setelah submit langsung ke /admin/family -->
+        <input type="hidden" name="redirect_to" value="<%= typeof nextUrl !== 'undefined' && nextUrl ? nextUrl : '/admin/family' %>">
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+          <button class="btn" type="submit">Simpan &amp; Kelola Keluarga</button>
+          <a class="btn ghost" href="/admin/family">Ke Data Keluarga</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .grid-2{
+    display:grid;
+    grid-template-columns: 1.1fr 1.6fr;
+    gap:12px;
+  }
+  @media (max-width: 960px){
+    .grid-2{ grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+  (function () {
+    const input = document.getElementById('avatar');
+    const wrap = document.getElementById('previewWrap');
+    const img  = document.getElementById('previewImg');
+    if (!input || !wrap || !img) return;
+    input.addEventListener('change', () => {
+      const f = input.files && input.files[0];
+      if (!f) { wrap.style.display = 'none'; return; }
+      const url = URL.createObjectURL(f);
+      img.src = url;
+      wrap.style.display = '';
+    });
+  })();
+</script>
