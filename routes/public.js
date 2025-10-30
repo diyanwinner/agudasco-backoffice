@@ -108,15 +108,20 @@ export default function (q, q1) {
   });
 
   /* ================== HALAMAN PUBLIK ================= */
-  // Kontak – ambil dari table site_contact (single row id=1)
-  router.get("/kontak", async (_req, res) => {
-    try {
-      const contact = await q1("SELECT * FROM site_contact WHERE id=1");
-      res.render("kontak", {
-        title: "Kontak",
-        active: "kontak",
-        contact: contact || {}, // aman kalau null
-      });
+  // routes/public.js
+router.get("/kontak", async (_req, res) => {
+  try {
+    const info = await q1("SELECT * FROM site_info WHERE id=1");
+    res.render("kontak", {
+      title: "Kontak",
+      active: "kontak",
+      contact: info || {},   // <- kontak.ejs tetap pakai `contact`
+    });
+  } catch (e) {
+    console.error("Kontak error:", e);
+    res.render("kontak", { title: "Kontak", active: "kontak", contact: {} });
+  }
+  });
     } catch (e) {
       console.error("Kontak error:", e);
       res.render("kontak", { title: "Kontak", active: "kontak", contact: {} });
