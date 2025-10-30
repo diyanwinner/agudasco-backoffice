@@ -382,3 +382,31 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   object-fit: cover;   /* isi kotak tapi tetap rapi */
 }
 
+/* ===== [Fix] Spasi judul aman di bawah header sticky (Anggota & Kontak) ===== */
+:root { --page-top-gap: 24px; }            /* atur 20–32px sesuai selera */
+@media (max-width: 768px){ :root { --page-top-gap: 16px; } }
+
+/* Halaman yang kontennya langsung di dalam .container */
+body.page-anggota main > .container,
+body.page-kontak  main > .container {
+  padding-top: var(--page-top-gap);
+}
+
+/* Halaman yang pakai .section */
+body.page-anggota .section,
+body.page-kontak  .section {
+  padding-top: var(--page-top-gap);
+}
+
+/* Pastikan H1 pertama tidak nabrak karena margin-collapsing */
+.container > h1:first-child,
+.section   > h1:first-child {
+  margin-top: 0;
+}
+
+/* ===== [Fix] Satukan aturan foto header di detail anggota =====
+   (hindari duplikasi selector .media-preview.member .media-fit) */
+.media-preview.member .media-fit{
+  height: clamp(200px, 38vh, 420px);  /* boleh ubah 180–440px */
+  object-fit: cover;
+}
