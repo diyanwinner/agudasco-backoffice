@@ -14,7 +14,7 @@ export default function (q, q1) {
   const router = express.Router();
 
   /* ===================== BERANDA ===================== */
-  router.get("/", async (req, res) => {
+  router.get("/", async (_req, res) => {
     const banners = await q("SELECT * FROM banners ORDER BY id DESC LIMIT 10");
     const arts    = await q("SELECT * FROM articles ORDER BY id DESC LIMIT 6");
     res.render("home", {
@@ -87,9 +87,7 @@ export default function (q, q1) {
 
   /* ===================== ANGGOTA ===================== */
   router.get("/anggota", async (_req, res) => {
-    const members = await q(
-      "SELECT id, name, avatar FROM members ORDER BY name ASC"
-    );
+    const members = await q("SELECT id, name, avatar FROM members ORDER BY name ASC");
     res.render("members", {
       title: "Anggota",
       active: "anggota",
@@ -108,20 +106,15 @@ export default function (q, q1) {
   });
 
   /* ================== HALAMAN PUBLIK ================= */
-  // routes/public.js
-router.get("/kontak", async (_req, res) => {
-  try {
-    const info = await q1("SELECT * FROM site_info WHERE id=1");
-    res.render("kontak", {
-      title: "Kontak",
-      active: "kontak",
-      contact: info || {},   // <- kontak.ejs tetap pakai `contact`
-    });
-  } catch (e) {
-    console.error("Kontak error:", e);
-    res.render("kontak", { title: "Kontak", active: "kontak", contact: {} });
-  }
-  });
+  // PUBLIK: KONTAK (ambil dari site_info id=1)
+  router.get("/kontak", async (_req, res) => {
+    try {
+      const info = await q1("SELECT * FROM site_info WHERE id=1");
+      res.render("kontak", {
+        title: "Kontak",
+        active: "kontak",
+        contact: info || {}, // kontak.ejs membaca variabel `contact`
+      });
     } catch (e) {
       console.error("Kontak error:", e);
       res.render("kontak", { title: "Kontak", active: "kontak", contact: {} });
