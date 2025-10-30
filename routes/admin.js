@@ -241,3 +241,54 @@ router.post("/contact", async (req, res) => {
 
   return router;
 }
+
+/* ===================== ADMIN: REPORTS (Laporan) ===================== */
+// List
+router.get("/reports", async (_req, res) => {
+  const reports = await q("SELECT * FROM reports ORDER BY id DESC");
+  res.render("admin/reports", { title: "Kelola Laporan", reports });
+});
+
+// Create
+router.post("/reports", uploadImage.single("cover"), async (req, res) => {
+  const { title = "", pdf_url = "" } = req.body;
+  const cover = req.file ? req.file.path : null; // optional
+  if (!title.trim()) return res.status(400).send("Judul wajib diisi");
+  await q(
+    "INSERT INTO reports (title, cover, pdf_url) VALUES ($1,$2,$3)",
+    [title.trim(), cover, pdf_url.trim()]
+  );
+  res.redirect("/admin/reports");
+});
+
+// Delete
+router.post("/reports/:id/delete", async (req, res) => {
+  await q("DELETE FROM reports WHERE id=$1", [Number(req.params.id)]);
+  res.redirect("/admin/reports");
+});
+
+
+/* ===================== ADMIN: AD/ART ===================== */
+// List
+router.get("/adarts", async (_req, res) => {
+  const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
+  res.render("admin/adarts", { title: "Kelola AD/ART", adarts });
+});
+
+// Create
+router.post("/adarts", uploadImage.single("cover"), async (req, res) => {
+  const { title = "", pdf_url = "" } = req.body;
+  const cover = req.file ? req.file.path : null; // optional
+  if (!title.trim()) return res.status(400).send("Judul wajib diisi");
+  await q(
+    "INSERT INTO adarts (title, cover, pdf_url) VALUES ($1,$2,$3)",
+    [title.trim(), cover, pdf_url.trim()]
+  );
+  res.redirect("/admin/adarts");
+});
+
+// Delete
+router.post("/adarts/:id/delete", async (req, res) => {
+  await q("DELETE FROM adarts WHERE id=$1", [Number(req.params.id)]);
+  res.redirect("/admin/adarts");
+});
