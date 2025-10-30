@@ -5,12 +5,12 @@ export default function (q, q1, uploadImage, pool) {
   const router = express.Router();
 
   /* -------------------- DASHBOARD -------------------- */
-  router.get("/", (req, res) =>
+  router.get("/", (_req, res) =>
     res.render("admin/dashboard", { title: "Dashboard" })
   );
 
   /* -------------------- ARTIKEL ---------------------- */
-  router.get("/articles", async (req, res) => {
+  router.get("/articles", async (_req, res) => {
     const articles = await q("SELECT * FROM articles ORDER BY id DESC");
     res.render("admin/articles", { title: "Kelola Artikel", articles });
   });
@@ -33,7 +33,7 @@ export default function (q, q1, uploadImage, pool) {
   });
 
   /* -------------------- BANNER ----------------------- */
-  router.get("/banners", async (req, res) => {
+  router.get("/banners", async (_req, res) => {
     const banners = await q("SELECT * FROM banners ORDER BY id DESC");
     res.render("admin/banners", { title: "Kelola Banner", banners });
   });
@@ -50,16 +50,14 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect("/admin/banners");
   });
 
-  /* ==================== ANGGOTA ====================== */
-  // Halaman khusus input + link ke Family (tanpa list anggota)
-  router.get("/members", async (req, res) => {
+  /* -------------------- ANGGOTA ---------------------- */
+  router.get("/members", async (_req, res) => {
     res.render("admin/members_add", {
       title: "Tambah Anggota",
-      nextUrl: "/admin/family", // target setelah submit
+      nextUrl: "/admin/family",
     });
   });
 
-  // Simpan anggota baru -> lanjut ke /admin/family (default)
   router.post("/members", uploadImage.single("avatar"), async (req, res) => {
     const { name = "", bio = "" } = req.body;
     if (!name.trim()) return res.status(400).send("Nama wajib diisi");
@@ -75,15 +73,12 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(redirectTo);
   });
 
-  // >>> NEW: Hapus anggota (POST) — ini yang bikin 404 kalau belum ada
   router.post("/members/:id/delete", async (req, res) => {
     const id = Number(req.params.id);
     await q("DELETE FROM members WHERE id=$1", [id]);
-    // NOTE: Tabel family & photos sudah ON DELETE CASCADE di schema kamu
     res.redirect("/admin/members");
   });
 
-  // Detail anggota (diakses dari tombol "Detail" di Family)
   router.get("/members/:id", async (req, res) => {
     const id = Number(req.params.id);
     const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
@@ -106,7 +101,6 @@ export default function (q, q1, uploadImage, pool) {
     });
   });
 
-  // Tambah keluarga dari halaman detail anggota (opsional)
   router.post("/members/:id/family", async (req, res) => {
     const memberId = Number(req.params.id);
     const { fullname = "", relation = "" } = req.body;
@@ -128,7 +122,6 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(`/admin/members/${memberId}`);
   });
 
-  // Upload foto anggota (opsional)
   router.post("/members/:id/photo", uploadImage.single("photo"), async (req, res) => {
     const memberId = Number(req.params.id);
     const { caption = "" } = req.body;
@@ -151,9 +144,8 @@ export default function (q, q1, uploadImage, pool) {
     ]);
     res.redirect(`/admin/members/${memberId}`);
   });
-  
-  /* ===================== FAMILY ====================== */
-  // Grid Family (filter member_id opsional + selectedMemberId untuk view)
+
+  /* -------------------- FAMILY GRID ------------------ */
   router.get("/family", async (req, res) => {
     const memberId = req.query.member_id ? Number(req.query.member_id) : null;
 
@@ -196,99 +188,93 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(backTo);
   });
 
-  /* ===================== ADMIN: KONTAK ===================== */
-router.get("/contact", async (req, res) => {
-  const info = await q1("SELECT * FROM site_info WHERE id=1", []);
-  res.render("admin/contact", {
-    title: "Kelola Kontak",
-    info: info || {}
+  /* -------------------- CONTACT (site_info) ---------- */
+  router.get("/contact", async (_req, res) => {
+    const info = await q1("SELECT * FROM site_info WHERE id=1", []);
+    res.render("admin/contact", {
+      title: "Kelola Kontak",
+      info: info || {}
+    });
   });
-});
 
-router.post("/contact", async (req, res) => {
-  const {
-    org_name = "",
-    email = "",
-    phone = "",
-    whatsapp = "",
-    address = "",
-    maps_url = "",
-    instagram = "",
-    facebook = "",
-    x_handle = ""
-  } = req.body;
+  router.post("/contact", async (req, res) => {
+    const {
+      org_name = "",
+      email = "",
+      phone = "",
+      whatsapp = "",
+      address = "",
+      maps_url = "",
+      instagram = "",
+      facebook = "",
+      x_handle = ""
+    } = req.body;
 
-  await q(
-    `UPDATE site_info
-     SET org_name=$1, email=$2, phone=$3, whatsapp=$4, address=$5,
-         maps_url=$6, instagram=$7, facebook=$8, x_handle=$9, updated_at=now()
-     WHERE id=1`,
-    [
-      org_name.trim(),
-      email.trim(),
-      phone.trim(),
-      whatsapp.trim(),
-      address.trim(),
-      maps_url.trim(),
-      instagram.trim(),
-      facebook.trim(),
-      x_handle.trim()
-    ]
-  );
+    await q(
+      `UPDATE site_info
+       SET org_name=$1, email=$2, phone=$3, whatsapp=$4, address=$5,
+           maps_url=$6, instagram=$7, facebook=$8, x_handle=$9, updated_at=now()
+       WHERE id=1`,
+      [
+        org_name.trim(),
+        email.trim(),
+        phone.trim(),
+        whatsapp.trim(),
+        address.trim(),
+        maps_url.trim(),
+        instagram.trim(),
+        facebook.trim(),
+        x_handle.trim()
+      ]
+    );
 
-  res.redirect("/admin/contact");
-});
+    res.redirect("/admin/contact");
+  });
 
+  /* -------------------- REPORTS ---------------------- */
+  router.get("/reports", async (_req, res) => {
+    const reports = await q("SELECT * FROM reports ORDER BY id DESC");
+    res.render("admin/reports", { title: "Kelola Laporan", reports });
+  });
+
+  router.post("/reports", uploadImage.single("cover"), async (req, res) => {
+    const { title = "", pdf_url = "" } = req.body;
+    const cover = req.file ? req.file.path : null;
+    if (!title.trim()) return res.status(400).send("Judul wajib diisi");
+    await q(
+      "INSERT INTO reports (title, cover, pdf_url) VALUES ($1,$2,$3)",
+      [title.trim(), cover, pdf_url.trim()]
+    );
+    res.redirect("/admin/reports");
+  });
+
+  router.post("/reports/:id/delete", async (req, res) => {
+    await q("DELETE FROM reports WHERE id=$1", [Number(req.params.id)]);
+    res.redirect("/admin/reports");
+  });
+
+  /* -------------------- AD/ART ----------------------- */
+  router.get("/adarts", async (_req, res) => {
+    const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
+    res.render("admin/adarts", { title: "Kelola AD/ART", adarts });
+  });
+
+  router.post("/adarts", uploadImage.single("cover"), async (req, res) => {
+    const { title = "", pdf_url = "" } = req.body;
+    const cover = req.file ? req.file.path : null;
+    if (!title.trim()) return res.status(400).send("Judul wajib diisi");
+    await q(
+      "INSERT INTO adarts (title, cover, pdf_url) VALUES ($1,$2,$3)",
+      [title.trim(), cover, pdf_url.trim()]
+    );
+    res.redirect("/admin/adarts");
+  });
+
+  router.post("/adarts/:id/delete", async (req, res) => {
+    await q("DELETE FROM adarts WHERE id=$1", [Number(req.params.id)]);
+    res.redirect("/admin/adarts");
+  });
+
+  /* -------------------- END -------------------------- */
   return router;
 }
-
-/* ===================== ADMIN: REPORTS (Laporan) ===================== */
-// List
-router.get("/reports", async (_req, res) => {
-  const reports = await q("SELECT * FROM reports ORDER BY id DESC");
-  res.render("admin/reports", { title: "Kelola Laporan", reports });
-});
-
-// Create
-router.post("/reports", uploadImage.single("cover"), async (req, res) => {
-  const { title = "", pdf_url = "" } = req.body;
-  const cover = req.file ? req.file.path : null; // optional
-  if (!title.trim()) return res.status(400).send("Judul wajib diisi");
-  await q(
-    "INSERT INTO reports (title, cover, pdf_url) VALUES ($1,$2,$3)",
-    [title.trim(), cover, pdf_url.trim()]
-  );
-  res.redirect("/admin/reports");
-});
-
-// Delete
-router.post("/reports/:id/delete", async (req, res) => {
-  await q("DELETE FROM reports WHERE id=$1", [Number(req.params.id)]);
-  res.redirect("/admin/reports");
-});
-
-
-/* ===================== ADMIN: AD/ART ===================== */
-// List
-router.get("/adarts", async (_req, res) => {
-  const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
-  res.render("admin/adarts", { title: "Kelola AD/ART", adarts });
-});
-
-// Create
-router.post("/adarts", uploadImage.single("cover"), async (req, res) => {
-  const { title = "", pdf_url = "" } = req.body;
-  const cover = req.file ? req.file.path : null; // optional
-  if (!title.trim()) return res.status(400).send("Judul wajib diisi");
-  await q(
-    "INSERT INTO adarts (title, cover, pdf_url) VALUES ($1,$2,$3)",
-    [title.trim(), cover, pdf_url.trim()]
-  );
-  res.redirect("/admin/adarts");
-});
-
-// Delete
-router.post("/adarts/:id/delete", async (req, res) => {
-  await q("DELETE FROM adarts WHERE id=$1", [Number(req.params.id)]);
-  res.redirect("/admin/adarts");
-});
