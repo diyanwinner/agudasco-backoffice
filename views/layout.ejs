@@ -1,27 +1,25 @@
 <!DOCTYPE html>
 <html lang="id">
-</head>
-<body class="page-<%= (typeof active !== 'undefined' ? active : '') %>">
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
   <!-- Favicon (Cloudinary) -->
-  <link rel="icon" href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png"/>
+  <link rel="icon" href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/public/styles.css" />
+  <link rel="stylesheet" href="/public/styles.css?v=<%= buildId %>" />
 
   <!-- FIX: header & mobile overlay -->
   <style>
     :root{
-      --header-h: 64px;             /* sesuaikan tinggi header */
+      --header-h: 64px;
       --bg: #0b1220;
       --border: #223241;
       --text: #fff;
     }
-
-    /* ===== Header fixed di atas, body diberi padding ===== */
+    /* Header fixed + offset konten */
     body{ padding-top: var(--header-h); background: var(--bg); color: var(--text); }
     .site-header{
       position: fixed; inset: 0 0 auto 0; height: var(--header-h);
@@ -30,18 +28,18 @@
     .header-wrap{ height: 100%; display:flex; align-items:center; gap:12px; }
     .brand{ color: inherit; text-decoration:none; font-weight:700; }
 
-    /* ===== Desktop nav di dalam header ===== */
+    /* Desktop nav */
     .nav-desktop a{ color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; }
     .nav-desktop a.active{ font-weight:700; }
 
-    /* ===== Tombol hamburger ===== */
+    /* Hamburger */
     .nav-toggle{ display:none; margin-left:auto; border:0; background:transparent; padding:10px; }
     .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
     .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
     .nav-toggle.is-open span:nth-child(2){ opacity:0; }
     .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
 
-    /* ===== Mobile overlay nav (di luar header) ===== */
+    /* Mobile overlay nav */
     .mobile-nav{ position: fixed; inset: 0; z-index: 9999;
       background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
     .mobile-nav.active{ display:block; }
@@ -55,10 +53,10 @@
       background: rgba(0,0,0,.4); display:none; }
     .nav-backdrop.active{ display:block; }
 
-    /* Kunci scroll saat menu buka */
+    /* Lock scroll saat menu buka */
     .body--lock{ overflow:hidden; height:100vh; }
 
-    /* ===== Responsif ===== */
+    /* Responsif */
     @media (max-width: 992px){
       .nav-desktop{ display:none; }
       .nav-toggle{ display:inline-flex; flex-direction:column; margin-left:auto; }
@@ -68,12 +66,13 @@
       .nav-toggle{ display:none; }
     }
 
-    /* Konten tidak memotong overlay */
+    /* Pastikan overlay tidak ter-clipped */
     main, .container, .admin-wrap, .card, .page-wrap{ overflow:visible !important; }
   </style>
 </head>
-<body>
-  <!-- ===== Header (desktop nav di dalam sini) ===== -->
+
+<body class="page-<%= (typeof active !== 'undefined' ? active : '') %>">
+  <!-- ===== Header ===== -->
   <header class="site-header">
     <div class="container header-wrap">
       <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO" style="display:flex;align-items:center;gap:10px">
@@ -87,36 +86,36 @@
 
       <!-- Desktop nav -->
       <nav class="nav-desktop" aria-label="Navigasi utama">
-        <a href="/"        class="<%= (locals.active==='home')     ? 'active' : '' %>">Beranda</a>
-        <a href="/artikel" class="<%= (locals.active==='artikel')  ? 'active' : '' %>">Artikel</a>
-        <a href="/laporan" class="<%= (locals.active==='laporan')  ? 'active' : '' %>">Laporan</a>
-        <a href="/adart"   class="<%= (locals.active==='adart')    ? 'active' : '' %>">AD/ART</a>
-        <a href="/anggota" class="<%= (locals.active==='anggota')  ? 'active' : '' %>">Anggota</a>
-        <a href="/galeri"  class="<%= (locals.active==='galeri')   ? 'active' : '' %>">Galeri</a>
-        <a href="/tentang" class="<%= (locals.active==='tentang')  ? 'active' : '' %>">Tentang</a>
-        <a href="/kontak"  class="<%= (locals.active==='kontak')   ? 'active' : '' %>">Kontak</a>
-        <a href="/admin"   class="<%= (locals.active==='admin')    ? 'active' : '' %>">Admin</a>
+        <a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a>
+        <a href="/artikel" class="<%= active==='artikel'  ? 'active' : '' %>">Artikel</a>
+        <a href="/laporan" class="<%= active==='laporan'  ? 'active' : '' %>">Laporan</a>
+        <a href="/adart"   class="<%= active==='adart'    ? 'active' : '' %>">AD/ART</a>
+        <a href="/anggota" class="<%= active==='anggota'  ? 'active' : '' %>">Anggota</a>
+        <a href="/galeri"  class="<%= active==='galeri'   ? 'active' : '' %>">Galeri</a>
+        <a href="/tentang" class="<%= active==='tentang'  ? 'active' : '' %>">Tentang</a>
+        <a href="/kontak"  class="<%= active==='kontak'   ? 'active' : '' %>">Kontak</a>
+        <a href="/admin"   class="<%= active==='admin'    ? 'active' : '' %>">Admin</a>
       </nav>
 
-      <!-- Tombol hamburger (muncul hanya di mobile) -->
+      <!-- Tombol hamburger -->
       <button id="navToggle" class="nav-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Buka navigasi">
         <span></span><span></span><span></span>
       </button>
     </div>
   </header>
 
-  <!-- ===== Mobile overlay nav (DI LUAR HEADER) ===== -->
+  <!-- ===== Mobile overlay nav ===== -->
   <nav id="mobileNav" class="mobile-nav" aria-label="Navigasi utama (mobile)">
     <ul class="mobile-nav__list">
-      <li><a href="/"        class="<%= (locals.active==='home')     ? 'active' : '' %>">Beranda</a></li>
-      <li><a href="/artikel" class="<%= (locals.active==='artikel')  ? 'active' : '' %>">Artikel</a></li>
-      <li><a href="/laporan" class="<%= (locals.active==='laporan')  ? 'active' : '' %>">Laporan</a></li>
-      <li><a href="/adart"   class="<%= (locals.active==='adart')    ? 'active' : '' %>">AD/ART</a></li>
-      <li><a href="/anggota" class="<%= (locals.active==='anggota')  ? 'active' : '' %>">Anggota</a></li>
-      <li><a href="/galeri"  class="<%= (locals.active==='galeri')   ? 'active' : '' %>">Galeri</a></li>
-      <li><a href="/tentang" class="<%= (locals.active==='tentang')  ? 'active' : '' %>">Tentang</a></li>
-      <li><a href="/kontak"  class="<%= (locals.active==='kontak')   ? 'active' : '' %>">Kontak</a></li>
-      <li><a href="/admin"   class="<%= (locals.active==='admin')    ? 'active' : '' %>">Admin</a></li>
+      <li><a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a></li>
+      <li><a href="/artikel" class="<%= active==='artikel'  ? 'active' : '' %>">Artikel</a></li>
+      <li><a href="/laporan" class="<%= active==='laporan'  ? 'active' : '' %>">Laporan</a></li>
+      <li><a href="/adart"   class="<%= active==='adart'    ? 'active' : '' %>">AD/ART</a></li>
+      <li><a href="/anggota" class="<%= active==='anggota'  ? 'active' : '' %>">Anggota</a></li>
+      <li><a href="/galeri"  class="<%= active==='galeri'   ? 'active' : '' %>">Galeri</a></li>
+      <li><a href="/tentang" class="<%= active==='tentang'  ? 'active' : '' %>">Tentang</a></li>
+      <li><a href="/kontak"  class="<%= active==='kontak'   ? 'active' : '' %>">Kontak</a></li>
+      <li><a href="/admin"   class="<%= active==='admin'    ? 'active' : '' %>">Admin</a></li>
     </ul>
   </nav>
   <div id="navBackdrop" class="nav-backdrop"></div>
@@ -158,7 +157,6 @@
       const btn = document.getElementById('navToggle');
       const panel = document.getElementById('mobileNav');
       const backdrop = document.getElementById('navBackdrop');
-
       if(!btn || !panel || !backdrop) return;
 
       function openMenu(){
