@@ -252,6 +252,23 @@ app.use((req, res, next) => {
   next();
 });
 
+// ---- Footer contact loader (cache 5 menit) ----
+let __footerCache = { data: null, ts: 0 };
+app.use(async (_req, res, next) => {
+  try {
+    const now = Date.now();
+    if (!__footerCache.data || (now - __footerCache.ts) > 5 * 60 * 1000) {
+      const row = await q1("SELECT org_name, email, address, phone, whatsapp FROM site_contact WHERE id=1");
+      __footerCache = { data: row || {}, ts: now };
+    }
+    res.locals.footerContact = __footerCache.data || {};
+  } catch (e) {
+    console.error("footerContact load err:", e);
+    res.locals.footerContact = {};
+  }
+  next();
+});
+
 /* ------------------------------------------------------------
    BASIC AUTH UNTUK /admin/*
 ------------------------------------------------------------ */
