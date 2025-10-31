@@ -252,15 +252,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---- Footer contact loader (cache 5 menit) ----
-let __footerCache = { data: null, ts: 0 };
+// ---- Footer contact loader (cache by updated_at) ----
+let __footerCache = { data: null, updated_at: null };
+
 app.use(async (_req, res, next) => {
   try {
-    const now = Date.now();
-    if (!__footerCache.data || (now - __footerCache.ts) > 5 * 60 * 1000) {
-      const row = await q1("SELECT org_name, email, address, phone, whatsapp FROM site_contact WHERE id=1");
-      __footerCache = { data: row || {}, ts: now };
+    const row = await q1(
+      "SELECT org_name, email, address, phone, whatsapp, updated_at FROM site_contact WHERE id=1"
+    );
+    if (!row) {
+      res.locals.footerContact = {};
+      return next();
     }
+
+    const ver = row.updated_at ? String(row.updated_at) : null;
+    if (!__footerCache.updated_at || __footerCache.updated_at !== ver) {
+      __footerCache = { data: row, updated_at: ver };
+    }
+
     res.locals.footerContact = __footerCache.data || {};
   } catch (e) {
     console.error("footerContact load err:", e);
