@@ -1,45 +1,40 @@
 <%
-  const c = (typeof footerContact === 'object' && footerContact) ? footerContact : {};
+  const c = (typeof footerContact !== 'undefined' && footerContact) ? footerContact : {};
   const safe = v => (v && String(v).trim()) ? String(v).trim() : null;
+
+  const org   = safe(c.org_name)  || 'AGUDASCO';
+  const email = safe(c.email);
+  const addr  = safe(c.address);
 %>
 
 <footer class="site-footer">
   <div class="container">
     <div class="footer-grid">
+
       <div class="footer-col">
-        <h4 class="footer-heading">AGUDASCO</h4>
-        <p>© <%= new Date().getFullYear() %> AGUDASCO</p>
+        <div class="footer-heading"><%= org %></div>
+        <p>© <%= new Date().getFullYear() %> <%= org %></p>
       </div>
 
       <div class="footer-col">
-        <h4 class="footer-heading">Kontak</h4>
-        <p>
-          Email:
-          <%= safe(c.email) ? safe(c.email) : '—' %><br/>
-          Alamat:
-          <%= safe(c.address) ? safe(c.address) : '—' %>
-        </p>
-        <% if (safe(c.phone) || safe(c.whatsapp)) { %>
-          <p>
-            <% if (safe(c.phone)) { %>Telp: <%= c.phone %><br/><% } %>
-            <% if (safe(c.whatsapp)) { %>WA: <%= c.whatsapp %><% } %>
-          </p>
-        <% } %>
+        <div class="footer-heading">Kontak</div>
+        <p>Email: <%= email || '—' %></p>
+        <p>Alamat: <%= addr  || '—' %></p>
       </div>
 
       <div class="footer-col">
-        <h4 class="footer-heading">Tautan</h4>
+        <div class="footer-heading">Tautan</div>
         <ul class="footer-links">
           <li><a href="/laporan">Laporan Keuangan</a></li>
           <li><a href="/adart">AD/ART</a></li>
           <li><a href="/kontak">Kontak</a></li>
         </ul>
       </div>
-    </div>
 
+    </div>
     <div class="footer-bottom">
-      <div>© <%= new Date().getFullYear() %> AGUDASCO</div>
-      <div class="muted">Diperbarui otomatis dari database.</div>
+      <span>© <%= new Date().getFullYear() %> <%= org %></span>
+      <span class="muted">Dibangun dengan ♥</span>
     </div>
   </div>
 </footer>
