@@ -20,7 +20,7 @@ const safe = v => (v && String(v).trim()) ? v : null;
     <p>
       <% if (safe(c.phone)) { %><div>Telp: <%= c.phone %></div><% } %>
       <% if (safe(c.whatsapp)) { %><div>WA: <%= c.whatsapp %></div><% } %>
-      <% if (!safe(c.phone) && !safe(c.whatsapp)) { %>Belum diisi<% } %>
+      <% if (!safe(c.phone) && !safe(c.whatsapp)) { %>0895340169646<% } %>
     </p>
 
     <% if (safe(c.instagram) || safe(c.facebook) || safe(c.x_handle)) { %>
