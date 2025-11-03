@@ -152,18 +152,19 @@ async function ensureTables() {
       IF NOT has_contact THEN
         SELECT * INTO si FROM site_info WHERE id=1;
         IF FOUND THEN
-          UPDATE site_contact SET
-            org_name  = COALESCE(si.org_name,  site_contact.org_name),
-            email     = COALESCE(si.email,     site_contact.email),
-            phone     = COALESCE(si.phone,     site_contact.phone),
-            whatsapp  = COALESCE(si.whatsapp,  site_contact.whatsapp),
-            address   = COALESCE(si.address,   site_contact.address),
-            maps_url  = COALESCE(si.maps_url,  site_contact.maps_url),
-            instagram = COALESCE(si.instagram, site_contact.instagram),
-            facebook  = COALESCE(si.facebook,  site_contact.facebook),
-            x_handle  = COALESCE(si.x_handle,  site_contact.x_handle),
+          UPDATE site_contact sc
+        SET org_name  = si.org_name,
+            email     = si.email,
+            phone     = si.phone,
+            whatsapp  = si.whatsapp,
+            address   = si.address,
+            maps_url  = si.maps_url,
+            instagram = si.instagram,
+            facebook  = si.facebook,
+            x_handle  = si.x_handle,
             updated_at = now()
-          WHERE id = 1;
+            FROM site_info si
+          WHERE sc.id = 1 AND si.id = 1;
         END IF;
       END IF;
     END $$;
