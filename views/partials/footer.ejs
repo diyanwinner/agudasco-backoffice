@@ -1,38 +1,35 @@
 <%
-const f = footerContact || {}; %>
-<h4 class="footer-heading">Kontak</h4>
-<% if (f.email)   { %><p>Email: <%= f.email %></p><% } %>
-<% if (f.address) { %><p>Alamat: <%= f.address %></p><% } %>
+// AMANIN DATA
+const f = (typeof footerContact !== 'undefined' && footerContact) ? footerContact : {};
+const ORG = f.org_name || 'AGUDASCO';
 %>
 
 <footer class="site-footer">
   <div class="container">
     <div class="footer-grid">
-
       <div class="footer-col">
-        <div class="footer-heading"><%= org %></div>
-        <p>© <%= new Date().getFullYear() %> <%= org %></p>
+        <h4 class="footer-heading"><%= ORG %></h4>
       </div>
 
       <div class="footer-col">
-        <div class="footer-heading">Kontak</div>
-        <p>Email: <%= email || '—' %></p>
-        <p>Alamat: <%= addr  || '—' %></p>
+        <h4 class="footer-heading">Kontak</h4>
+        <% if (f.email)   { %><p>Email: <%= f.email %></p><% } %>
+        <% if (f.address) { %><p>Alamat: <%= f.address %></p><% } %>
+        <% if (!f.email && !f.address) { %><p>—</p><% } %>
       </div>
 
       <div class="footer-col">
-        <div class="footer-heading">Tautan</div>
+        <h4 class="footer-heading">Tautan</h4>
         <ul class="footer-links">
           <li><a href="/laporan">Laporan Keuangan</a></li>
           <li><a href="/adart">AD/ART</a></li>
           <li><a href="/kontak">Kontak</a></li>
         </ul>
       </div>
-
     </div>
+
     <div class="footer-bottom">
-      <span>© <%= new Date().getFullYear() %> <%= org %></span>
-      <span class="muted">Dibangun dengan ♥</span>
+      <div>© <%= new Date().getFullYear() %> <%= ORG %></div>
     </div>
   </div>
 </footer>
