@@ -253,9 +253,10 @@ app.use((req, res, next) => {
 });
 
 // ---- Footer contact loader (NO CACHE) ----
+// ganti query footer biar sama dengan halaman /kontak
 app.use(async (_req, res, next) => {
   try {
-    res.locals.footerContact = await q1("SELECT * FROM site_contact WHERE id=1") || {};
+    res.locals.footerContact = await q1("SELECT * FROM site_info WHERE id=1") || {};
   } catch (e) {
     console.error("footerContact load err:", e?.message);
     res.locals.footerContact = {};
