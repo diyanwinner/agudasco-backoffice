@@ -255,12 +255,9 @@ app.use((req, res, next) => {
 // ---- Footer contact loader (NO CACHE) ----
 app.use(async (_req, res, next) => {
   try {
-    const row = await q1(
-      "SELECT org_name, email, address, phone, whatsapp FROM site_contact WHERE id=1"
-    );
-    res.locals.footerContact = row || {};
+    res.locals.footerContact = await q1("SELECT * FROM site_contact WHERE id=1") || {};
   } catch (e) {
-    console.error("footerContact load err:", e);
+    console.error("footerContact load err:", e?.message);
     res.locals.footerContact = {};
   }
   next();
