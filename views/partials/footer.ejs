@@ -1,10 +1,8 @@
 <%
-  const c = (typeof footerContact !== 'undefined' && footerContact) ? footerContact : {};
-  const safe = v => (v && String(v).trim()) ? String(v).trim() : null;
-
-  const org   = safe(c.org_name)  || 'AGUDASCO';
-  const email = safe(c.email);
-  const addr  = safe(c.address);
+const f = footerContact || {}; %>
+<h4 class="footer-heading">Kontak</h4>
+<% if (f.email)   { %><p>Email: <%= f.email %></p><% } %>
+<% if (f.address) { %><p>Alamat: <%= f.address %></p><% } %>
 %>
 
 <footer class="site-footer">
