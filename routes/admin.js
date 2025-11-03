@@ -189,12 +189,9 @@ export default function (q, q1, uploadImage, pool) {
   });
 
   /* -------------------- CONTACT (site_info) ---------- */
-  router.get("/contact", async (_req, res) => {
-    const info = await q1("SELECT * FROM site_info WHERE id=1", []);
-    res.render("admin/contact", {
-      title: "Kelola Kontak",
-      info: info || {}
-    });
+  router.get("/contact", async (req, res) => {
+    const info = await q1("SELECT * FROM site_contact WHERE id=1", []);
+    res.render("admin/contact", { title: "Kelola Kontak", info: info || {} });
   });
 
   router.post("/contact", async (req, res) => {
