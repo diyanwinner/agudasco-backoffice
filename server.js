@@ -182,6 +182,9 @@ async function ensureTables() {
 }
 ensureTables().catch(err => console.error("ensureTables error:", err?.message || String(err)));
 
+// pastikan kolom birthdate ada di tabel members
+await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS birthdate DATE;`);
+
 /* ------------------------------------------------------------
    CLOUDINARY + MULTER (image only)
 ------------------------------------------------------------ */
