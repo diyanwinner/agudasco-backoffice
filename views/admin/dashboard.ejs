@@ -1,48 +1,15 @@
-<%- include('../layout-top') %>
-
 <div class="admin-wrap container">
   <div class="admin-head">
-    <h1 class="admin-title">Dashboard</h1>
+    <h1 class="admin-title">Dashboard Admin</h1>
+    <a href="/admin/members" class="btn">Kelola Anggota</a>
   </div>
 
-  <!-- ===== Widget: Ulang Tahun 7 Hari Ke Depan ===== -->
-  <div class="card mb-3">
-    <div class="card-header bg-warning text-dark fw-bold">
-      🎉 Ulang Tahun 7 Hari Ke Depan
-    </div>
-    <div class="card-body">
-      <% if (upcomingBirthdays && upcomingBirthdays.length) { %>
-        <ul class="list-group">
-          <% upcomingBirthdays.forEach(u => { %>
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <strong><%= u.name %></strong>
-                <% if (u.is_today) { %>
-                  <span class="badge bg-danger ms-2">Hari ini 🎂</span>
-                <% } %>
-              </div>
-              <span class="badge bg-primary">
-                <%= new Date(u.birthdate).toLocaleDateString('id-ID', {
-                    day: '2-digit',
-                    month: 'long'
-                }) %>
-              </span>
-            </li>
-          <% }) %>
-        </ul>
-      <% } else { %>
-        <p class="text-muted mb-0">Tidak ada anggota yang berulang tahun 7 hari ke depan.</p>
-      <% } %>
-    </div>
-  </div>
-
-  <!-- ===== Tempatkan widget admin lain di bawah ini (opsional) ===== -->
-  <div class="card">
-    <div class="card-header">Ringkasan</div>
-    <div class="card-body">
-      <p class="text-muted mb-0">Tambahkan ringkasan lain (artikel terbaru, laporan terakhir, dsb) di sini ya sayang.</p>
+  <div class="grid" style="grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:16px">
+    <div class="card">
+      <div class="pad">
+        <h3 class="m-0">Selamat datang</h3>
+        <p class="muted">Gunakan menu di atas untuk mengelola konten situs.</p>
+      </div>
     </div>
   </div>
 </div>
-
-<%- include('../layout-bottom') %>
