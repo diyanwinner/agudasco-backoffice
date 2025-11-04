@@ -1,15 +1,111 @@
-<div class="admin-wrap container">
+<!-- views/admin/dashboard.ejs -->
+<div class="admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title">Dashboard Admin</h1>
-    <a href="/admin/members" class="btn">Kelola Anggota</a>
+    <a class="btn" href="/admin/members">Kelola Anggota</a>
   </div>
 
-  <div class="grid" style="grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap:16px">
-    <div class="card">
-      <div class="pad">
-        <h3 class="m-0">Selamat datang</h3>
-        <p class="muted">Gunakan menu di atas untuk mengelola konten situs.</p>
+  <% /* ===== Ulang Tahun 7 Hari ke Depan ===== */ %>
+  <% if (typeof upcomingBirthdays !== 'undefined' && upcomingBirthdays && upcomingBirthdays.length) { %>
+    <section class="section">
+      <div class="section-head">
+        <h2>Ulang Tahun 7 Hari ke Depan</h2>
+      </div>
+      <div class="grid cards">
+        <% upcomingBirthdays.forEach(function(b){ 
+             const d = b.birthdate ? new Date(b.birthdate) : null;
+             const tgl = d ? d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long' }) : '-';
+        %>
+          <div class="card">
+            <div class="pad">
+              <h3 style="margin-bottom:6px">
+                <%= b.name %>
+                <% if (b.is_today) { %>
+                  <span class="btn red" style="padding:2px 8px;margin-left:8px">HARI INI</span>
+                <% } %>
+              </h3>
+              <p class="meta" style="margin-bottom:12px">Tanggal: <%= tgl %></p>
+              <a class="btn" href="/admin/members/<%= b.id %>">Lihat Anggota</a>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+
+  <% /* ===== Menu Admin (Quick Actions) ===== */ %>
+  <section class="section">
+    <div class="section-head">
+      <h2>Menu Admin</h2>
+    </div>
+
+    <div class="grid cards">
+      <div class="card">
+        <div class="pad">
+          <h3>Anggota</h3>
+          <p class="meta">Kelola data anggota, tanggal lahir, foto & keluarga.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn" href="/admin/members">Buka</a>
+            <a class="btn ghost" href="/admin/members/new">Tambah</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
+          <h3>Keluarga</h3>
+          <p class="meta">Grid semua data keluarga per anggota.</p>
+          <a class="btn" href="/admin/family">Buka</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
+          <h3>Artikel</h3>
+          <p class="meta">Kelola artikel untuk halaman publik.</p>
+          <a class="btn" href="/admin/articles">Buka</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
+          <h3>Banner</h3>
+          <p class="meta">Atur gambar slider/hero di beranda.</p>
+          <a class="btn" href="/admin/banners">Buka</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
+          <h3>Laporan Keuangan</h3>
+          <p class="meta">Upload cover & tautan PDF laporan.</p>
+          <a class="btn" href="/admin/reports">Buka</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
+          <h3>AD/ART</h3>
+          <p class="meta">Kelola dokumen AD/ART (cover + PDF).</p>
+          <a class="btn" href="/admin/adarts">Buka</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
+          <h3>Kontak</h3>
+          <p class="meta">Alamat, email, telepon/WA, sosmed organisasi.</p>
+          <a class="btn" href="/admin/contact">Buka</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
+          <h3>Galeri</h3>
+          <p class="meta">Tautan ke halaman galeri publik.</p>
+          <a class="btn" href="/galeri">Lihat Publik</a>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 </div>
