@@ -1,52 +1,139 @@
-<!-- views/admin/member_add.ejs -->
-<div class="admin-wrap container">
+<!-- views/admin/members_new.ejs -->
+<div class="admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title">Tambah Anggota</h1>
-    <a href="/admin/members" class="btn ghost">← Kembali</a>
+    <a class="btn ghost" href="/admin">← Kembali</a>
   </div>
 
-  <div class="card">
-    <div class="card-body">
-      <form method="post" action="/admin/members">
-        <div class="form-modern">
-          <div class="form-grid-2">
-            <div>
-              <label class="label" for="name">Nama Lengkap</label>
-              <input id="name" name="name" type="text" class="input" placeholder="Nama anggota" required />
+  <form class="form-modern" action="/admin/members" method="POST" enctype="multipart/form-data">
+    <div class="form-grid-2">
+      <div>
+        <label class="label" for="name">Nama Lengkap</label>
+        <input class="input" id="name" name="name" type="text" placeholder="Nama anggota" required />
 
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-                <div>
-                  <label class="label" for="birthdate">Tanggal Lahir</label>
-                  <input id="birthdate" name="birthdate" type="date" class="input" />
-                  <small class="muted">Format: YYYY-MM-DD (opsional)</small>
-                </div>
-                <div>
-                  <label class="label" for="avatar">Foto (URL)</label>
-                  <input id="avatar" name="avatar" type="url" class="input" placeholder="https://..." />
-                  <small class="muted">Bisa URL Cloudinary/foto lain.</small>
-                </div>
-              </div>
-            </div>
+        <label class="label" for="birthdate" style="margin-top:12px">Tanggal Lahir</label>
+        <input class="input" id="birthdate" name="birthdate" type="date" placeholder="YYYY-MM-DD" />
+        <p class="meta" style="margin-top:6px">Format: <code>YYYY-MM-DD</code> (opsional)</p>
 
-            <div>
-              <label class="label">Preview Foto</label>
-              <div class="dropzone" style="min-height:180px;cursor:auto">
-                <div class="dz-empty">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  <div class="muted">Belum ada gambar</div>
-                </div>
-              </div>
-            </div>
+        <div style="margin-top:14px">
+          <label class="label">Foto Anggota</label>
+
+          <!-- Toggle Upload vs URL -->
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <label class="btn ghost">
+              <input type="radio" name="avatar_mode" value="upload" id="modeUpload" checked style="display:none" />
+              <span>Pakai Upload</span>
+            </label>
+            <label class="btn ghost">
+              <input type="radio" name="avatar_mode" value="url" id="modeUrl" style="display:none" />
+              <span>Pakai URL</span>
+            </label>
           </div>
 
-          <div class="form-bar">
-            <a href="/admin/members" class="btn ghost">Batal</a>
-            <button class="btn">Simpan</button>
+          <!-- Upload file -->
+          <div id="uploadPanel">
+            <input class="input" type="file" id="avatar_file" name="avatar_file" accept="image/*" />
+            <p class="meta" style="margin-top:6px">Pilih gambar dari perangkatmu.</p>
+          </div>
+
+          <!-- URL file -->
+          <div id="urlPanel" style="display:none">
+            <input class="input" type="url" id="avatar_url" name="avatar_url" placeholder="https://..." />
+            <p class="meta" style="margin-top:6px">Masukkan URL Cloudinary/hosting gambar lainnya.</p>
           </div>
         </div>
-      </form>
+
+        <div style="margin-top:16px;display:flex;gap:8px">
+          <a class="btn ghost" href="/admin">Batal</a>
+          <button class="btn" type="submit">Simpan</button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div>
+        <label class="label">Preview Foto</label>
+        <div class="dropzone" style="min-height:260px">
+          <div class="dz-empty" id="previewEmpty">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <div>Belum ada gambar</div>
+          </div>
+          <div class="dz-preview" id="previewWrap" style="display:none">
+            <img id="previewImg" alt="">
+            <button type="button" class="dz-remove" id="btnClear" title="Hapus">×</button>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <!-- redirect ke halaman keluarga setelah tambah -->
+    <input type="hidden" name="redirect_to" value="/admin/family" />
+  </form>
 </div>
+
+<script>
+(function(){
+  const modeUpload = document.getElementById('modeUpload');
+  const modeUrl    = document.getElementById('modeUrl');
+  const uploadPanel = document.getElementById('uploadPanel');
+  const urlPanel    = document.getElementById('urlPanel');
+
+  const fileInput = document.getElementById('avatar_file');
+  const urlInput  = document.getElementById('avatar_url');
+
+  const wrap   = document.getElementById('previewWrap');
+  const empty  = document.getElementById('previewEmpty');
+  const img    = document.getElementById('previewImg');
+  const clear  = document.getElementById('btnClear');
+
+  function showPreview(src){
+    if (!src) { hidePreview(); return; }
+    img.src = src;
+    wrap.style.display = 'block';
+    empty.style.display = 'none';
+  }
+  function hidePreview(){
+    img.src = '';
+    wrap.style.display = 'none';
+    empty.style.display = 'flex';
+  }
+
+  function selectMode(which){
+    if (which === 'upload'){
+      uploadPanel.style.display = '';
+      urlPanel.style.display = 'none';
+      urlInput.value = '';
+      hidePreview();
+    } else {
+      uploadPanel.style.display = 'none';
+      urlPanel.style.display = '';
+      fileInput.value = '';
+      hidePreview();
+    }
+  }
+
+  // default upload
+  selectMode('upload');
+
+  // toggle
+  modeUpload.parentElement.addEventListener('click', () => { modeUpload.checked = true; modeUrl.checked = false; selectMode('upload'); });
+  modeUrl.parentElement.addEventListener('click', () => { modeUrl.checked = true; modeUpload.checked = false; selectMode('url'); });
+
+  // preview untuk file
+  fileInput.addEventListener('change', (e)=>{
+    const f = e.target.files && e.target.files[0];
+    if (f) showPreview(URL.createObjectURL(f));
+    else hidePreview();
+  });
+  // preview untuk URL
+  urlInput.addEventListener('input', (e)=>{
+    const v = e.target.value.trim();
+    if (v) showPreview(v); else hidePreview();
+  });
+
+  clear.addEventListener('click', ()=>{
+    if (modeUpload.checked){ fileInput.value=''; }
+    if (modeUrl.checked){ urlInput.value=''; }
+    hidePreview();
+  });
+})();
+</script>
