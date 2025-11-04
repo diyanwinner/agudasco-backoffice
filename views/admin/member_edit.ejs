@@ -1,72 +1,79 @@
-<div class="container py-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 m-0">Edit Anggota</h1>
+<%- include('../layout-top', { title: 'Edit Anggota', active: 'admin' }) %>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Edit Anggota</h1>
     <a href="/admin/members" class="btn btn-outline-secondary">← Kembali</a>
   </div>
 
-  <form action="/admin/members/<%= member.id %>/update" method="post" enctype="multipart/form-data">
-    <div class="row g-4">
-      <div class="col-lg-7">
-        <div class="card bg-dark-subtle border-0 shadow-sm">
-          <div class="card-body">
-            <div class="mb-3">
-              <label class="form-label">Nama Lengkap</label>
-              <input name="name" type="text" class="form-control" value="<%- member.name || '' %>" required />
-            </div>
+  <form class="card shadow-sm border-0" action="/admin/members/<%= member.id %>/update" method="post" enctype="multipart/form-data">
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="mb-3">
+            <label class="form-label">Nama Lengkap</label>
+            <input name="name" class="form-control" value="<%= member.name %>" required />
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label">Tanggal Lahir</label>
-              <input name="birthdate" type="date" class="form-control" value="<%- member.birthdate ? member.birthdate.toISOString().slice(0,10) : '' %>" />
-            </div>
+          <div class="mb-3">
+            <label class="form-label">Tanggal Lahir</label>
+            <input name="birthdate" type="date" class="form-control"
+                   value="<%= member.birthdate ? member.birthdate.toISOString().substring(0,10) : '' %>" />
+          </div>
 
-            <div class="mb-3">
-              <label class="form-label">Bio / Keterangan</label>
-              <textarea name="bio" class="form-control" rows="4"><%- member.bio || '' %></textarea>
+          <div class="mb-3">
+            <label class="form-label">Bio / Keterangan</label>
+            <textarea name="bio" class="form-control" rows="4"><%= member.bio || '' %></textarea>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label d-block">Foto Anggota</label>
+            <ul class="nav nav-pills mb-3" role="tablist">
+              <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#up" type="button">Upload Baru</button></li>
+              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#url" type="button">Pakai URL</button></li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="up">
+                <input class="form-control" type="file" name="avatar" accept="image/*" />
+                <div class="form-text">Jika diisi, akan menimpa foto lama.</div>
+              </div>
+              <div class="tab-pane fade" id="url">
+                <input class="form-control" name="avatar_url" placeholder="https://..." />
+                <div class="form-text">Kosongkan jika tidak ingin mengubah via URL.</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="col-lg-5">
-        <div class="card bg-dark-subtle border-0 shadow-sm h-100">
-          <div class="card-body">
-            <h5 class="card-title mb-3">Foto Anggota</h5>
-
-            <div class="mb-3">
-              <% if (member.avatar) { %>
-                <img src="<%- member.avatar %>" alt="avatar" class="img-fluid rounded border mb-2" />
-              <% } else { %>
-                <div class="text-muted mb-2">Belum ada foto.</div>
-              <% } %>
-            </div>
-
-            <div class="d-flex gap-2 mb-2">
-              <button type="button" class="btn btn-primary btn-sm" onclick="useUpload()">Pakai Upload</button>
-              <button type="button" class="btn btn-outline-primary btn-sm" onclick="useUrl()">Pakai URL</button>
-            </div>
-
-            <div id="fileWrap" class="mb-3">
-              <input class="form-control" type="file" name="avatar" accept="image/*" />
-              <div class="form-text">Jika diisi, akan menimpa foto lama.</div>
-            </div>
-
-            <div id="urlWrap" class="mb-3 d-none">
-              <input class="form-control" type="url" name="avatar_url" placeholder="https://..." />
-              <div class="form-text">Atau isi URL baru. Jika kosong, foto tetap memakai yang sekarang.</div>
-            </div>
-
-            <div class="d-flex gap-2">
-              <a class="btn btn-secondary" href="/admin/members">Batal</a>
-              <button class="btn btn-primary" type="submit">Simpan Perubahan</button>
-            </div>
+        <div class="col-lg-5">
+          <label class="form-label">Preview Foto</label>
+          <div class="border border-dashed rounded-3 p-4 text-center" id="previewBox">
+            <% if (member.avatar) { %>
+              <img class="img-fluid rounded" src="<%= member.avatar %>" alt="current" />
+            <% } else { %>
+              <div class="opacity-75">Belum ada gambar</div>
+            <% } %>
           </div>
         </div>
       </div>
+    </div>
+    <div class="card-footer d-flex gap-2 justify-content-end">
+      <a href="/admin/members" class="btn btn-outline-secondary">Batal</a>
+      <button class="btn btn-primary">Simpan Perubahan</button>
     </div>
   </form>
 </div>
 
 <script>
-  function useUpload(){ document.getElementById('fileWrap').classList.remove('d-none'); document.getElementById('urlWrap').classList.add('d-none'); }
-  function useUrl(){ document.getElementById('urlWrap').classList.remove('d-none'); document.getElementById('fileWrap').classList.add('d-none'); }
+  const file = document.querySelector('input[name="avatar"]');
+  const box  = document.getElementById('previewBox');
+  file?.addEventListener('change', (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = URL.createObjectURL(f);
+    box.innerHTML = '<img class="img-fluid rounded" alt="preview" />';
+    box.querySelector('img').src = url;
+  });
 </script>
+
+<%- include('../layout-bottom') %>
