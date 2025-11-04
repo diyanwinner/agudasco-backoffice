@@ -1,6 +1,6 @@
 <%- include('../layout-top', { title: 'Edit Anggota', active: 'admin' }) %>
 
-<div class="container py-4">
+<div class="container py-4 form-dark">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Edit Anggota</h1>
     <a href="/admin/members" class="btn btn-outline-secondary">← Kembali</a>
@@ -17,8 +17,12 @@
 
           <div class="mb-3">
             <label class="form-label">Tanggal Lahir</label>
-            <input name="birthdate" type="date" class="form-control"
-                   value="<%= member.birthdate ? member.birthdate.toISOString().substring(0,10) : '' %>" />
+            <input
+              name="birthdate"
+              type="date"
+              class="form-control"
+              value="<%= member.birthdate ? (new Date(member.birthdate)).toISOString().slice(0,10) : '' %>"
+            />
           </div>
 
           <div class="mb-3">
@@ -29,8 +33,12 @@
           <div class="mb-2">
             <label class="form-label d-block">Foto Anggota</label>
             <ul class="nav nav-pills mb-3" role="tablist">
-              <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#up" type="button">Upload Baru</button></li>
-              <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#url" type="button">Pakai URL</button></li>
+              <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#up" type="button">Upload Baru</button>
+              </li>
+              <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#url" type="button">Pakai URL</button>
+              </li>
             </ul>
             <div class="tab-content">
               <div class="tab-pane fade show active" id="up">
@@ -47,7 +55,7 @@
 
         <div class="col-lg-5">
           <label class="form-label">Preview Foto</label>
-          <div class="border border-dashed rounded-3 p-4 text-center" id="previewBox">
+          <div class="placeholder-panel rounded-3 p-4 text-center" id="previewBox">
             <% if (member.avatar) { %>
               <img class="img-fluid rounded" src="<%= member.avatar %>" alt="current" />
             <% } else { %>
@@ -57,6 +65,7 @@
         </div>
       </div>
     </div>
+
     <div class="card-footer d-flex gap-2 justify-content-end">
       <a href="/admin/members" class="btn btn-outline-secondary">Batal</a>
       <button class="btn btn-primary">Simpan Perubahan</button>
