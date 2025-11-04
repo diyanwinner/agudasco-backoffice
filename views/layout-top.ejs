@@ -5,25 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title><%= (typeof title !== 'undefined' ? title + ' · ' : '') %>AGUDASCO</title>
 
-  <!-- Bootstrap -->
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-  <!-- Style dasar gelap + padding aman -->
+  <!-- THEME gelap + padding aman + skin form -->
   <style>
     :root { --navH: 64px; }
     @media (min-width: 992px) { :root { --navH: 72px; } }
+
     body { background:#0b1220; color:#eaeef7; padding-top:var(--navH); }
     .border-dashed { border:1px dashed #445; }
-    .nav-link.active { font-weight:600; color:#0dcaf0!important; }
+    .nav-link.active { font-weight:600; color:#0dcaf0 !important; }
     .navbar-brand { font-weight:600; letter-spacing:.5px; }
     footer { color:#99a3b3; }
 
-    /* === THEME GELAP UNTUK FORM === */
+    /* === Form dark skin (untuk halaman tambah/edit anggota) === */
     .form-dark .card,
     .form-dark .card-header,
     .form-dark .card-body {
-      background:#111827;       /* slate-900-ish */
-      border-color:#293248;     /* slate-800-ish */
+      background:#111827;
+      border-color:#293248;
       color:#e5e7eb;
     }
     .form-dark .form-label { color:#cbd5e1; }
@@ -32,16 +33,16 @@
     .form-dark .form-select,
     .form-dark .form-control:disabled,
     .form-dark .form-select:disabled {
-      background:#0f172a;       /* slate-950 */
+      background:#0f172a;
       color:#e5e7eb;
-      border-color:#334155;     /* slate-700 */
+      border-color:#334155;
     }
-    .form-dark .form-control::placeholder { color:#94a3b8; }   /* slate-400 */
+    .form-dark .form-control::placeholder { color:#94a3b8; }
     .form-dark .form-control:focus,
     .form-dark .form-select:focus {
       background:#0f172a;
       color:#fff;
-      border-color:#38bdf8;     /* sky-400 */
+      border-color:#38bdf8;
       box-shadow:0 0 0 .2rem rgba(56,189,248,.15);
     }
     .form-dark .input-group-text {
@@ -49,43 +50,17 @@
       color:#cbd5e1;
       border-color:#334155;
     }
-    .form-dark .form-check-input {
-      background:#0f172a; border-color:#334155;
-    }
-    .form-dark .form-check-input:checked {
-      background:#38bdf8; border-color:#38bdf8;
-    }
+    .form-dark .form-check-input { background:#0f172a; border-color:#334155; }
+    .form-dark .form-check-input:checked { background:#38bdf8; border-color:#38bdf8; }
 
-    /* panel preview gambar/area kosong */
     .form-dark .placeholder-panel {
       background:#0f172a; border:1px dashed #334155; color:#94a3b8;
     }
 
-    /* tombol – biar matching */
-    .btn-primary {
-      background:#0ea5e9; border-color:#0ea5e9;
-    }
+    .btn-primary { background:#0ea5e9; border-color:#0ea5e9; }
     .btn-primary:hover { background:#0284c7; border-color:#0284c7; }
-    .btn-outline-light {
-      color:#e5e7eb; border-color:#475569;
-    }
-    .btn-outline-light:hover {
-      background:#1f2937; border-color:#64748b; color:#fff;
-    }
-  </style>
-    :root { --navH: 64px; }
-    @media (min-width: 992px) {
-      :root { --navH: 72px; }
-    }
-    body {
-      background: #0b1220;
-      color: #eaeef7;
-      padding-top: var(--navH);
-    }
-    .border-dashed { border: 1px dashed #445; }
-    .nav-link.active { font-weight: 600; color: #0dcaf0 !important; }
-    .navbar-brand { font-weight: 600; letter-spacing: 0.5px; }
-    footer { color: #999; }
+    .btn-outline-light { color:#e5e7eb; border-color:#475569; }
+    .btn-outline-light:hover { background:#1f2937; border-color:#64748b; color:#fff; }
   </style>
 </head>
 <body>
@@ -98,13 +73,11 @@
         <span>AGUDASCO</span>
       </a>
 
-      <!-- Toggle -->
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
         aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <!-- Menu -->
       <div class="collapse navbar-collapse" id="mainNav">
         <ul class="navbar-nav ms-auto">
           <li class="nav-item"><a class="nav-link <%= active==='admin'?'active':'' %>" href="/admin">Admin</a></li>
