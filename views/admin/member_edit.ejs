@@ -1,0 +1,52 @@
+<!-- views/admin/member_edit.ejs -->
+<div class="admin-wrap container">
+  <div class="admin-head">
+    <h1 class="admin-title">Edit Anggota</h1>
+    <a href="/admin/members" class="btn ghost">← Kembali</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" action="/admin/members/<%= member.id %>/update">
+        <div class="form-modern">
+          <div class="form-grid-2">
+            <div>
+              <label class="label" for="name">Nama Lengkap</label>
+              <input id="name" name="name" type="text" class="input" required
+                     value="<%= member?.name || '' %>" />
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+                <div>
+                  <label class="label" for="birthdate">Tanggal Lahir</label>
+                  <input id="birthdate" name="birthdate" type="date" class="input"
+                         value="<%= member?.birthdate ? new Date(member.birthdate).toISOString().slice(0,10) : '' %>" />
+                </div>
+                <div>
+                  <label class="label" for="avatar">Foto (URL)</label>
+                  <input id="avatar" name="avatar" type="url" class="input"
+                         value="<%= member?.avatar || '' %>" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="label">Preview Foto</label>
+              <div class="dropzone" style="min-height:180px;cursor:auto">
+                <% if (member?.avatar) { %>
+                  <img src="<%= member.avatar %>" alt="" style="width:100%;height:100%;object-fit:cover" />
+                <% } else { %>
+                  <div class="dz-empty"><div class="muted">Belum ada gambar</div></div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-bar">
+            <a href="/admin/members" class="btn ghost">Batal</a>
+            <button class="btn">Simpan Perubahan</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
