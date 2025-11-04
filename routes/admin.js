@@ -5,7 +5,7 @@ export default function (q, q1, uploadImage, pool) {
   const router = express.Router();
 
   /* ==================== DASHBOARD ==================== */
-  // SATU route saja (hapus duplikasi "/") + widget ultah 7 hari ke depan
+  // Satu route "/" saja + widget ulang tahun 7 hari ke depan
   router.get("/", async (_req, res) => {
     try {
       const upcomingBirthdays = await q(`
@@ -48,7 +48,7 @@ export default function (q, q1, uploadImage, pool) {
   /* ==================== ARTIKEL ====================== */
   router.get("/articles", async (_req, res) => {
     const articles = await q("SELECT * FROM articles ORDER BY id DESC");
-    res.render("admin/articles", { title: "Kelola Artikel", articles });
+    res.render("admin/articles", { title: "Kelola Artikel", active: "admin", articles });
   });
 
   router.post("/articles", uploadImage.single("image"), async (req, res) => {
@@ -71,7 +71,7 @@ export default function (q, q1, uploadImage, pool) {
   /* ==================== BANNER ======================= */
   router.get("/banners", async (_req, res) => {
     const banners = await q("SELECT * FROM banners ORDER BY id DESC");
-    res.render("admin/banners", { title: "Kelola Banner", banners });
+    res.render("admin/banners", { title: "Kelola Banner", active: "admin", banners });
   });
 
   router.post("/banners", uploadImage.single("image"), async (req, res) => {
@@ -99,7 +99,7 @@ export default function (q, q1, uploadImage, pool) {
     });
   });
 
-  // FORM TAMBAH
+  // FORM TAMBAH (pakai members_add.ejs)
   router.get("/members/new", (_req, res) => {
     res.render("admin/members_add", {
       title: "Tambah Anggota",
@@ -107,59 +107,87 @@ export default function (q, q1, uploadImage, pool) {
     });
   });
 
-  // SIMPAN TAMBAH
-  router.post("/members", uploadImage.single("avatar"), async (req, res) => {
-    const { name = "", bio = "", birthdate = "", avatar: avatarUrl = "" } = req.body;
-    if (!name.trim()) return res.status(400).send("Nama wajib diisi");
+  // SIMPAN TAMBAH — field upload: avatar_file, field URL: avatar_url
+  router.post("/members", uploadImage.single("avatar_file"), async (req, res) => {
+    try {
+      const {
+        name = "",
+        bio = "",
+        birthdate = "",
+        avatar_url = "",
+        redirect_to = "/admin/members"
+      } = req.body;
 
-    // Bisa unggah file (Cloudinary) atau isi URL manual
-    const avatar = req.file ? req.file.path : (avatarUrl?.trim() || null);
-    const bd = birthdate ? birthdate : null; // YYYY-MM-DD atau null
+      if (!name.trim()) return res.status(400).send("Nama wajib diisi");
 
-    await q(
-      "INSERT INTO members (name, birthdate, avatar, bio) VALUES ($1,$2,$3,$4)",
-      [name.trim(), bd, avatar, bio || ""]
-    );
+      // Prioritaskan file upload; jika tidak ada, pakai URL; jika kosong, null
+      const avatar =
+        (req.file && req.file.path) ||
+        (avatar_url && avatar_url.trim()) ||
+        null;
 
-    const redirectTo = req.body.redirect_to || "/admin/members";
-    res.redirect(redirectTo);
+      const bd = birthdate ? birthdate : null; // YYYY-MM-DD atau null
+
+      await q(
+        "INSERT INTO members (name, birthdate, avatar, bio) VALUES ($1,$2,$3,$4)",
+        [name.trim(), bd, avatar, bio || ""]
+      );
+
+      return res.redirect(redirect_to || "/admin/members");
+    } catch (e) {
+      console.error("members create error:", e);
+      return res.status(500).send("Gagal menyimpan anggota");
+    }
   });
 
-  // FORM EDIT (pastikan didefinisikan sebelum /members/:id detail)
+  // FORM EDIT (didefinisikan sebelum /members/:id)
   router.get("/members/:id/edit", async (req, res) => {
     const id = Number(req.params.id);
     const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
     if (!member) return res.status(404).send("Anggota tidak ditemukan");
 
     res.render("admin/member_edit", {
-      title: `Edit Anggota`,
+      title: "Edit Anggota",
       active: "admin",
       member
     });
   });
 
-  // SIMPAN EDIT
-  router.post("/members/:id/update", uploadImage.single("avatar"), async (req, res) => {
-    const id = Number(req.params.id);
-    const { name = "", bio = "", birthdate = "", avatar: avatarUrl = "" } = req.body;
-    if (!name.trim()) return res.status(400).send("Nama wajib diisi");
+  // SIMPAN EDIT — field upload: avatar_file, field URL: avatar_url
+  router.post("/members/:id/update", uploadImage.single("avatar_file"), async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const {
+        name = "",
+        bio = "",
+        birthdate = "",
+        avatar_url = "",
+        redirect_to = "/admin/members"
+      } = req.body;
 
-    const current = await q1("SELECT avatar FROM members WHERE id=$1", [id]);
-    if (!current) return res.status(404).send("Anggota tidak ditemukan");
+      if (!name.trim()) return res.status(400).send("Nama wajib diisi");
 
-    const avatar =
-      req.file ? req.file.path :
-      (avatarUrl?.trim() ? avatarUrl.trim() : current.avatar);
+      const current = await q1("SELECT avatar FROM members WHERE id=$1", [id]);
+      if (!current) return res.status(404).send("Anggota tidak ditemukan");
 
-    const bd = birthdate ? birthdate : null;
+      // Pilih: upload > url > avatar lama
+      const avatar =
+        (req.file && req.file.path) ||
+        (avatar_url && avatar_url.trim()) ||
+        current.avatar;
 
-    await q(
-      "UPDATE members SET name=$1, birthdate=$2, avatar=$3, bio=$4 WHERE id=$5",
-      [name.trim(), bd, avatar, bio || "", id]
-    );
+      const bd = birthdate ? birthdate : null;
 
-    const redirectTo = req.body.redirect_to || "/admin/members";
-    res.redirect(redirectTo);
+      await q(
+        "UPDATE members SET name=$1, birthdate=$2, avatar=$3, bio=$4 WHERE id=$5",
+        [name.trim(), bd, avatar, bio || "", id]
+      );
+
+      return res.redirect(redirect_to || "/admin/members");
+    } catch (e) {
+      console.error("members update error:", e);
+      return res.status(500).send("Gagal memperbarui anggota");
+    }
   });
 
   // HAPUS
