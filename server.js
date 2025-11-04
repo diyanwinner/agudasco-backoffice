@@ -180,7 +180,7 @@ async function ensureTables() {
     END $$;
   `);
 }
-ensureTables().catch(err => console.error("ensureTables error:", err));
+ensureTables().catch(err => console.error("ensureTables error:", err?.message || String(err)));
 
 /* ------------------------------------------------------------
    CLOUDINARY + MULTER (image only)
