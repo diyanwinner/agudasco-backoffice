@@ -1,47 +1,54 @@
-<% /* ADMIN: Tambah Anggota Saja */ %>
-<div class="container admin-wrap">
-  <div class="admin-head" style="align-items:center; gap:12px">
-    <h1 class="admin-title">Tambah Anggota</h1>
+<div class="admin-wrap container">
+  <div class="admin-head">
+    <h1 class="admin-title">Anggota</h1>
+    <a href="/admin/members/new" class="btn">+ Tambah Anggota</a>
+  </div>
 
-    <div style="margin-left:auto; display:flex; gap:8px; align-items:center">
-      <a class="btn ghost" href="/admin">← Dashboard</a>
-      <a class="btn" href="/admin/family">Kelola Data Keluarga</a>
+  <div class="card">
+    <div class="card-header">Daftar Anggota</div>
+    <div class="card-body table-wrap">
+      <table class="table table-dark table-striped">
+        <thead>
+          <tr>
+            <th style="width:56px">Foto</th>
+            <th>Nama</th>
+            <th>Tgl Lahir</th>
+            <th>Dibuat</th>
+            <th style="width:120px">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (members && members.length) { %>
+            <% members.forEach(m => { %>
+              <tr>
+                <td>
+                  <% if (m.avatar) { %>
+                    <img src="<%= m.avatar %>" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)" />
+                  <% } else { %>
+                    <div style="width:44px;height:44px;border-radius:8px;border:1px dashed #35527a;display:flex;align-items:center;justify-content:center;opacity:.6">–</div>
+                  <% } %>
+                </td>
+                <td class="fw-bold"><%= m.name || '—' %></td>
+                <td>
+                  <% if (m.birthdate) { %>
+                    <%= new Date(m.birthdate).toLocaleDateString('id-ID', { day:'2-digit', month:'long' }) %>
+                  <% } else { %>—<% } %>
+                </td>
+                <td>
+                  <% if (m.created_at) { %>
+                    <%= new Date(m.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) %>
+                  <% } else { %>—<% } %>
+                </td>
+                <td>
+                  <a class="btn" href="/admin/members/<%= m.id %>/edit">Edit</a>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="5" class="text-muted">Belum ada data anggota.</td></tr>
+          <% } %>
+        </tbody>
+      </table>
     </div>
   </div>
-
-  <div class="card" style="max-width:760px; margin-inline:auto">
-    <form action="/admin/members" method="post" enctype="multipart/form-data" style="display:grid; gap:14px">
-      <div>
-        <label for="name">Nama<span style="color:#e66">*</span></label>
-        <input id="name" name="name" type="text" class="input" placeholder="mis. Dedi" required>
-      </div>
-
-      <div>
-        <label for="bio">Bio (opsional)</label>
-        <textarea id="bio" name="bio" class="input" rows="4" placeholder="Deskripsi singkat"></textarea>
-      </div>
-
-      <div class="hint muted">
-        File gambar otomatis di-upload ke Cloudinary.
-      </div>
-
-      <div>
-        <label for="avatar">Foto (opsional)</label>
-        <input id="avatar" name="avatar" type="file" accept="image/*" class="input">
-      </div>
-
-      <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end">
-        <button class="btn" type="submit">Simpan Anggota</button>
-      </div>
-    </form>
-  </div>
-
-  <div class="muted" style="text-align:center; margin-top:16px">
-    Butuh mengisi keluarga untuk anggota yang sudah ada? → 
-    <a class="rowlink" href="/admin/family">Buka Data Keluarga</a>
-  </div>
 </div>
-
-<style>
-  .hint{ font-size:.9rem }
-</style>
