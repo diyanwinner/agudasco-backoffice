@@ -9,6 +9,47 @@ export default function (q, q1, uploadImage, pool) {
     res.render("admin/dashboard", { title: "Dashboard" })
   );
 
+  // === Dashboard: ulang tahun 7 hari ke depan ===
+// Robust melewati akhir bulan/tahun: bandingkan MM-DD 7 hari ke depan via generate_series
+router.get("/", async (_req, res) => {
+  try {
+    const upcomingBirthdays = await q(`
+      WITH next_7 AS (
+        SELECT to_char((CURRENT_DATE + offs)::date, 'MM-DD') AS md
+        FROM generate_series(0, 7) AS offs
+      )
+      SELECT
+        m.id,
+        m.name,
+        m.birthdate,
+        make_date(
+          EXTRACT(year FROM CURRENT_DATE)::int,
+          EXTRACT(month FROM m.birthdate)::int,
+          EXTRACT(day   FROM m.birthdate)::int
+        ) AS birthdate_this_year,
+        -- flag hari ini
+        (to_char(m.birthdate, 'MM-DD') = to_char(CURRENT_DATE, 'MM-DD')) AS is_today
+      FROM members m
+      JOIN next_7 n
+        ON to_char(m.birthdate, 'MM-DD') = n.md
+      ORDER BY birthdate_this_year ASC, name ASC
+    `);
+
+    res.render("admin/dashboard", {
+      title: "Dashboard",
+      active: "admin",
+      upcomingBirthdays
+    });
+   } catch (e) {
+    console.error("dashboard birthdays error:", e);
+    res.render("admin/dashboard", {
+      title: "Dashboard",
+      active: "admin",
+      upcomingBirthdays: []
+    });
+   }
+  });
+
   /* -------------------- ARTIKEL ---------------------- */
   router.get("/articles", async (_req, res) => {
     const articles = await q("SELECT * FROM articles ORDER BY id DESC");
