@@ -8,25 +8,50 @@
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-  <!-- Optional: style dasar gelap biar serasi -->
+  <!-- Style dasar gelap + padding aman -->
   <style>
-    body { background:#0b1220; color:#eaeef7; }
-    .border-dashed { border:1px dashed #445; }
-    .nav-link.active { font-weight:600; }
+    :root { --navH: 64px; }
+    @media (min-width: 992px) {
+      :root { --navH: 72px; }
+    }
+    body {
+      background: #0b1220;
+      color: #eaeef7;
+      padding-top: var(--navH);
+    }
+    .border-dashed { border: 1px dashed #445; }
+    .nav-link.active { font-weight: 600; color: #0dcaf0 !important; }
+    .navbar-brand { font-weight: 600; letter-spacing: 0.5px; }
+    footer { color: #999; }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-dark bg-dark border-bottom border-secondary">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark bg-dark fixed-top border-bottom border-secondary navbar-expand-lg">
     <div class="container">
-      <a class="navbar-brand" href="/">AGUDASCO</a>
-      <div class="nav">
-        <a class="nav-link <%= active==='admin'?'active':'' %>" href="/admin">Admin</a>
-        <a class="nav-link" href="/admin/members">Anggota</a>
-        <a class="nav-link" href="/admin/articles">Artikel</a>
-        <a class="nav-link" href="/admin/banners">Banner</a>
-        <a class="nav-link" href="/admin/reports">Laporan</a>
-        <a class="nav-link" href="/admin/adarts">AD/ART</a>
-        <a class="nav-link" href="/admin/contact">Kontak</a>
+      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+        <img src="/assets/logo.png" alt="AGUDASCO" height="32" />
+        <span>AGUDASCO</span>
+      </a>
+
+      <!-- Toggle -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Menu -->
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link <%= active==='admin'?'active':'' %>" href="/admin">Admin</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/members">Anggota</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/articles">Artikel</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/banners">Banner</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/reports">Laporan</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/adarts">AD/ART</a></li>
+          <li class="nav-item"><a class="nav-link" href="/admin/contact">Kontak</a></li>
+        </ul>
       </div>
     </div>
   </nav>
