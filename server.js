@@ -10,6 +10,16 @@ import { CloudinaryStorage } from "multer-storage-cloudinary";
 import pkg from "pg";
 const { Pool } = pkg;
 
+// Tangkap error global biar yang di-print cuma pesannya
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught:', err?.message || String(err));
+});
+
+process.on('unhandledRejection', (reason) => {
+  const msg = (reason && reason.message) ? reason.message : String(reason);
+  console.error('UnhandledRejection:', msg);
+});
+
 /* ------------------------------------------------------------
    PATH / APP SETUP
 ------------------------------------------------------------ */
