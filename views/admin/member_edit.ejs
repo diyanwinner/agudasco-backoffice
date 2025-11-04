@@ -1,118 +1,109 @@
-<%- include('../layout-top') %>
+<% /* Dibungkus layout.ejs */ %>
 
-<div class="page-wrap">
-  <div class="container">
+<div class="container py-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <a href="/admin/members" class="btn btn-outline-light btn-sm">← Kembali</a>
+    <h1 class="h4 m-0">Edit Anggota</h1>
+  </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="mb-0">Edit Anggota</h2>
-      <a href="/admin/members/<%= member.id %>" class="btn btn-outline-light">&larr; Kembali</a>
+  <form action="/admin/members/<%= member.id %>/update" method="POST" enctype="multipart/form-data" class="row g-4">
+    <div class="col-lg-7">
+      <!-- Nama -->
+      <label class="form-label">Nama Lengkap</label>
+      <input type="text" name="name" class="form-control" value="<%= member.name || '' %>" required />
+
+      <!-- Tanggal lahir -->
+      <div class="mt-3">
+        <label class="form-label">Tanggal Lahir</label>
+        <input type="date" name="birthdate" class="form-control" value="<%= member.birthdate ? member.birthdate.toISOString().slice(0,10) : '' %>" />
+      </div>
+
+      <!-- Bio -->
+      <div class="mt-3">
+        <label class="form-label">Bio / Keterangan</label>
+        <textarea name="bio" rows="4" class="form-control"><%= member.bio || '' %></textarea>
+      </div>
+
+      <!-- Foto: Upload / URL -->
+      <div class="mt-4">
+        <label class="form-label d-block">Foto Anggota</label>
+        <div class="btn-group mb-2" role="group">
+          <button type="button" id="btnUpload" class="btn btn-primary btn-sm">Pakai Upload</button>
+          <button type="button" id="btnUrl"     class="btn btn-outline-primary btn-sm">Pakai URL</button>
+        </div>
+
+        <div id="boxUpload">
+          <input type="file" name="avatar" accept="image/*" class="form-control" />
+          <div class="form-text">Jika diisi, akan menimpa foto lama.</div>
+        </div>
+
+        <div id="boxUrl" class="d-none">
+          <input type="url" name="avatar" id="avatarUrl" class="form-control" placeholder="https://..." value=""/>
+          <div class="form-text">Atau isi URL baru. Jika kosong, foto tetap memakai yang sekarang.</div>
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex gap-2">
+        <a href="/admin/members" class="btn btn-outline-light">Batal</a>
+        <button class="btn btn-success">Simpan Perubahan</button>
+      </div>
     </div>
 
-    <form action="/admin/members/<%= member.id %>/update" method="post" enctype="multipart/form-data" class="row g-4">
-      <div class="col-lg-7">
-        <!-- Nama -->
-        <div class="mb-3">
-          <label class="form-label">Nama Lengkap</label>
-          <input type="text" name="name" class="form-control" value="<%= member.name || '' %>" required />
-        </div>
-
-        <!-- Tanggal lahir -->
-        <div class="mb-3">
-          <label class="form-label">Tanggal Lahir</label>
-          <input type="date" name="birthdate" class="form-control"
-                 value="<%= member.birthdate ? member.birthdate.toISOString().slice(0,10) : '' %>" />
-        </div>
-
-        <!-- Bio -->
-        <div class="mb-3">
-          <label class="form-label">Bio / Keterangan</label>
-          <textarea name="bio" rows="5" class="form-control" placeholder="Keterangan anggota"><%= member.bio || '' %></textarea>
-        </div>
-
-        <!-- Foto -->
-        <div class="mb-3">
-          <label class="form-label d-block">Foto Anggota</label>
-          <div class="btn-group mb-2" role="group" aria-label="Foto source">
-            <button type="button" id="btnUseUpload" class="btn btn-primary btn-sm">Pakai Upload</button>
-            <button type="button" id="btnUseUrl" class="btn btn-outline-light btn-sm">Pakai URL</button>
-          </div>
-
-          <!-- upload -->
-          <input type="file" name="avatar_file" id="avatar_file" accept="image/*" class="form-control mb-2">
-
-          <!-- url -->
-          <input type="url" name="avatar_url" id="avatar_url" class="form-control mb-2 d-none"
-                 placeholder="https://..." value="">
-
-          <div class="form-text">Jika kosong, foto lama tetap dipakai. Isi salah satu: upload atau URL.</div>
-        </div>
-
-        <input type="hidden" name="redirect_to" value="/admin/members" />
-
-        <div class="mt-4 d-flex gap-2">
-          <a class="btn btn-outline-light" href="/admin/members/<%= member.id %>">Batal</a>
-          <button class="btn btn-primary" type="submit">Simpan Perubahan</button>
-        </div>
+    <!-- Preview -->
+    <div class="col-lg-5">
+      <label class="form-label">Preview Foto</label>
+      <div class="border rounded-3 d-flex align-items-center justify-content-center" style="height:280px; background:rgba(255,255,255,.03);">
+        <img id="previewImg" alt="Preview" style="max-width:100%; max-height:100%; display:<%= member.avatar ? 'block' : 'none' %>;"
+             src="<%= member.avatar || '' %>" />
+        <div id="previewEmpty" class="text-muted" style="display:<%= member.avatar ? 'none':'block' %>;">Belum ada gambar</div>
       </div>
-
-      <div class="col-lg-5">
-        <label class="form-label">Preview Foto</label>
-        <div id="previewBox" class="border rounded d-flex align-items-center justify-content-center"
-             style="height:260px;background:rgba(255,255,255,.03);">
-          <% if (member.avatar) { %>
-            <img id="previewImg" src="<%= member.avatar %>" alt="" style="max-height:100%;max-width:100%;object-fit:contain;">
-          <% } else { %>
-            <span class="text-muted">Belum ada gambar</span>
-            <img id="previewImg" alt="" class="d-none" style="max-height:100%;max-width:100%;object-fit:contain;">
-          <% } %>
-        </div>
-      </div>
-    </form>
-  </div>
+    </div>
+  </form>
 </div>
 
 <script>
-  const btnUseUpload = document.getElementById('btnUseUpload');
-  const btnUseUrl    = document.getElementById('btnUseUrl');
-  const fUpload      = document.getElementById('avatar_file');
-  const fUrl         = document.getElementById('avatar_url');
-  const previewImg   = document.getElementById('previewImg');
-  const previewBox   = document.getElementById('previewBox');
+  const btnUpload = document.getElementById('btnUpload');
+  const btnUrl    = document.getElementById('btnUrl');
+  const boxUpload = document.getElementById('boxUpload');
+  const boxUrl    = document.getElementById('boxUrl');
+  const fileInput = boxUpload.querySelector('input[type="file"]');
+  const urlInput  = document.getElementById('avatarUrl');
+  const img       = document.getElementById('previewImg');
+  const empty     = document.getElementById('previewEmpty');
 
   function showUpload(){
-    fUpload.classList.remove('d-none');
-    fUrl.classList.add('d-none');
-    btnUseUpload.classList.add('btn-primary'); btnUseUpload.classList.remove('btn-outline-light');
-    btnUseUrl.classList.remove('btn-primary'); btnUseUrl.classList.add('btn-outline-light');
-    fUrl.value='';
+    boxUpload.classList.remove('d-none');
+    boxUrl.classList.add('d-none');
+    btnUpload.classList.add('btn-primary'); btnUpload.classList.remove('btn-outline-primary');
+    btnUrl.classList.add('btn-outline-primary'); btnUrl.classList.remove('btn-primary');
   }
   function showUrl(){
-    fUpload.classList.add('d-none');
-    fUrl.classList.remove('d-none');
-    btnUseUrl.classList.add('btn-primary'); btnUseUrl.classList.remove('btn-outline-light');
-    btnUseUpload.classList.remove('btn-primary'); btnUseUpload.classList.add('btn-outline-light');
-    fUpload.value='';
+    boxUrl.classList.remove('d-none');
+    boxUpload.classList.add('d-none');
+    btnUrl.classList.add('btn-primary'); btnUrl.classList.remove('btn-outline-primary');
+    btnUpload.classList.add('btn-outline-primary'); btnUpload.classList.remove('btn-primary');
   }
-  btnUseUpload.addEventListener('click', showUpload);
-  btnUseUrl.addEventListener('click', showUrl);
-  showUpload(); // default
+  btnUpload.addEventListener('click', showUpload);
+  btnUrl.addEventListener('click', showUrl);
 
-  // preview dari upload
-  fUpload.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const url = URL.createObjectURL(file);
-    previewImg.src = url;
-    previewImg.classList.remove('d-none');
+  function setPreview(src){
+    if(src){
+      img.src = src;
+      img.style.display = 'block';
+      empty.style.display = 'none';
+    }else{
+      img.style.display = 'none';
+      empty.style.display = 'block';
+    }
+  }
+
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files?.[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = e => setPreview(e.target.result);
+    reader.readAsDataURL(f);
   });
 
-  // preview dari url
-  fUrl.addEventListener('input', (e) => {
-    const url = e.target.value.trim();
-    if(!url) return;
-    previewImg.src = url;
-    previewImg.classList.remove('d-none');
-  });
+  urlInput?.addEventListener('input', () => setPreview(urlInput.value.trim()));
 </script>
-
-<%- include('../layout-bottom') %>
