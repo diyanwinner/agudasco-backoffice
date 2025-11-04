@@ -1,124 +1,68 @@
+<!-- TIDAK ADA <% layout('layout') %> -->
 <div class="container py-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 m-0">Tambah Anggota</h1>
-    <a href="/admin/members" class="btn btn-outline-light btn-sm">← Kembali</a>
+    <a href="/admin/members" class="btn btn-outline-secondary">← Kembali</a>
   </div>
 
-  <div class="card shadow-sm border-0 overflow-hidden">
-    <div class="row g-0">
+  <form action="/admin/members" method="post" enctype="multipart/form-data">
+    <div class="row g-4">
       <div class="col-lg-7">
-        <form class="p-4 p-lg-5" action="/admin/members" method="post" enctype="multipart/form-data">
-          <input type="hidden" name="redirect_to" value="/admin/members" />
+        <div class="card bg-dark-subtle border-0 shadow-sm">
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label">Nama Lengkap</label>
+              <input name="name" type="text" class="form-control" placeholder="Nama anggota" required />
+            </div>
 
-          <div class="mb-3">
-            <label class="form-label">Nama Lengkap</label>
-            <input name="name" type="text" class="form-control" placeholder="Nama anggota" required>
-          </div>
+            <div class="mb-3">
+              <label class="form-label">Tanggal Lahir</label>
+              <input name="birthdate" type="date" class="form-control" />
+              <div class="form-text">Format: YYYY-MM-DD (opsional)</div>
+            </div>
 
-          <div class="mb-3">
-            <label class="form-label">Tanggal Lahir <span class="text-muted">(opsional)</span></label>
-            <input name="birthdate" type="date" class="form-control" placeholder="YYYY-MM-DD">
-          </div>
-
-          <div class="mb-4">
-            <label class="form-label">Bio / Keterangan <span class="text-muted">(opsional)</span></label>
-            <textarea name="bio" rows="4" class="form-control" placeholder="Deskripsi singkat"></textarea>
-          </div>
-
-          <!-- Foto: Upload / URL -->
-          <div class="mb-2 d-flex gap-2">
-            <button type="button" class="btn btn-secondary btn-sm" id="btnUseUpload">Pakai Upload</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnUseUrl">Pakai URL</button>
-          </div>
-
-          <div id="wrapUpload" class="mb-3">
-            <label class="form-label">Pilih gambar dari perangkat</label>
-            <div class="uploader border border-dashed rounded-3 p-4 text-center">
-              <div class="mb-2 fs-4">➕</div>
-              <div class="text-muted mb-2">Tarik & lepas gambar ke sini atau klik untuk pilih file</div>
-              <input id="fileInput" name="avatar" type="file" accept="image/*" class="form-control">
+            <div class="mb-3">
+              <label class="form-label">Bio / Keterangan</label>
+              <textarea name="bio" class="form-control" rows="4" placeholder="Deskripsi singkat"></textarea>
             </div>
           </div>
-
-          <div id="wrapUrl" class="mb-4 d-none">
-            <label class="form-label">Atau gunakan URL gambar</label>
-            <input id="urlInput" name="avatar" type="url" class="form-control" placeholder="https://… (opsional)">
-            <div class="form-text">Kalau Upload & URL sama-sama diisi, yang dipakai adalah <b>Upload</b>.</div>
-          </div>
-
-          <div class="d-flex gap-2">
-            <a href="/admin/members" class="btn btn-outline-light">Batal</a>
-            <button class="btn btn-primary">Simpan</button>
-          </div>
-        </form>
+        </div>
       </div>
 
-      <div class="col-lg-5 border-top border-lg-start">
-        <div class="p-4 p-lg-5">
-          <h2 class="h6 text-uppercase text-muted mb-3">Preview Foto</h2>
-          <div class="preview-box ratio ratio-1x1 bg-dark-subtle rounded-3 d-flex align-items-center justify-content-center overflow-hidden">
-            <img id="previewImg" alt="Preview" class="d-none w-100 h-100 object-fit-cover">
-            <div id="previewEmpty" class="text-muted">Belum ada gambar</div>
+      <div class="col-lg-5">
+        <div class="card bg-dark-subtle border-0 shadow-sm h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Foto Anggota</h5>
+
+            <div class="d-flex gap-2 mb-2">
+              <button type="button" class="btn btn-primary btn-sm" onclick="useUpload()">Pakai Upload</button>
+              <button type="button" class="btn btn-outline-primary btn-sm" onclick="useUrl()">Pakai URL</button>
+            </div>
+
+            <!-- Upload file -->
+            <div id="fileWrap" class="mb-3">
+              <input class="form-control" type="file" name="avatar" accept="image/*" />
+              <div class="form-text">Pilih gambar dari perangkatmu.</div>
+            </div>
+
+            <!-- URL Cloudinary -->
+            <div id="urlWrap" class="mb-3 d-none">
+              <input class="form-control" type="url" name="avatar_url" placeholder="https://..." />
+              <div class="form-text">Atau isi URL (mis. dari Cloudinary). Jika dua-duanya diisi, yang dipakai adalah upload.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <a class="btn btn-secondary" href="/admin/members">Batal</a>
+              <button class="btn btn-primary" type="submit">Simpan</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
+  </form>
 </div>
 
-<style>
-  .border-dashed { border-style: dashed !important; }
-  .preview-box { min-height: 260px; }
-  .object-fit-cover { object-fit: cover; }
-</style>
-
 <script>
-  (function () {
-    const useUploadBtn = document.getElementById('btnUseUpload');
-    const useUrlBtn    = document.getElementById('btnUseUrl');
-    const wrapUpload   = document.getElementById('wrapUpload');
-    const wrapUrl      = document.getElementById('wrapUrl');
-    const fileInput    = document.getElementById('fileInput');
-    const urlInput     = document.getElementById('urlInput');
-    const previewImg   = document.getElementById('previewImg');
-    const previewEmpty = document.getElementById('previewEmpty');
-
-    function setMode(mode) {
-      const uploadOn = mode === 'upload';
-      wrapUpload.classList.toggle('d-none', !uploadOn);
-      wrapUrl.classList.toggle('d-none', uploadOn);
-      useUploadBtn.classList.toggle('btn-secondary', uploadOn);
-      useUploadBtn.classList.toggle('btn-outline-secondary', !uploadOn);
-      useUrlBtn.classList.toggle('btn-secondary', !uploadOn);
-      useUrlBtn.classList.toggle('btn-outline-secondary', uploadOn);
-    }
-    setMode('upload');
-
-    useUploadBtn.addEventListener('click', () => setMode('upload'));
-    useUrlBtn.addEventListener('click', () => setMode('url'));
-
-    fileInput.addEventListener('change', (e) => {
-      const f = e.target.files?.[0];
-      if (!f) return clearPreview();
-      const reader = new FileReader();
-      reader.onload = () => showPreview(reader.result);
-      reader.readAsDataURL(f);
-    });
-
-    urlInput?.addEventListener('input', () => {
-      const v = urlInput.value.trim();
-      if (v) showPreview(v); else clearPreview();
-    });
-
-    function showPreview(src) {
-      previewImg.src = src;
-      previewImg.classList.remove('d-none');
-      previewEmpty.classList.add('d-none');
-    }
-    function clearPreview() {
-      previewImg.src = '';
-      previewImg.classList.add('d-none');
-      previewEmpty.classList.remove('d-none');
-    }
-  })();
+  function useUpload(){ document.getElementById('fileWrap').classList.remove('d-none'); document.getElementById('urlWrap').classList.add('d-none'); }
+  function useUrl(){ document.getElementById('urlWrap').classList.remove('d-none'); document.getElementById('fileWrap').classList.add('d-none'); }
 </script>
