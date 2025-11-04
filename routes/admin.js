@@ -5,7 +5,6 @@ export default function (q, q1, uploadImage, pool) {
   const router = express.Router();
 
   /* ==================== DASHBOARD ==================== */
-  // Satu route "/" saja + widget ulang tahun 7 hari ke depan
   router.get("/", async (_req, res) => {
     try {
       const upcomingBirthdays = await q(`
@@ -99,7 +98,7 @@ export default function (q, q1, uploadImage, pool) {
     });
   });
 
-  // FORM TAMBAH (pakai members_add.ejs)
+  // FORM TAMBAH
   router.get("/members/new", (_req, res) => {
     res.render("admin/members_add", {
       title: "Tambah Anggota",
@@ -107,88 +106,74 @@ export default function (q, q1, uploadImage, pool) {
     });
   });
 
-  // SIMPAN TAMBAH — field upload: avatar_file, field URL: avatar_url
-  router.post("/members", uploadImage.single("avatar_file"), async (req, res) => {
-    try {
-      const {
-        name = "",
-        bio = "",
-        birthdate = "",
-        avatar_url = "",
-        redirect_to = "/admin/members"
-      } = req.body;
+  // SIMPAN TAMBAH (fix Multer: 'avatar' via fields)
+  router.post(
+    "/members",
+    uploadImage.fields([{ name: "avatar", maxCount: 1 }]),
+    async (req, res) => {
+      try {
+        const { name = "", bio = "", birthdate = "", avatar_url = "" } = req.body;
+        if (!name.trim()) return res.status(400).send("Nama wajib diisi");
 
-      if (!name.trim()) return res.status(400).send("Nama wajib diisi");
+        const uploaded = req.files?.avatar?.[0]?.path || null;
+        const avatar = uploaded || (avatar_url?.trim() || null);
+        const bd = birthdate ? birthdate : null;
 
-      // Prioritaskan file upload; jika tidak ada, pakai URL; jika kosong, null
-      const avatar =
-        (req.file && req.file.path) ||
-        (avatar_url && avatar_url.trim()) ||
-        null;
+        await q(
+          "INSERT INTO members (name, birthdate, avatar, bio) VALUES ($1,$2,$3,$4)",
+          [name.trim(), bd, avatar, bio || ""]
+        );
 
-      const bd = birthdate ? birthdate : null; // YYYY-MM-DD atau null
-
-      await q(
-        "INSERT INTO members (name, birthdate, avatar, bio) VALUES ($1,$2,$3,$4)",
-        [name.trim(), bd, avatar, bio || ""]
-      );
-
-      return res.redirect(redirect_to || "/admin/members");
-    } catch (e) {
-      console.error("members create error:", e);
-      return res.status(500).send("Gagal menyimpan anggota");
+        res.redirect("/admin/members");
+      } catch (e) {
+        console.error("create member error:", e);
+        res.status(500).send("Gagal menyimpan anggota");
+      }
     }
-  });
+  );
 
-  // FORM EDIT (didefinisikan sebelum /members/:id)
+  // FORM EDIT
   router.get("/members/:id/edit", async (req, res) => {
     const id = Number(req.params.id);
     const member = await q1("SELECT * FROM members WHERE id=$1", [id]);
     if (!member) return res.status(404).send("Anggota tidak ditemukan");
 
     res.render("admin/member_edit", {
-      title: "Edit Anggota",
+      title: `Edit Anggota`,
       active: "admin",
       member
     });
   });
 
-  // SIMPAN EDIT — field upload: avatar_file, field URL: avatar_url
-  router.post("/members/:id/update", uploadImage.single("avatar_file"), async (req, res) => {
-    try {
-      const id = Number(req.params.id);
-      const {
-        name = "",
-        bio = "",
-        birthdate = "",
-        avatar_url = "",
-        redirect_to = "/admin/members"
-      } = req.body;
+  // SIMPAN EDIT (fix Multer: 'avatar' via fields)
+  router.post(
+    "/members/:id/update",
+    uploadImage.fields([{ name: "avatar", maxCount: 1 }]),
+    async (req, res) => {
+      try {
+        const id = Number(req.params.id);
+        const { name = "", bio = "", birthdate = "", avatar_url = "" } = req.body;
+        if (!name.trim()) return res.status(400).send("Nama wajib diisi");
 
-      if (!name.trim()) return res.status(400).send("Nama wajib diisi");
+        const current = await q1("SELECT avatar FROM members WHERE id=$1", [id]);
+        if (!current) return res.status(404).send("Anggota tidak ditemukan");
 
-      const current = await q1("SELECT avatar FROM members WHERE id=$1", [id]);
-      if (!current) return res.status(404).send("Anggota tidak ditemukan");
+        const uploaded = req.files?.avatar?.[0]?.path || null;
+        const avatar = uploaded || (avatar_url?.trim() || current.avatar);
+        const bd = birthdate ? birthdate : null;
 
-      // Pilih: upload > url > avatar lama
-      const avatar =
-        (req.file && req.file.path) ||
-        (avatar_url && avatar_url.trim()) ||
-        current.avatar;
+        await q(
+          "UPDATE members SET name=$1, birthdate=$2, avatar=$3, bio=$4 WHERE id=$5",
+          [name.trim(), bd, avatar, bio || "", id]
+        );
 
-      const bd = birthdate ? birthdate : null;
-
-      await q(
-        "UPDATE members SET name=$1, birthdate=$2, avatar=$3, bio=$4 WHERE id=$5",
-        [name.trim(), bd, avatar, bio || "", id]
-      );
-
-      return res.redirect(redirect_to || "/admin/members");
-    } catch (e) {
-      console.error("members update error:", e);
-      return res.status(500).send("Gagal memperbarui anggota");
+        res.redirect("/admin/members");
+      } catch (e) {
+        console.error("update member error:", e);
+        res.status(500).send("Gagal mengubah anggota");
+      }
     }
-  });
+  );
 
   // HAPUS
   router.post("/members/:id/delete", async (req, res) => {
@@ -244,7 +229,7 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(`/admin/members/${memberId}`);
   });
 
-  // TAMBAH FOTO
+  // TAMBAH FOTO (tetap single 'photo')
   router.post("/members/:id/photo", uploadImage.single("photo"), async (req, res) => {
     const memberId = Number(req.params.id);
     const { caption = "" } = req.body;
