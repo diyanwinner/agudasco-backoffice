@@ -1,9 +1,22 @@
 <footer class="border-top border-secondary mt-5 py-4">
-    <div class="container small text-secondary">
-      © <%= new Date().getFullYear() %> AGUDASCO
+    <div class="container small text-center">
+      © <%= new Date().getFullYear() %> AGUDASCO — All rights reserved.
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Auto close menu collapse on mobile after click
+    document.addEventListener('DOMContentLoaded', function () {
+      const nav = document.getElementById('mainNav');
+      if (!nav) return;
+      nav.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+          const opened = document.querySelector('.navbar-collapse.show');
+          if (opened) bootstrap.Collapse.getOrCreateInstance(opened).hide();
+        });
+      });
+    });
+  </script>
 </body>
 </html>
