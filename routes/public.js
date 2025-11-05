@@ -66,7 +66,7 @@ export default function (q, q1) {
   });
 
   /* ====================== AD/ART ===================== */
-/* Mode Scroll (semua device) */
+// Scroll version
 router.get("/adart", (_req, res) => {
   res.render("adart", {
     title: "AD/ART",
@@ -74,12 +74,8 @@ router.get("/adart", (_req, res) => {
   });
 });
 
-/* Mode Flipbook (desktop). Mobile diarahkan ke /adart */
+// Flipbook (Desktop). Mobile otomatis buka scroll.
 router.get("/adart/book", (req, res) => {
-  const ua = (req.headers["user-agent"] || "").toLowerCase();
-  const isMobile = /iphone|ipod|ipad|android|mobile/.test(ua);
-  if (isMobile) return res.redirect("/adart");
-
   res.render("adart_book", {
     title: "AD/ART (Mode Buku)",
     active: "adart",
