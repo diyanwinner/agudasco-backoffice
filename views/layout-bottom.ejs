@@ -1,66 +1,89 @@
-  <footer class="border-top border-secondary mt-5 py-4">
-    <div class="container small text-center">
-      © <%= new Date().getFullYear() %> AGUDASCO — All rights reserved.
-    </div>
-  </footer>
+<footer class="border-top border-secondary mt-5 py-4">
+  <div class="container small text-center">
+    © <%= new Date().getFullYear() %> AGUDASCO — All rights reserved.
+  </div>
+</footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <script>
-    // Auto close menu collapse on mobile after click
-    document.addEventListener('DOMContentLoaded', function () {
-      const nav = document.getElementById('mainNav');
-      if (!nav) return;
-      nav.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-          const opened = document.querySelector('.navbar-collapse.show');
-          if (opened) bootstrap.Collapse.getOrCreateInstance(opened).hide();
-        });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Auto close menu collapse on mobile after click
+  document.addEventListener('DOMContentLoaded', function () {
+    const nav = document.getElementById('mainNav');
+    if (!nav) return;
+    nav.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        const opened = document.querySelector('.navbar-collapse.show');
+        if (opened) bootstrap.Collapse.getOrCreateInstance(opened).hide();
       });
     });
-  </script>
+  });
+</script>
 
 <%
-  // --- Kontrol visibilitas WA (pakai locals agar tidak bentrok nama) ---
-  const L = (typeof locals !== 'undefined') ? locals : {};
-
+  // --- Kontrol visibilitas WA ---
   // default: tampil di semua halaman kecuali admin
-  const showWA = (typeof L.showWhatsAppFloat !== 'undefined')
-    ? !!L.showWhatsAppFloat
+  const showWA = (typeof showWhatsAppFloat !== 'undefined')
+    ? showWhatsAppFloat
     : (active !== 'admin');
 
-  // nomor & teks default; bisa di-override via res.render({ waNumber, waText })
-  const cfgWaNumber = (typeof L.waNumber !== 'undefined') ? String(L.waNumber) : '62895340169646';
-  const cfgWaText   = (typeof L.waText   !== 'undefined') ? String(L.waText)   : 'Halo Admin AGUDASCO, saya ingin mengajukan kritik & saran.';
+  // Nomor & teks dari app.locals atau fallback
+  const _waNumber = (typeof waNumber !== 'undefined' && waNumber) ? waNumber : '62895340169646';
+  const _waText   = (typeof waText   !== 'undefined' && waText)   ? waText   : 'Halo Admin AGUDASCO, saya ingin mengajukan kritik & saran.';
+  const _waHref   = `https://wa.me/${String(_waNumber).replace(/\\D/g,'')}?text=${encodeURIComponent(_waText)}`;
 %>
 
 <% if (showWA) { %>
-  <!-- Floating WhatsApp -->
-  <div id="wa-float"
-       class="wa-float"
-       data-wa-number="<%= cfgWaNumber %>"
-       data-wa-text="<%= cfgWaText %>">
-    <span class="wa-label">Kontak Kami</span>
-    <button class="wa-btn" aria-label="Hubungi via WhatsApp">
+  <!-- Floating WhatsApp (tanpa JS; super stabil) -->
+  <a id="wa-float" class="wa-float" href="<%= _waHref %>" target="_blank" rel="noopener">
+    <span class="wa-label">Contact Us</span>
+    <span class="wa-btn" aria-label="Hubungi via WhatsApp">
+      <!-- WhatsApp SVG -->
       <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
         <path d="M13.601 2.326A7.905 7.905 0 0 0 8.003.001C3.584 0 .003 3.58.003 7.998c0 1.409.37 2.78 1.072 3.988L0 16l4.12-1.05a7.98 7.98 0 0 0 3.882 1.002h.003c4.417 0 7.997-3.58 7.997-7.998a7.94 7.94 0 0 0-2.401-5.628m-5.598 12.34h-.003a6.63 6.63 0 0 1-3.389-.93l-.244-.145-2.445.623.652-2.384-.159-.245A6.635 6.635 0 0 1 1.37 7.998c0-3.655 2.976-6.63 6.632-6.63 1.773 0 3.437.69 4.69 1.944a6.59 6.59 0 0 1 1.94 4.686c0 3.656-2.975 6.63-6.63 6.63m3.69-4.965c-.202-.1-1.19-.586-1.374-.653-.185-.068-.32-.1-.456.1-.135.202-.523.653-.64.787-.118.135-.237.152-.439.051-.202-.101-.853-.313-1.625-.998-.6-.536-1.004-1.197-1.122-1.399-.117-.202-.012-.312.089-.412.092-.091.202-.237.303-.356.101-.118.135-.202.202-.337.067-.135.034-.253-.017-.354-.051-.101-.456-1.102-.625-1.507-.165-.397-.334-.343-.456-.35l-.39-.007a.752.752 0 0 0-.54.253c-.185.202-.706.69-.706 1.68s.724 1.949.825 2.086c.101.135 1.424 2.175 3.445 3.048.482.208.859.332 1.153.425.484.154.925.132 1.275.08.389-.058 1.19-.486 1.36-.956.168-.47.168-.873.118-.957-.051-.084-.186-.135-.389-.236"/>
       </svg>
-    </button>
-  </div>
+    </span>
+  </a>
 
-  <script>
-    (() => {
-      const root = document.getElementById('wa-float');
-      if (!root) return;
-      const number = (root.dataset.waNumber || '').replace(/\D/g,''); // 628xx…
-      if (!number) return;
-      const text = root.dataset.waText || 'Halo, saya ingin bertanya.';
-      const url  = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
-      root.querySelector('.wa-btn')?.addEventListener('click', () => {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }, { passive:true });
-    })();
-  </script>
+  <style>
+    /* === Floating WhatsApp: z-index maksimum biar nggak ketumpuk === */
+    #wa-float.wa-float{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 2147483647; /* lebih tinggi dari apa pun */
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      text-decoration: none;
+    }
+    #wa-float .wa-btn{
+      width: 56px; height: 56px;
+      border-radius: 9999px;
+      background: #25D366; color: #0b1220;
+      display: grid; place-items: center;
+      box-shadow: 0 12px 24px rgba(37,211,102,.35);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    #wa-float .wa-btn:hover{ transform: translateY(-1px); box-shadow: 0 16px 28px rgba(37,211,102,.45); }
+    #wa-float .wa-label{
+      background:#111827; color:#e5e7eb; border:1px solid #293248;
+      font-weight:600; font-size:14px; padding:.45rem .65rem; border-radius:9999px;
+      white-space:nowrap; box-shadow:0 10px 24px rgba(0,0,0,.35);
+      opacity:0; transform: translateX(8px) scale(.98);
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events:none;
+    }
+    #wa-float:hover .wa-label{ opacity:1; transform: translateX(0) scale(1); }
+
+    @media (max-width:576px){
+      #wa-float{ right:12px; bottom:12px; }
+      #wa-float .wa-btn{ width:54px; height:54px; }
+      #wa-float .wa-label{ display:none; }
+    }
+    @media (prefers-reduced-motion:reduce){
+      #wa-float .wa-btn, #wa-float .wa-label{ transition:none; }
+    }
+  </style>
 <% } %>
 
 </body>
