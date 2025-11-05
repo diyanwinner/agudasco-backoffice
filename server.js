@@ -1,7 +1,6 @@
 // server.js
 import express from "express";
 import path from "path";
-// import fs from "fs"; // (tidak dipakai)
 import { fileURLToPath } from "url";
 import expressLayouts from "express-ejs-layouts";
 import multer from "multer";
@@ -11,13 +10,12 @@ import pkg from "pg";
 const { Pool } = pkg;
 
 // Tangkap error global biar yang di-print cuma pesannya
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught:', err?.message || String(err));
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught:", err?.message || String(err));
 });
-
-process.on('unhandledRejection', (reason) => {
+process.on("unhandledRejection", (reason) => {
   const msg = (reason && reason.message) ? reason.message : String(reason);
-  console.error('UnhandledRejection:', msg);
+  console.error("UnhandledRejection:", msg);
 });
 
 /* ------------------------------------------------------------
@@ -91,6 +89,7 @@ async function ensureTables() {
       name TEXT NOT NULL,
       avatar TEXT,
       bio TEXT,
+      birthdate DATE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS idx_members_name ON members (name);
@@ -153,27 +152,28 @@ async function ensureTables() {
       has_contact boolean;
       si record;
     BEGIN
-      SELECT EXISTS(SELECT 1 FROM site_contact WHERE id=1
-                    AND (org_name IS NOT NULL OR email IS NOT NULL OR phone IS NOT NULL
-                         OR whatsapp IS NOT NULL OR address IS NOT NULL OR maps_url IS NOT NULL
-                         OR instagram IS NOT NULL OR facebook IS NOT NULL OR x_handle IS NOT NULL))
-      INTO has_contact;
+      SELECT EXISTS(
+        SELECT 1 FROM site_contact WHERE id=1
+        AND (org_name IS NOT NULL OR email IS NOT NULL OR phone IS NOT NULL
+             OR whatsapp IS NOT NULL OR address IS NOT NULL OR maps_url IS NOT NULL
+             OR instagram IS NOT NULL OR facebook IS NOT NULL OR x_handle IS NOT NULL)
+      ) INTO has_contact;
 
       IF NOT has_contact THEN
         SELECT * INTO si FROM site_info WHERE id=1;
         IF FOUND THEN
           UPDATE site_contact sc
-        SET org_name  = si.org_name,
-            email     = si.email,
-            phone     = si.phone,
-            whatsapp  = si.whatsapp,
-            address   = si.address,
-            maps_url  = si.maps_url,
-            instagram = si.instagram,
-            facebook  = si.facebook,
-            x_handle  = si.x_handle,
-            updated_at = now()
-            FROM site_info si
+            SET org_name  = si.org_name,
+                email     = si.email,
+                phone     = si.phone,
+                whatsapp  = si.whatsapp,
+                address   = si.address,
+                maps_url  = si.maps_url,
+                instagram = si.instagram,
+                facebook  = si.facebook,
+                x_handle  = si.x_handle,
+                updated_at = now()
+          FROM site_info si
           WHERE sc.id = 1 AND si.id = 1;
         END IF;
       END IF;
@@ -181,9 +181,6 @@ async function ensureTables() {
   `);
 }
 ensureTables().catch(err => console.error("ensureTables error:", err?.message || String(err)));
-
-// pastikan kolom birthdate ada di tabel members
-await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS birthdate DATE;`);
 
 /* ------------------------------------------------------------
    CLOUDINARY + MULTER (image only)
@@ -251,15 +248,28 @@ app.use((req, res, next) => {
   next();
 });
 
-// CSP yang ramah CDN/image (Cloudinary dll)
+/* === Floating WhatsApp locals (TAMPIL di semua halaman publik) === */
+app.use((req, res, next) => {
+  // tampilkan tombol WA di semua path non-admin
+  res.locals.showWhatsAppFloat = !req.path.startsWith("/admin");
+
+  // nomor WA dan text default (bisa override via env)
+  res.locals.waNumber = (process.env.WHATSAPP_NUMBER || "62895340169646").replace(/\D/g, "");
+  res.locals.waText   = process.env.WHATSAPP_TEXT
+    || "Halo Admin AGUDASCO, saya ingin mengajukan kritik & saran.";
+
+  next();
+});
+
+// CSP yang ramah CDN/image (Cloudinary dll) + blob: untuk preview file
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
     [
       "default-src 'self' https:",
-      "img-src 'self' https: data:",
+      "img-src 'self' https: data: blob:",
       "script-src 'self' 'unsafe-inline' https:",
-      "style-src 'self' 'unsafe-inline' https:",
+      "style-src  'self' 'unsafe-inline' https:",
       "object-src 'none'",
     ].join("; ")
   );
@@ -267,7 +277,6 @@ app.use((req, res, next) => {
 });
 
 // ---- Footer contact loader (NO CACHE) ----
-// ganti query footer biar sama dengan halaman /kontak
 app.use(async (_req, res, next) => {
   try {
     res.locals.footerContact = await q1("SELECT * FROM site_info WHERE id=1") || {};
