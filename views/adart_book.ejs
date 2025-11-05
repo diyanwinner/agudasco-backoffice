@@ -1,0 +1,91 @@
+<%- include('layout-top', { title: 'AD/ART (Flipbook)', active: 'adart' }) %>
+
+<div class="container py-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <h1 class="h4 mb-0">AD/ART — Mode Flipbook</h1>
+    <a href="/adart" class="btn btn-outline-light btn-sm ms-auto">Mode Scroll</a>
+  </div>
+
+  <div class="card border-0 form-dark">
+    <div class="card-body">
+      <div id="flipbook" class="mx-auto" style="width: 920px; max-width: 100%; height: 600px;"></div>
+
+      <div class="d-flex justify-content-center gap-2 mt-3">
+        <button id="prevBtn" class="btn btn-outline-light btn-sm">← Sebelumnya</button>
+        <button id="nextBtn" class="btn btn-primary btn-sm">Berikutnya →</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-center small text-secondary mt-3">
+    File sumber: /public/docs/adart.pdf
+  </p>
+</div>
+
+<!-- CDN: PDF.js & StPageFlip -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/css/stpageflip.min.css">
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
+
+<script>
+(async () => {
+  // ====== Konfigurasi PDF.js ======
+  const pdfUrl = '/public/docs/adart.pdf'; // PDF kamu
+  // (sebagian build PDF.js perlu worker, yang ini sudah inline; kalau perlu:)
+  // pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.js';
+
+  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+
+  // Render semua halaman ke canvas -> dataURL gambar
+  const pageImages = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+
+    // skala responsif—tinggi kira2 600px
+    const viewport = page.getViewport({ scale: 1.5 });
+    const targetH  = 1000; // resolusi bagus; nanti di-fit sama flipbook
+    const scale    = targetH / viewport.height;
+    const vp       = page.getViewport({ scale });
+
+    const canvas = document.createElement('canvas');
+    const ctx    = canvas.getContext('2d');
+    canvas.width  = vp.width;
+    canvas.height = vp.height;
+
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+  }
+
+  // ====== Inisialisasi Flipbook ======
+  const el = document.getElementById('flipbook');
+  const flip = new St.PageFlip(el, {
+    width:  600,   // lebar halaman (bukan spread)
+    height: 800,   // tinggi halaman
+    size: 'stretch',
+    showCover: true,
+    useMouseEvents: true,
+    maxShadowOpacity: 0.3,
+    mobileScrollSupport: true,
+    autoSize: true
+  });
+
+  flip.loadFromImages(pageImages);
+
+  document.getElementById('prevBtn').addEventListener('click', () => flip.flipPrev());
+  document.getElementById('nextBtn').addEventListener('click', () => flip.flipNext());
+
+  // keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') flip.flipPrev();
+    if (e.key === 'ArrowRight') flip.flipNext();
+  });
+})();
+</script>
+
+<style>
+  /* Dark skin selaras situs */
+  .form-dark .page { background:#0f172a; }
+  #flipbook .page img { width:100%; height:100%; object-fit:contain; }
+</style>
+
+<%- include('layout-bottom') %>
