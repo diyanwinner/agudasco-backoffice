@@ -1,15 +1,119 @@
-<h2>AD/ART</h2>
-<div class="grid cards">
-  <% (adarts||[]).forEach(i=>{ %>
-    <div class="card">
-      <img src="<%= i.cover||'https://via.placeholder.com/640x360?text=AD/ART' %>" alt="<%= i.title %>"/>
-      <div class="pad">
-        <h3><a href="/adart/<%= i.id %>"><%= i.title %></a></h3>
-        <p class="meta"><%= new Date(i.created_at).toLocaleDateString('id-ID') %></p>
-        <a class="btn" href="/adart/<%= i.id %>">Detail</a>
+<%- include('../layout-top', { title, active }) %>
+
+<div class="container py-4 adart form-dark">
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <h1 class="h3 mb-0">Anggaran Dasar & Anggaran Rumah Tangga</h1>
+    <a href="/adart/book" class="btn btn-outline-light btn-sm ms-auto d-none d-lg-inline-flex">
+      Mode Buku
+    </a>
+  </div>
+
+  <!-- Tools -->
+  <div class="row g-4">
+    <div class="col-lg-3">
+      <div class="card border-0">
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">Cari di AD/ART</label>
+            <input id="adartSearch" class="form-control form-control-sm" placeholder="Ketik kata kunci…" />
+            <div class="form-text">Tekan Enter untuk lompat ke hasil berikutnya.</div>
+          </div>
+          <hr class="text-secondary" />
+          <div class="small fw-semibold text-secondary mb-2">Daftar Isi</div>
+          <nav id="adartTOC" class="toc small"></nav>
+        </div>
       </div>
     </div>
-  <% }) %>
+
+    <div class="col-lg-9">
+      <article id="adartContent" class="card border-0">
+        <div class="card-body content-typography">
+          <!-- === KONTEN AD/ART (scroll) === -->
+          <%- include('../shared/adart_content') %>
+        </div>
+      </article>
+    </div>
+  </div>
 </div>
 
-<%- include('./layout-bottom', { active: 'beranda' }) %>
+<script>
+(function(){
+  // ====== TOC auto-generate dari heading H2/H3 ======
+  const toc = document.getElementById('adartTOC');
+  const content = document.getElementById('adartContent');
+  if (toc && content) {
+    const hs = content.querySelectorAll('h2, h3');
+    const ul = document.createElement('ul'); ul.className = 'list-unstyled';
+    hs.forEach((h, idx) => {
+      if (!h.id) h.id = 'sec-' + (idx+1);
+      const li = document.createElement('li');
+      li.style.marginLeft = (h.tagName==='H3' ? '1rem' : '0');
+      li.innerHTML = `<a class="link-light link-opacity-75-hover" href="#${h.id}">${h.textContent}</a>`;
+      ul.appendChild(li);
+    });
+    toc.appendChild(ul);
+  }
+
+  // ====== Search + highlight sederhana ======
+  const input = document.getElementById('adartSearch');
+  const marks = [];
+  function clearMarks(){
+    marks.forEach(m=>{
+      const span = m;
+      const text = document.createTextNode(span.textContent);
+      span.replaceWith(text);
+    });
+    marks.length = 0;
+  }
+  let currentIndex = -1;
+  function jumpTo(i){
+    if (!marks.length) return;
+    currentIndex = (i + marks.length) % marks.length;
+    marks[currentIndex].scrollIntoView({behavior:'smooth', block:'center'});
+    marks.forEach(m=>m.classList.remove('bg-info','text-dark'));
+    marks[currentIndex].classList.add('bg-info','text-dark');
+  }
+
+  input?.addEventListener('keydown', (e)=>{
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // next result
+      jumpTo(currentIndex+1);
+    }
+  });
+
+  input?.addEventListener('input', ()=>{
+    clearMarks();
+    const q = input.value.trim();
+    if (!q) return;
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+    while(walker.nextNode()){
+      const node = walker.currentNode;
+      const i = node.nodeValue.toLowerCase().indexOf(q.toLowerCase());
+      if (i >= 0) {
+        const before = node.nodeValue.slice(0,i);
+        const mid = node.nodeValue.slice(i, i+q.length);
+        const after = node.nodeValue.slice(i+q.length);
+        const span = document.createElement('mark');
+        span.textContent = mid;
+        const frag = document.createDocumentFragment();
+        if (before) frag.appendChild(document.createTextNode(before));
+        frag.appendChild(span);
+        if (after) frag.appendChild(document.createTextNode(after));
+        node.parentNode.replaceChild(frag, node);
+        marks.push(span);
+      }
+    }
+    currentIndex = -1;
+  });
+})();
+</script>
+
+<style>
+  .adart .toc a { text-decoration: none; }
+  .content-typography h2 { margin-top:1.25rem; }
+  .content-typography h3 { margin-top:.75rem; }
+  .content-typography p  { line-height:1.7; }
+</style>
+
+<%- include('../layout-bottom') %>
