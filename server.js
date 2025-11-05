@@ -204,12 +204,18 @@ const uploadImage = multer({ storage: imageStorage });
 
 // Non-static responses: jangan di-cache
 app.use((req, res, next) => {
-  if (!req.path.startsWith("/public")) {
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
-    res.setHeader("Surrogate-Control", "no-store");
-  }
+  res.setHeader(
+    "Content-Security-Policy",
+    [
+      "default-src 'self' https:",
+      "img-src 'self' https: data:",
+      "script-src 'self' 'unsafe-inline' https:",
+      "style-src 'self' 'unsafe-inline' https:",
+      "object-src 'none'",
+      "worker-src 'self' blob:",
+      "connect-src 'self' https:"
+    ].join("; ")
+  );
   next();
 });
 
