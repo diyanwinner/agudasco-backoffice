@@ -66,36 +66,21 @@ export default function (q, q1) {
   });
 
   /* ====================== AD/ART ===================== */
-  router.get("/adart", async (_req, res) => {
-    const adarts = await q("SELECT * FROM adarts ORDER BY id DESC");
-    res.render("adart", {
-      title: "AD/ART",
-      active: "adart",
-      adarts,
-    });
-  });
-
-  router.get("/adart/:id", async (req, res) => {
-    const item = await q1("SELECT * FROM adarts WHERE id=$1", [req.params.id]);
-    if (!item) return res.status(404).send("AD/ART tidak ditemukan");
-    res.render("adart_view", {
-      title: item.title,
-      active: "adart",
-      item,
-    });
-  });
-
-  // === AD/ART (Scroll)
-router.get("/adart", async (_req, res) => {
-  res.render("public/adart", {
+/* Mode Scroll (semua device) */
+router.get("/adart", (_req, res) => {
+  res.render("adart", {
     title: "AD/ART",
     active: "adart",
   });
 });
 
-// === AD/ART Flipbook (Desktop only; mobile auto-redirect ke /adart)
-router.get("/adart/book", async (req, res) => {
-  res.render("public/adart_book", {
+/* Mode Flipbook (desktop). Mobile diarahkan ke /adart */
+router.get("/adart/book", (req, res) => {
+  const ua = (req.headers["user-agent"] || "").toLowerCase();
+  const isMobile = /iphone|ipod|ipad|android|mobile/.test(ua);
+  if (isMobile) return res.redirect("/adart");
+
+  res.render("adart_book", {
     title: "AD/ART (Mode Buku)",
     active: "adart",
   });
