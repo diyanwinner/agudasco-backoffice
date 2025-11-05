@@ -1,97 +1,107 @@
-<section class="admin-wrap container">
-  <header class="admin-head">
-    <div>
-      <h1 class="admin-title">Kelola AD/ART</h1>
-      <p class="meta">Cover gambar + tautan PDF AD/ART. Ditampilkan publik di halaman AD/ART.</p>
-    </div>
-    <nav class="admin-actions">
-      <a class="btn ghost" href="/adart" target="_blank" rel="noopener">Lihat Halaman AD/ART ↗</a>
-    </nav>
-  </header>
+<%- include('../layout-top', { title: 'Kelola AD/ART', active: 'admin', showWhatsAppFloat: false }) %>
 
-  <form class="card form-modern" action="/admin/adart" method="post" enctype="multipart/form-data">
-    <div class="form-grid-2">
-      <div class="form-col">
-        <label class="label">Judul</label>
-        <input class="input" type="text" name="title" placeholder="Contoh: AD/ART 2025" required>
+<div class="container py-4 form-dark">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">Kelola AD/ART</h1>
+    <a class="btn btn-outline-light" href="/adart" target="_blank" rel="noopener">Lihat Halaman AD/ART ↗</a>
+  </div>
 
-        <label class="label">Link PDF</label>
-        <input class="input" type="text" name="pdf_url" placeholder="Tempel link PDF AD/ART">
-      </div>
-
-      <div class="form-col">
-        <label class="label">Cover</label>
-        <div id="dzADART" class="dropzone">
-          <div class="dz-preview"><img id="imgADART"/><button type="button" class="dz-remove" id="rmADART">✕</button></div>
-          <div class="dz-empty">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M4 17v2a1 1 0 0 0 1 1h14M4 17l4-4 3 3 5-5 4 4M4 17V7a1 1 0 0 1 1-1h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <div>Tarik & letakkan cover ke sini</div>
-            <small class="meta">atau klik untuk pilih file</small>
+  <!-- Form tambah AD/ART -->
+  <form class="card shadow-sm border-0 mb-4" action="/admin/adarts" method="post" enctype="multipart/form-data">
+    <div class="card-body p-4">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="mb-3">
+            <label class="form-label">Judul</label>
+            <input name="title" class="form-control" placeholder="Judul dokumen AD/ART" required />
           </div>
-          <input id="coverADART" type="file" name="cover" accept="image/*" hidden>
+
+          <div class="mb-3">
+            <label class="form-label">URL PDF</label>
+            <input name="pdf_url" class="form-control" placeholder="https://... (boleh dikosongkan jika hanya pakai cover)" />
+            <div class="form-text">Bisa link Google Drive/Cloudinary/dll. Opsional.</div>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <label class="form-label">Gambar Sampul</label>
+          <div class="placeholder-panel rounded-3 p-3 text-center mb-2" id="previewBox">
+            <div class="opacity-75">Tarik & lepas file ke sini atau klik untuk pilih</div>
+          </div>
+          <input class="form-control" type="file" name="cover" accept="image/*" />
+          <div class="form-text">Rasio disarankan 3:4, ukuran ≥ 600×800. File akan diupload (Cloudinary).</div>
         </div>
       </div>
     </div>
-
-    <div class="form-bar">
-      <div class="left meta"></div>
-      <div class="right"><button class="btn" type="submit">Simpan</button></div>
+    <div class="card-footer d-flex justify-content-end gap-2">
+      <button class="btn btn-primary">Simpan</button>
     </div>
   </form>
 
-  <h2 style="margin:26px 0 12px">AD/ART Saat Ini</h2>
-  <div class="table-wrap card">
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width:110px">Cover</th>
-          <th>Judul</th>
-          <th style="width:240px">PDF</th>
-          <th style="width:140px">Tanggal</th>
-          <th style="width:110px">Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% (adarts||[]).forEach(r=>{ %>
-          <tr>
-            <td><img src="<%= r.cover || 'https://via.placeholder.com/110x70?text=COVER' %>" alt="" style="width:100px;height:64px;object-fit:cover;border-radius:8px"></td>
-            <td><a class="rowlink" href="/adart#item-<%= r.id %>" target="_blank"><%= r.title %></a></td>
-            <td class="meta">
-              <% if (r.pdf_url) { %>
-                <a href="<%= r.pdf_url %>" target="_blank" rel="noopener">Unduh PDF ↗</a>
-              <% } else { %>
-                <span class="meta">Belum ada</span>
-              <% } %>
-            </td>
-            <td class="meta"><%= new Date(r.created_at).toLocaleString('id-ID') %></td>
-            <td>
-              <form action="/admin/adart/<%= r.id %>/delete" method="post" onsubmit="return confirm('Hapus item ini?')">
-                <button class="btn red" type="submit">Hapus</button>
-              </form>
-            </td>
-          </tr>
-        <% }) %>
-        <% if (!(adarts||[]).length) { %>
-          <tr><td colspan="5" class="meta">Belum ada data AD/ART.</td></tr>
-        <% } %>
-      </tbody>
-    </table>
+  <!-- Daftar AD/ART -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width:72px">#</th>
+              <th>Judul</th>
+              <th style="width:140px">Sampul</th>
+              <th>PDF</th>
+              <th style="width:120px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!adarts || adarts.length === 0) { %>
+              <tr><td colspan="5" class="text-center py-4 text-secondary">Belum ada data.</td></tr>
+            <% } %>
+            <% adarts && adarts.forEach((a, idx) => { %>
+              <tr>
+                <td class="text-secondary"><%= idx + 1 %></td>
+                <td><%= a.title %></td>
+                <td>
+                  <% if (a.cover) { %>
+                    <img src="<%= a.cover %>" alt="cover" class="img-thumbnail" style="max-height:90px" />
+                  <% } else { %>
+                    <span class="text-secondary">—</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (a.pdf_url) { %>
+                    <a class="link-info" href="<%= a.pdf_url %>" target="_blank" rel="noopener">Buka PDF ↗</a>
+                  <% } else { %>
+                    <span class="text-secondary">—</span>
+                  <% } %>
+                </td>
+                <td class="text-end">
+                  <form action="/admin/adarts/<%= a.id %>/delete" method="post" onsubmit="return confirm('Hapus item ini?')">
+                    <button class="btn btn-sm btn-outline-danger">Hapus</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</section>
+</div>
 
 <script>
-(function() {
-  const dz = document.getElementById('dzADART');
-  const i  = document.getElementById('coverADART');
-  const pv = dz.querySelector('.dz-preview'); const im = document.getElementById('imgADART');
-  const rm = document.getElementById('rmADART'); const emp = dz.querySelector('.dz-empty');
-  const show = f => { im.src = URL.createObjectURL(f); pv.style.display='block'; emp.style.display='none'; };
-  const clear=()=>{ i.value=''; im.src=''; pv.style.display='none'; emp.style.display='flex'; };
-  rm.addEventListener('click', clear);
-  dz.addEventListener('click', ()=>i.click());
-  i.addEventListener('change', e=>{ const f=e.target.files?.[0]; if(f) show(f); });
-  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('is-drag'); });
-  dz.addEventListener('dragleave', ()=>dz.classList.remove('is-drag'));
-  dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('is-drag'); const f=e.dataTransfer.files?.[0]; if(f&&f.type.startsWith('image/')){ i.files=e.dataTransfer.files; show(f);} });
-})();
+  // Preview cover saat pilih file
+  (function () {
+    const input = document.querySelector('input[name="cover"]');
+    const box   = document.getElementById('previewBox');
+    if (!input || !box) return;
+    input.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) { box.innerHTML = '<div class="opacity-75">Tarik & lepas file ke sini atau klik untuk pilih</div>'; return; }
+      const url = URL.createObjectURL(f);
+      box.innerHTML = '<img class="img-fluid rounded" alt="preview" />';
+      box.querySelector('img').src = url;
+    });
+  })();
 </script>
+
+<%- include('../layout-bottom', { showWhatsAppFloat: false }) %>
