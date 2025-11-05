@@ -3,7 +3,7 @@
 <div class="container py-4 adart form-dark">
   <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
     <h1 class="h3 mb-0">Anggaran Dasar & Anggaran Rumah Tangga</h1>
-    <!-- opsional: mode buku nanti -->
+    <!-- Aktifkan kalau mau mode buku -->
     <!-- <a href="/adart/book" class="btn btn-outline-light btn-sm ms-auto d-none d-lg-inline-flex">Mode Buku</a> -->
   </div>
 
@@ -13,7 +13,7 @@
       <div class="card border-0">
         <div class="card-body">
           <div class="mb-3">
-            <label class="form-label">Cari di AD/ART</label>
+            <label class="form-label" for="adartSearch">Cari di AD/ART</label>
             <input id="adartSearch" class="form-control form-control-sm" placeholder="Ketik kata kunci…" />
             <div class="form-text">Tekan Enter untuk lompat ke hasil berikutnya.</div>
           </div>
@@ -28,8 +28,8 @@
     <div class="col-lg-9">
       <article id="adartContent" class="card border-0">
         <div class="card-body content-typography">
-          <!-- === KONTEN AD/ART (dibaca dari partial) === -->
-          <%- include('./shared/adart_content') %>
+          <!-- === KONTEN AD/ART (partial) === -->
+          <%- include('shared/adart_content') %>
         </div>
       </article>
     </div>
@@ -37,17 +37,17 @@
 </div>
 
 <script>
-(function(){
-  // ====== Generate TOC dari H2/H3 ======
+(function () {
+  // ====== TOC dari H2/H3 ======
   const toc = document.getElementById('adartTOC');
   const content = document.getElementById('adartContent');
   if (toc && content) {
     const hs = content.querySelectorAll('h2, h3');
     const ul = document.createElement('ul'); ul.className = 'list-unstyled';
     hs.forEach((h, idx) => {
-      if (!h.id) h.id = 'sec-' + (idx+1);
+      if (!h.id) h.id = 'sec-' + (idx + 1);
       const li = document.createElement('li');
-      li.style.marginLeft = (h.tagName==='H3' ? '1rem' : '0');
+      li.style.marginLeft = (h.tagName === 'H3' ? '1rem' : '0');
       li.innerHTML = `<a class="link-light link-opacity-75-hover" href="#${h.id}">${h.textContent}</a>`;
       ul.appendChild(li);
     });
@@ -57,42 +57,44 @@
   // ====== Search + highlight sederhana ======
   const input = document.getElementById('adartSearch');
   const marks = [];
-  function clearMarks(){
-    marks.splice(0).forEach(span=>{
-      const txt = document.createTextNode(span.textContent);
-      span.replaceWith(txt);
-    });
+  function clearMarks() {
+    while (marks.length) {
+      const span = marks.pop();
+      span.replaceWith(document.createTextNode(span.textContent));
+    }
   }
   let currentIndex = -1;
-  function jumpTo(i){
+  function jumpTo(i) {
     if (!marks.length) return;
     currentIndex = (i + marks.length) % marks.length;
-    marks.forEach(m=>m.classList.remove('bg-info','text-dark'));
+    marks.forEach(m => m.classList.remove('bg-info', 'text-dark'));
     const target = marks[currentIndex];
-    target.classList.add('bg-info','text-dark');
-    target.scrollIntoView({behavior:'smooth', block:'center'});
+    target.classList.add('bg-info', 'text-dark');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  input?.addEventListener('keydown', (e)=>{
+  input?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      jumpTo(currentIndex+1);
+      jumpTo(currentIndex + 1);
     }
   });
 
-  input?.addEventListener('input', ()=>{
+  input?.addEventListener('input', () => {
     clearMarks();
     const q = input.value.trim();
     if (!q) return;
-    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-    while(walker.nextNode()){
+
+    const NF = window.NodeFilter || { SHOW_TEXT: 4 };
+    const walker = document.createTreeWalker(content, NF.SHOW_TEXT);
+    while (walker.nextNode()) {
       const node = walker.currentNode;
       const text = node.nodeValue;
       const i = text.toLowerCase().indexOf(q.toLowerCase());
       if (i >= 0) {
-        const before = text.slice(0,i);
-        const mid = text.slice(i, i+q.length);
-        const after = text.slice(i+q.length);
+        const before = text.slice(0, i);
+        const mid = text.slice(i, i + q.length);
+        const after = text.slice(i + q.length);
         const span = document.createElement('mark'); span.textContent = mid;
         const frag = document.createDocumentFragment();
         if (before) frag.appendChild(document.createTextNode(before));
@@ -109,9 +111,9 @@
 
 <style>
   .adart .toc a { text-decoration: none; }
-  .content-typography h2 { margin-top:1.25rem; }
-  .content-typography h3 { margin-top:.75rem; }
-  .content-typography p  { line-height:1.7; }
+  .content-typography h2 { margin-top: 1.25rem; }
+  .content-typography h3 { margin-top: .75rem; }
+  .content-typography p  { line-height: 1.7; }
 </style>
 
 <%- include('layout-bottom') %>
