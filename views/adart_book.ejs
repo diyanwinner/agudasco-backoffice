@@ -18,7 +18,7 @@
   </div>
 
   <p class="text-center small text-secondary mt-3">
-    File sumber: /public/docs/adart.pdf
+    Sumber file: <code>/public/docs/adart.pdf</code>
   </p>
 </div>
 
@@ -29,21 +29,23 @@
 
 <script>
 (async () => {
-  // ====== Konfigurasi PDF.js ======
-  const pdfUrl = '/public/docs/adart.pdf'; // PDF kamu
-  // (sebagian build PDF.js perlu worker, yang ini sudah inline; kalau perlu:)
-  // pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.js';
+  // ====== PDF.js config (WAJIB) ======
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.js';
+
+  // Cache-buster supaya nggak ke-cache di Render/CDN
+  const pdfUrl = '/public/docs/adart.pdf?v=<%= buildId %>';
 
   const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
 
-  // Render semua halaman ke canvas -> dataURL gambar
+  // Render semua halaman ke <canvas> lalu jadi dataURL
   const pageImages = [];
   for (let p = 1; p <= pdf.numPages; p++) {
     const page = await pdf.getPage(p);
 
-    // skala responsif—tinggi kira2 600px
+    // target height yang tajam; flipbook nanti menyesuaikan container
     const viewport = page.getViewport({ scale: 1.5 });
-    const targetH  = 1000; // resolusi bagus; nanti di-fit sama flipbook
+    const targetH  = 1000;
     const scale    = targetH / viewport.height;
     const vp       = page.getViewport({ scale });
 
@@ -59,8 +61,8 @@
   // ====== Inisialisasi Flipbook ======
   const el = document.getElementById('flipbook');
   const flip = new St.PageFlip(el, {
-    width:  600,   // lebar halaman (bukan spread)
-    height: 800,   // tinggi halaman
+    width:  600,
+    height: 800,
     size: 'stretch',
     showCover: true,
     useMouseEvents: true,
@@ -71,19 +73,18 @@
 
   flip.loadFromImages(pageImages);
 
+  // Navigasi
   document.getElementById('prevBtn').addEventListener('click', () => flip.flipPrev());
   document.getElementById('nextBtn').addEventListener('click', () => flip.flipNext());
-
-  // keyboard
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') flip.flipPrev();
+    if (e.key === 'ArrowLeft')  flip.flipPrev();
     if (e.key === 'ArrowRight') flip.flipNext();
   });
 })();
 </script>
 
 <style>
-  /* Dark skin selaras situs */
+  /* Dark skin selaras tema */
   .form-dark .page { background:#0f172a; }
   #flipbook .page img { width:100%; height:100%; object-fit:contain; }
 </style>
