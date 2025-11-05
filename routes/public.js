@@ -85,6 +85,22 @@ export default function (q, q1) {
     });
   });
 
+  // === AD/ART (Scroll)
+router.get("/adart", async (_req, res) => {
+  res.render("public/adart", {
+    title: "AD/ART",
+    active: "adart",
+  });
+});
+
+// === AD/ART Flipbook (Desktop only; mobile auto-redirect ke /adart)
+router.get("/adart/book", async (req, res) => {
+  res.render("public/adart_book", {
+    title: "AD/ART (Mode Buku)",
+    active: "adart",
+  });
+});
+
   /* ===================== ANGGOTA ===================== */
   router.get("/anggota", async (_req, res) => {
     const members = await q("SELECT id, name, avatar FROM members ORDER BY name ASC");
