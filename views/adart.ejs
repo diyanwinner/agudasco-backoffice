@@ -1,16 +1,14 @@
 <%- include('layout-top', { title: 'AD/ART', active: 'adart' }) %>
-<%- include('shared/adart_content') %>
 
 <div class="container py-4 adart form-dark">
   <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
     <h1 class="h3 mb-0">Anggaran Dasar & Anggaran Rumah Tangga</h1>
-    <a href="/adart/book" class="btn btn-outline-light btn-sm ms-auto d-none d-lg-inline-flex">
-      Mode Buku
-    </a>
+    <!-- opsional: mode buku nanti -->
+    <!-- <a href="/adart/book" class="btn btn-outline-light btn-sm ms-auto d-none d-lg-inline-flex">Mode Buku</a> -->
   </div>
 
-  <!-- Tools -->
   <div class="row g-4">
+    <!-- Sidebar tools -->
     <div class="col-lg-3">
       <div class="card border-0">
         <div class="card-body">
@@ -26,11 +24,12 @@
       </div>
     </div>
 
+    <!-- Konten -->
     <div class="col-lg-9">
       <article id="adartContent" class="card border-0">
         <div class="card-body content-typography">
-          <!-- === KONTEN AD/ART (scroll) === -->
-          <%- include('../shared/adart_content') %>
+          <!-- === KONTEN AD/ART (dibaca dari partial) === -->
+          <%- include('./shared/adart_content') %>
         </div>
       </article>
     </div>
@@ -39,7 +38,7 @@
 
 <script>
 (function(){
-  // ====== TOC auto-generate dari heading H2/H3 ======
+  // ====== Generate TOC dari H2/H3 ======
   const toc = document.getElementById('adartTOC');
   const content = document.getElementById('adartContent');
   if (toc && content) {
@@ -59,26 +58,24 @@
   const input = document.getElementById('adartSearch');
   const marks = [];
   function clearMarks(){
-    marks.forEach(m=>{
-      const span = m;
-      const text = document.createTextNode(span.textContent);
-      span.replaceWith(text);
+    marks.splice(0).forEach(span=>{
+      const txt = document.createTextNode(span.textContent);
+      span.replaceWith(txt);
     });
-    marks.length = 0;
   }
   let currentIndex = -1;
   function jumpTo(i){
     if (!marks.length) return;
     currentIndex = (i + marks.length) % marks.length;
-    marks[currentIndex].scrollIntoView({behavior:'smooth', block:'center'});
     marks.forEach(m=>m.classList.remove('bg-info','text-dark'));
-    marks[currentIndex].classList.add('bg-info','text-dark');
+    const target = marks[currentIndex];
+    target.classList.add('bg-info','text-dark');
+    target.scrollIntoView({behavior:'smooth', block:'center'});
   }
 
   input?.addEventListener('keydown', (e)=>{
     if (e.key === 'Enter') {
       e.preventDefault();
-      // next result
       jumpTo(currentIndex+1);
     }
   });
@@ -90,13 +87,13 @@
     const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
     while(walker.nextNode()){
       const node = walker.currentNode;
-      const i = node.nodeValue.toLowerCase().indexOf(q.toLowerCase());
+      const text = node.nodeValue;
+      const i = text.toLowerCase().indexOf(q.toLowerCase());
       if (i >= 0) {
-        const before = node.nodeValue.slice(0,i);
-        const mid = node.nodeValue.slice(i, i+q.length);
-        const after = node.nodeValue.slice(i+q.length);
-        const span = document.createElement('mark');
-        span.textContent = mid;
+        const before = text.slice(0,i);
+        const mid = text.slice(i, i+q.length);
+        const after = text.slice(i+q.length);
+        const span = document.createElement('mark'); span.textContent = mid;
         const frag = document.createDocumentFragment();
         if (before) frag.appendChild(document.createTextNode(before));
         frag.appendChild(span);
