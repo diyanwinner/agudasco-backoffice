@@ -1,10 +1,11 @@
-<footer class="border-top border-secondary mt-5 py-4">
+  <footer class="border-top border-secondary mt-5 py-4">
     <div class="container small text-center">
       © <%= new Date().getFullYear() %> AGUDASCO — All rights reserved.
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
     // Auto close menu collapse on mobile after click
     document.addEventListener('DOMContentLoaded', function () {
@@ -18,17 +19,17 @@
       });
     });
   </script>
+
 <%
-  // kontrol lewat variabel EJS
+  // --- Kontrol visibilitas WA ---
+  // default: tampil di semua halaman kecuali admin
   const showWA = (typeof showWhatsAppFloat !== 'undefined')
-    ? showWhatsAppFloat
-    : (active !== 'admin');  // default: tampil kecuali di admin
+    ? !!showWhatsAppFloat
+    : (active !== 'admin');
 
-  const waNumber = (typeof waNumber !== 'undefined')
-    ? waNumber : '6281234567890'; // GANTI ke nomor kamu (format internasional)
-
-  const waText = (typeof waText !== 'undefined')
-    ? waText : 'Halo Admin AGUDASCO, saya ingin mengajukan kritik & saran.';
+  // nomor & teks default (bisa override dari res.render)
+  const waNumber = (typeof waNumber !== 'undefined') ? waNumber : '62895340169646';
+  const waText   = (typeof waText   !== 'undefined') ? waText   : 'Halo Admin AGUDASCO, saya ingin mengajukan kritik & saran.';
 %>
 
 <% if (showWA) { %>
@@ -37,7 +38,7 @@
        class="wa-float"
        data-wa-number="<%= String(waNumber) %>"
        data-wa-text="<%= waText %>">
-    <span class="wa-label">Contact Us</span>
+    <span class="wa-label">Kontak Kami</span>
     <button class="wa-btn" aria-label="Hubungi via WhatsApp">
       <!-- WhatsApp SVG icon -->
       <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -56,9 +57,10 @@
       const url  = `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
       root.querySelector('.wa-btn')?.addEventListener('click', () => {
         window.open(url, '_blank', 'noopener,noreferrer');
-      }, { passive: true });
+      }, { passive:true });
     })();
   </script>
 <% } %>
+
 </body>
 </html>
