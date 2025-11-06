@@ -144,41 +144,6 @@ async function ensureTables() {
     );
     INSERT INTO site_contact (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
   `);
-
-  // Migrasi ringan: copy dari site_info -> site_contact bila contact kosong
-  await pool.query(`
-    DO $$
-    DECLARE
-      has_contact boolean;
-      si record;
-    BEGIN
-      SELECT EXISTS(
-        SELECT 1 FROM site_contact WHERE id=1
-        AND (org_name IS NOT NULL OR email IS NOT NULL OR phone IS NOT NULL
-             OR whatsapp IS NOT NULL OR address IS NOT NULL OR maps_url IS NOT NULL
-             OR instagram IS NOT NULL OR facebook IS NOT NULL OR x_handle IS NOT NULL)
-      ) INTO has_contact;
-
-      IF NOT has_contact THEN
-        SELECT * INTO si FROM site_info WHERE id=1;
-        IF FOUND THEN
-          UPDATE site_contact sc
-            SET org_name  = si.org_name,
-                email     = si.email,
-                phone     = si.phone,
-                whatsapp  = si.whatsapp,
-                address   = si.address,
-                maps_url  = si.maps_url,
-                instagram = si.instagram,
-                facebook  = si.facebook,
-                x_handle  = si.x_handle,
-                updated_at = now()
-          FROM site_info si
-          WHERE sc.id = 1 AND si.id = 1;
-        END IF;
-      END IF;
-    END $$;
-  `);
 }
 ensureTables().catch(err => console.error("ensureTables error:", err?.message || String(err)));
 
@@ -217,6 +182,15 @@ app.use(
   })
 );
 
+// alias lebih singkat untuk dokumen (PDF, dsb)
+app.use(
+  "/docs",
+  express.static(path.join(__dirname, "public", "docs"), {
+    maxAge: "7d",
+    immutable: true,
+  })
+);
+
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(expressLayouts);
@@ -231,26 +205,22 @@ app.locals.CLOUD_BASE = process.env.CLOUDINARY_CLOUD_NAME
 // per-request locals
 app.use((req, res, next) => {
   res.locals.buildId   = app.locals.buildId;
-  res.locals.active    = "";          // nav highlight (set di routes)
-  res.locals.title     = "AGUDASCO";  // default title
+  res.locals.active    = "";
+  res.locals.title     = "AGUDASCO";
   res.locals.CLOUD_BASE = app.locals.CLOUD_BASE;
   next();
 });
 
-/* === Floating WhatsApp locals (TAMPIL di semua halaman publik) === */
+/* === Floating WhatsApp locals (tampil di semua halaman publik) === */
 app.use((req, res, next) => {
-  // tampilkan tombol WA di semua path non-admin
   res.locals.showWhatsAppFloat = !req.path.startsWith("/admin");
-
-  // nomor WA dan text default (bisa override via env)
   res.locals.waNumber = (process.env.WHATSAPP_NUMBER || "62895340169646").replace(/\D/g, "");
   res.locals.waText   = process.env.WHATSAPP_TEXT
     || "Halo Admin AGUDASCO, saya ingin mengajukan kritik & saran.";
-
   next();
 });
 
-// CSP yang ramah CDN/image (Cloudinary dll) + PDF.js worker + flipbook
+/* === SATU-SATUNYA CSP (mengizinkan PDF.js worker & blob) === */
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -304,7 +274,7 @@ function adminAuth(req, res, next) {
 }
 
 /* ------------------------------------------------------------
-   ROUTES (pisah: public & admin)
+   ROUTES
 ------------------------------------------------------------ */
 import publicRoutes from "./routes/public.js";
 import adminRoutes  from "./routes/admin.js";
