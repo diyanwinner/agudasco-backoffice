@@ -276,6 +276,7 @@ app.use((req, res, next) => {
       "img-src 'self' https: data: blob:",
       "script-src 'self' 'unsafe-inline' https:",
       "style-src  'self' 'unsafe-inline' https:",
+      "worker-src 'self' https:",
       "object-src 'none'",
     ].join("; ")
   );
