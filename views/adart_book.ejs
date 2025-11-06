@@ -8,108 +8,105 @@
 
   <div class="card border-0 form-dark">
     <div class="card-body">
-      <!-- kanvas flipbook -->
-      <div id="flipbook" class="mx-auto"></div>
+      <div id="flipbook" class="mx-auto" style="width: 920px; max-width: 100%; height: 600px;"></div>
 
       <div class="d-flex justify-content-center gap-2 mt-3">
         <button id="prevBtn" class="btn btn-outline-light btn-sm">← Sebelumnya</button>
         <button id="nextBtn" class="btn btn-primary btn-sm">Berikutnya →</button>
       </div>
 
-      <div id="fb-error" class="text-danger small mt-3 d-none"></div>
+      <div id="errBox" class="text-danger small mt-3" style="display:none;"></div>
+      <p class="text-center small text-secondary mt-2">
+        Sumber file: <code>/docs/adart.pdf</code>
+      </p>
     </div>
   </div>
-
-  <p class="text-center small text-secondary mt-3">
-    Sumber file: <code>/public/docs/adart.pdf</code>
-  </p>
 </div>
 
-<!-- ====== CDN: STPageFlip + PDF.js (versi UMD stabil) ====== -->
+<!-- CSS Flipbook -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/css/stpageflip.min.css">
-<script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
 
-<!-- PDF.js 3.11 UMD (lebih simpel untuk browser biasa) -->
+<!-- PDF.js -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-  // worker untuk PDF.js (WAJIB agar render jalan)
+  // Wajib: set workerSrc eksplisit agar tidak diblokir CSP
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
+<!-- STPageFlip -->
+<script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
+
 <script>
 (async () => {
-  const pdfUrl = '/public/docs/adart.pdf';         // pastikan file ini ada
-  const flipEl = document.getElementById('flipbook');
-  const errBox = document.getElementById('fb-error');
+  const errBox = document.getElementById('errBox');
+  const showErr = (msg) => { errBox.style.display = 'block'; errBox.textContent = msg; };
 
-  // sizing flipbook
-  const PAGE_W = 600;   // lebar 1 halaman (px)
-  const PAGE_H = 800;   // tinggi 1 halaman (px)
+  // PDF kamu
+  const pdfUrl = '/docs/adart.pdf';
 
-  // apply ukuran via style supaya tidak collapse sebelum render
-  flipEl.style.width  = (PAGE_W * 2) + 'px';   // 2 halaman berdampingan
-  flipEl.style.maxWidth = '100%';
-  flipEl.style.height = PAGE_H + 'px';
-
+  let pdf;
   try {
-    const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+    pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+  } catch (e) {
+    showErr('Gagal memuat PDF. Pastikan /docs/adart.pdf tersedia dan tidak diblokir CSP.');
+    return;
+  }
 
-    // render semua halaman ke <img> (dataURL)
-    const imgs = [];
+  // Render semua halaman ke canvas → dataURL
+  const pageImages = [];
+  try {
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p);
 
-      // hitung scale agar tinggi hasil render ≈ PAGE_H
-      const viewport0 = page.getViewport({ scale: 1 });
-      const scale = PAGE_H / viewport0.height;
-      const viewport = page.getViewport({ scale });
+      // render high-res (nanti di-fit sama flipbook)
+      const targetH  = 1000; // px
+      const vp0      = page.getViewport({ scale: 1.0 });
+      const scale    = targetH / vp0.height;
+      const vp       = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      const ctx    = canvas.getContext('2d');
+      canvas.width  = Math.ceil(vp.width);
+      canvas.height = Math.ceil(vp.height);
 
-      canvas.width  = Math.round(viewport.width);
-      canvas.height = Math.round(viewport.height);
-
-      await page.render({ canvasContext: ctx, viewport }).promise;
-      imgs.push(canvas.toDataURL('image/jpeg', 0.92));
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
     }
-
-    // inisialisasi flipbook
-    const flip = new St.PageFlip(flipEl, {
-      width: PAGE_W,
-      height: PAGE_H,
-      size: 'stretch',            // supaya responsive
-      minWidth: 315,
-      minHeight: 420,
-      maxShadowOpacity: 0.3,
-      showCover: true,
-      useMouseEvents: true,
-      mobileScrollSupport: true,
-      autoSize: true
-    });
-
-    flip.loadFromImages(imgs);
-
-    // kontrol
-    document.getElementById('prevBtn').addEventListener('click', () => flip.flipPrev());
-    document.getElementById('nextBtn').addEventListener('click', () => flip.flipNext());
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft')  flip.flipPrev();
-      if (e.key === 'ArrowRight') flip.flipNext();
-    });
   } catch (e) {
-    console.error('Flipbook error:', e);
-    errBox.classList.remove('d-none');
-    errBox.textContent = 'Gagal memuat PDF. Pastikan /public/docs/adart.pdf tersedia dan tidak diblokir CSP.';
+    showErr('Gagal merender halaman PDF.');
+    return;
   }
+
+  // Inisialisasi flipbook
+  const el = document.getElementById('flipbook');
+  const flip = new St.PageFlip(el, {
+    width:  600,    // ukuran 1 halaman (bukan spread)
+    height: 800,
+    size: 'stretch',
+    showCover: true,
+    useMouseEvents: true,
+    maxShadowOpacity: 0.3,
+    mobileScrollSupport: true,
+    autoSize: true
+  });
+
+  flip.loadFromImages(pageImages);
+
+  // Navigasi
+  document.getElementById('prevBtn').addEventListener('click', () => flip.flipPrev());
+  document.getElementById('nextBtn').addEventListener('click', () => flip.flipNext());
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft')  flip.flipPrev();
+    if (e.key === 'ArrowRight') flip.flipNext();
+  });
 })();
 </script>
 
 <style>
-  /* Dark skin agar serasi */
   .form-dark .page { background:#0f172a; }
-  #flipbook { background:#0b1220; border-radius:12px; }
   #flipbook .page img { width:100%; height:100%; object-fit:contain; }
 </style>
 
