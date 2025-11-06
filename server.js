@@ -274,7 +274,7 @@ app.use((req, res, next) => {
     [
       "default-src 'self' https:",
       "img-src 'self' https: data: blob:",
-      "script-src 'self' 'unsafe-inline' https:",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
       "style-src  'self' 'unsafe-inline' https:",
       "worker-src 'self' https:",
       "object-src 'none'",
