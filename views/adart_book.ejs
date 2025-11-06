@@ -11,100 +11,92 @@
       <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:600px"></div>
       <div id="errBox" class="text-danger small mt-3" style="display:none"></div>
       <p class="text-center small text-secondary mt-2">Sumber file: <code>/docs/adart.pdf</code></p>
+    </div>
   </div>
 </div>
 
-<!-- CSS -->
+<!-- CSS STPageFlip -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/css/stpageflip.min.css">
 
-<!-- PDF.js -->
+<!-- PDF.js (global) -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-  // set worker eksplisit
+  // penting: workerSrc eksplisit agar tidak di-block CSP
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
-<!-- STPageFlip JS (UMD) -->
-<script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
+<!-- Pakai ESM import agar tidak tergantung window.St -->
+<script type="module">
+  import { PageFlip } from 'https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/pageflip.min.js';
 
-<script>
-(async () => {
+  const errBox = document.getElementById('errBox');
+  const showErr = (msg) => { errBox.style.display = 'block'; errBox.textContent = msg; };
+
   const pdfUrl = '/docs/adart.pdf';
 
-  // --- render PDF jadi gambar ---
-  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-  const imgs = [];
-  for (let p = 1; p <= pdf.numPages; p++) {
-    const page = await pdf.getPage(p);
-    const base = page.getViewport({ scale: 1 });
-    const targetH = 1000;
-    const scale = targetH / base.height;
-    const vp = page.getViewport({ scale });
+  try {
+    const pdf = await window.pdfjsLib.getDocument(pdfUrl).promise;
 
-    const c = document.createElement('canvas');
-    c.width = Math.ceil(vp.width);
-    c.height = Math.ceil(vp.height);
-    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-    imgs.push(c.toDataURL('image/jpeg', 0.92));
+    // Render semua halaman ke dataURL gambar (resolusi bagus)
+    const imgs = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const base = page.getViewport({ scale: 1 });
+      const targetH = 1000;                 // tinggi sasaran
+      const scale   = targetH / base.height;
+      const vp      = page.getViewport({ scale });
+
+      const c  = document.createElement('canvas');
+      c.width  = Math.ceil(vp.width);
+      c.height = Math.ceil(vp.height);
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      imgs.push(c.toDataURL('image/jpeg', 0.92));
+    }
+
+    // Inisialisasi PageFlip
+    const el   = document.getElementById('flipbook');
+    const flip = new PageFlip(el, {
+      width:  600,           // ukuran 1 halaman (bukan spread)
+      height: 800,
+      size: 'stretch',
+      showCover: true,
+      mobileScrollSupport: true,
+      maxShadowOpacity: 0.3,
+      autoSize: true
+    });
+
+    flip.loadFromImages(imgs);
+
+    // Navigasi keyboard
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft')  flip.flipPrev();
+      if (e.key === 'ArrowRight') flip.flipNext();
+    });
+
+    // Responsif minimalis
+    const fit = () => {
+      const w = Math.min(980, el.clientWidth);
+      const h = Math.round(w * (800/600)); // rasio 4:3-ish per halaman
+      flip.update({ width: Math.round(w/1.6), height: Math.round(h/1.6) });
+    };
+    window.addEventListener('resize', fit, { passive: true });
+    fit();
+
+  } catch (e) {
+    console.error(e);
+    showErr('Gagal memuat flipbook. Pastikan /docs/adart.pdf ada dan refresh (Ctrl+F5).');
   }
-
-  // --- inisialisasi PageFlip ---
-  const FlipCtor =
-    (window.St && window.St.PageFlip) ? window.St.PageFlip :
-    (window.PageFlip) ? window.PageFlip :
-    null;
-
-  if (!FlipCtor) {
-    console.error('PageFlip global not found'); 
-    document.getElementById('errBox').style.display = 'block';
-    document.getElementById('errBox').textContent =
-      'Gagal memuat komponen flipbook. Coba refresh (Ctrl+F5).';
-    return;
-  }
-
-  const el = document.getElementById('flipbook');
-  const flip = new FlipCtor(el, {
-    width:  600,   // ukuran 1 halaman (bukan spread)
-    height: 800,
-    size: 'stretch',
-    showCover: true,
-    mobileScrollSupport: true,
-    maxShadowOpacity: 0.3,
-    autoSize: true
-  });
-
-  flip.loadFromImages(imgs);
-
-  // navigasi: klik kiri/kanan atau drag. Tambah keyboard (opsional)
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft')  flip.flipPrev();
-    if (e.key === 'ArrowRight') flip.flipNext();
-  });
-
-  // responsif saat resize
-  const onResize = () => {
-    const s = getSize();
-    flip.update({ width: s.w, height: s.h });
-  };
-  window.addEventListener('resize', onResize, { passive: true });
-})();
 </script>
 
 <style>
-  /* Napas tipis + dark skin konsisten */
-  #flipWrap {
-    padding: 8px 12px;
-    background: transparent;
-  }
-  #flipbook {
-    /* tinggi mengikuti rasio via JS; biarkan auto */
-    outline: none;
-  }
+  /* Dark skin + napas yang pas */
   .form-dark .page { background:#0f172a; }
   #flipbook .page img { width:100%; height:100%; object-fit:contain; }
-  @media (max-width: 576px){
-    #flipWrap { padding: 6px 8px; }
+
+  /* Sedikit kurangi ruang kosong di desktop lebar */
+  @media (min-width:1200px){
+    #flipbook{ max-width:980px; height:680px; }
   }
 </style>
 
