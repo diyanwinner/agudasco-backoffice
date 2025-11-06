@@ -66,18 +66,10 @@ export default function (q, q1) {
   });
 
   /* ====================== AD/ART ===================== */
-// Scroll version
-router.get("/adart", (_req, res) => {
-  res.render("adart", {
-    title: "AD/ART",
-    active: "adart",
-  });
-});
-
 // Flipbook (Desktop). Mobile otomatis buka scroll.
-router.get("/adart/book", (req, res) => {
-  res.render("adart_book", {
-    title: "AD/ART (Mode Buku)",
+router.get("/adart/book", (_req, res) => {
+  title: "AD/ART (Flipbook)", { 
+    title: "AD/ART (Flipbook)",
     active: "adart",
   });
 });
