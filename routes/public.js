@@ -67,11 +67,10 @@ export default function (q, q1) {
 
   /* ====================== AD/ART ===================== */
 // Flipbook (Desktop). Mobile otomatis buka scroll.
+router.get("/adart", (_req, res) => res.redirect("/adart/book"));
+
 router.get("/adart/book", (_req, res) => {
-  title: "AD/ART (Flipbook)", { 
-    title: "AD/ART (Flipbook)",
-    active: "adart",
-  });
+  res.render("adart_book", { title: "AD/ART (Flipbook)", active: "adart" });
 });
 
   /* ===================== ANGGOTA ===================== */
