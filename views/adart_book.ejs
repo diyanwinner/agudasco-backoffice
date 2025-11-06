@@ -10,106 +10,93 @@
     <div class="card-body">
       <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:600px"></div>
       <div id="errBox" class="text-danger small mt-3" style="display:none"></div>
-      <p class="text-center small text-secondary mt-2">Sumber file: <code>/docs/adart.pdf</code></p>
+      <p class="text-center small text-secondary mt-2">
+        Sumber file: <code>/docs/adart.pdf</code>
+      </p>
     </div>
   </div>
 </div>
 
-<!-- CSS STPageFlip -->
+<!-- CSS flipbook -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/css/stpageflip.min.css">
 
 <!-- PDF.js -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-  // worker harus eksplisit supaya tidak diblok CSP
+  // Worker harus eksplisit agar tidak diblokir CSP
   pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
 </script>
 
-<!-- STPageFlip UMD (nama file benar) -->
+<!-- STPageFlip (UMD) -->
 <script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
 
 <script>
-(function(){
-  const errBox = document.getElementById('errBox');
-  function showErr(msg){
-    errBox.style.display = 'block';
-    errBox.textContent = msg;
+(async function () {
+  const errBox = document.getElementById("errBox");
+  const showErr = (msg) => { errBox.style.display = "block"; errBox.textContent = msg; };
+
+  const pdfUrl = "/docs/adart.pdf";
+
+  // 1) Ambil dokumen PDF
+  let pdf;
+  try {
+    pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+  } catch (e) {
+    showErr("Gagal memuat PDF. Pastikan /docs/adart.pdf tersedia.");
+    console.error(e);
+    return;
   }
 
-  const pdfUrl = '/docs/adart.pdf';
+  // 2) Render semua halaman jadi dataURL gambar
+  const images = [];
+  try {
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const base = page.getViewport({ scale: 1 });
+      const targetH = 1000;                        // resolusi bagus
+      const scale   = targetH / base.height;
+      const vp      = page.getViewport({ scale });
 
-  (async function init(){
-    let pdf;
-    try {
-      pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-    } catch (err) {
-      showErr('Gagal memuat PDF. Pastikan /docs/adart.pdf tersedia.');
-      console.error(err);
-      return;
+      const canvas = document.createElement("canvas");
+      canvas.width  = Math.ceil(vp.width);
+      canvas.height = Math.ceil(vp.height);
+
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
+      images.push(canvas.toDataURL("image/jpeg", 0.92));
     }
-
-    // Render semua halaman ke dataURL gambar
-    const imgs = [];
-    try {
-      for (let p = 1; p <= pdf.numPages; p++) {
-        const page = await pdf.getPage(p);
-        const base = page.getViewport({ scale: 1 });
-        const targetH = 1000;               // resolusi tinggi agar tajam
-        const scale   = targetH / base.height;
-        const vp      = page.getViewport({ scale });
-
-        const canvas = document.createElement('canvas');
-        canvas.width  = Math.ceil(vp.width);
-        canvas.height = Math.ceil(vp.height);
-
-        await page.render({
-          canvasContext: canvas.getContext('2d'),
-          viewport: vp
-        }).promise;
-
-        imgs.push(canvas.toDataURL('image/jpeg', 0.92));
-      }
-    } catch (err) {
-      showErr('Gagal merender halaman PDF.');
-      console.error(err);
-      return;
-    }
-
-    <!-- Ambil konstruktor dari global UMD -->
-<script>
-  var FlipCtor = window.PageFlip || (window.St && window.St.PageFlip);
-  if (!FlipCtor) {
-    (function(){
-      var errBox = document.getElementById('errBox');
-      if (errBox) {
-        errBox.style.display = 'block';
-        errBox.textContent = 'Komponen flipbook tidak berhasil dimuat. Coba refresh (Ctrl+F5).';
-      }
-      console.error('PageFlip global not found (cek CDN st-pageflip).');
-    })();
+  } catch (e) {
+    showErr("Gagal merender halaman PDF.");
+    console.error(e);
     return;
-    }
+  }
 
-    var el   = document.getElementById('flipbook');
-    var flip = new FlipCtor(el, {
-      width:  600,              // ukuran 1 halaman (bukan spread)
-      height: 800,
-      size: 'stretch',
-      showCover: true,
-      mobileScrollSupport: true,
-      maxShadowOpacity: 0.3,
-      autoSize: true
-    });
+  // 3) Inisialisasi flipbook (coba namespace St dulu, lalu fallback PageFlip)
+  const FlipCtor = (window.St && window.St.PageFlip) || window.PageFlip;
+  if (!FlipCtor) {
+    showErr("Komponen flipbook tidak berhasil dimuat. Coba refresh (Ctrl+F5).");
+    console.error("PageFlip global not found.");
+    return;
+  }
 
-    flip.loadFromImages(imgs);
+  const el = document.getElementById("flipbook");
+  const flip = new FlipCtor(el, {
+    width: 600,               // ukuran 1 halaman (bukan spread)
+    height: 800,
+    size: "stretch",
+    showCover: true,
+    mobileScrollSupport: true,
+    maxShadowOpacity: 0.3,
+    autoSize: true,
+  });
 
-    // Navigasi keyboard (opsional)
-    document.addEventListener('keydown', function(e){
-      if (e.key === 'ArrowLeft')  flip.flipPrev();
-      if (e.key === 'ArrowRight') flip.flipNext();
-    });
-  })();
+  flip.loadFromImages(images);
+
+  // Navigasi keyboard (opsional)
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft")  flip.flipPrev();
+    if (e.key === "ArrowRight") flip.flipNext();
+  });
 })();
 </script>
 
