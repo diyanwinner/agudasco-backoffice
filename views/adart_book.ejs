@@ -29,47 +29,74 @@
 <!-- PDF.js -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-  // Wajib: set workerSrc eksplisit agar tidak diblokir CSP
+  // worker harus eksplisit agar lolos CSP
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
-
-<!-- STPageFlip -->
-<script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
 
 <script>
 (async () => {
   const errBox = document.getElementById('errBox');
   const showErr = (msg) => { errBox.style.display = 'block'; errBox.textContent = msg; };
 
-  // PDF kamu
-  const pdfUrl = '/docs/adart.pdf';
+  // 1) Pastikan library flipbook (St.PageFlip) termuat — dengan fallback
+  async function ensureFlipLib() {
+    if (window.St && window.St.PageFlip) return;
 
+    // Coba 1: st-pageflip (nama file yang benar: pageflip.min.js)
+    try {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/pageflip.min.js';
+        s.onload = res; s.onerror = () => rej(new Error('cdn st-pageflip gagal'));
+        document.head.appendChild(s);
+      });
+    } catch (_) {
+      // Coba 2: page-flip (build browser)
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      }).catch((e) => { throw new Error('Gagal memuat library flipbook dari semua CDN'); });
+    }
+
+    if (!(window.St && window.St.PageFlip)) {
+      throw new Error('Flipbook library tidak tersedia (St.PageFlip belum terdefinisi).');
+    }
+  }
+
+  try {
+    await ensureFlipLib();
+  } catch (e) {
+    showErr(e.message);
+    return;
+  }
+
+  // 2) Ambil PDF
+  const pdfUrl = '/docs/adart.pdf';
   let pdf;
   try {
     pdf = await pdfjsLib.getDocument(pdfUrl).promise;
   } catch (e) {
-    showErr('Gagal memuat PDF. Pastikan /docs/adart.pdf tersedia dan tidak diblokir CSP.');
+    showErr('Gagal memuat PDF. Pastikan /docs/adart.pdf ada dan dapat diakses.');
     return;
   }
 
-  // Render semua halaman ke canvas → dataURL
+  // 3) Render semua halaman jadi dataURL
   const pageImages = [];
   try {
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p);
-
-      // render high-res (nanti di-fit sama flipbook)
-      const targetH  = 1000; // px
-      const vp0      = page.getViewport({ scale: 1.0 });
-      const scale    = targetH / vp0.height;
-      const vp       = page.getViewport({ scale });
+      const targetH = 1000;
+      const vp0 = page.getViewport({ scale: 1 });
+      const scale = targetH / vp0.height;
+      const vp = page.getViewport({ scale });
 
       const canvas = document.createElement('canvas');
-      const ctx    = canvas.getContext('2d');
-      canvas.width  = Math.ceil(vp.width);
+      const ctx = canvas.getContext('2d');
+      canvas.width = Math.ceil(vp.width);
       canvas.height = Math.ceil(vp.height);
-
       await page.render({ canvasContext: ctx, viewport: vp }).promise;
       pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
     }
@@ -78,17 +105,17 @@
     return;
   }
 
-  // Inisialisasi flipbook
+  // 4) Inisialisasi flipbook
   const el = document.getElementById('flipbook');
   const flip = new St.PageFlip(el, {
-    width:  600,    // ukuran 1 halaman (bukan spread)
+    width: 600,          // ukuran 1 halaman (bukan spread)
     height: 800,
     size: 'stretch',
     showCover: true,
     useMouseEvents: true,
     maxShadowOpacity: 0.3,
     mobileScrollSupport: true,
-    autoSize: true
+    autoSize: true,
   });
 
   flip.loadFromImages(pageImages);
@@ -97,7 +124,6 @@
   document.getElementById('prevBtn').addEventListener('click', () => flip.flipPrev());
   document.getElementById('nextBtn').addEventListener('click', () => flip.flipNext());
 
-  // Keyboard
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft')  flip.flipPrev();
     if (e.key === 'ArrowRight') flip.flipNext();
