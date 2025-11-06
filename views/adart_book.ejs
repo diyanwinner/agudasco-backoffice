@@ -26,53 +26,58 @@
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
-<!-- Pakai ESM import agar tidak tergantung window.St -->
-<script type="module">
-  import { PageFlip } from 'https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/pageflip.min.js';
+<!-- STPageFlip UMD (NAMA FILE YANG BENAR) -->
+<script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
 
-  const errBox = document.getElementById('errBox');
-  const showErr = (msg) => { errBox.style.display = 'block'; errBox.textContent = msg; };
-
+<script>
+(async () => {
   const pdfUrl = '/docs/adart.pdf';
 
-  try {
-    const pdf = await window.pdfjsLib.getDocument(pdfUrl).promise;
+  // render PDF -> images
+  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+  const imgs = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const base = page.getViewport({ scale: 1 });
+    const targetH = 1000;
+    const scale   = targetH / base.height;
+    const vp      = page.getViewport({ scale });
 
-    // Render semua halaman ke dataURL gambar (resolusi bagus)
-    const imgs = [];
-    for (let p = 1; p <= pdf.numPages; p++) {
-      const page = await pdf.getPage(p);
-      const base = page.getViewport({ scale: 1 });
-      const targetH = 1000;                 // tinggi sasaran
-      const scale   = targetH / base.height;
-      const vp      = page.getViewport({ scale });
+    const c = document.createElement('canvas');
+    c.width  = Math.ceil(vp.width);
+    c.height = Math.ceil(vp.height);
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    imgs.push(c.toDataURL('image/jpeg', 0.92));
+  }
 
-      const c  = document.createElement('canvas');
-      c.width  = Math.ceil(vp.width);
-      c.height = Math.ceil(vp.height);
-      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-      imgs.push(c.toDataURL('image/jpeg', 0.92));
-    }
+  // ambil ctor dari global UMD
+  const FlipCtor = (window.St && window.St.PageFlip) ? window.St.PageFlip : null;
+  if (!FlipCtor) {
+    console.error('St.PageFlip tidak ditemukan');
+    document.getElementById('errBox').style.display = 'block';
+    document.getElementById('errBox').textContent =
+      'Gagal memuat komponen flipbook. Coba refresh (Ctrl+F5).';
+    return;
+  }
 
-    // Inisialisasi PageFlip
-    const el   = document.getElementById('flipbook');
-    const flip = new PageFlip(el, {
-      width:  600,           // ukuran 1 halaman (bukan spread)
-      height: 800,
-      size: 'stretch',
-      showCover: true,
-      mobileScrollSupport: true,
-      maxShadowOpacity: 0.3,
-      autoSize: true
-    });
+  const el   = document.getElementById('flipbook');
+  const flip = new FlipCtor(el, {
+    width:  600,
+    height: 800,
+    size: 'stretch',
+    showCover: true,
+    mobileScrollSupport: true,
+    maxShadowOpacity: 0.3,
+    autoSize: true
+  });
 
-    flip.loadFromImages(imgs);
+  flip.loadFromImages(imgs);
 
-    // Navigasi keyboard
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft')  flip.flipPrev();
-      if (e.key === 'ArrowRight') flip.flipNext();
-    });
+  // Navigasi keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft')  flip.flipPrev();
+    if (e.key === 'ArrowRight') flip.flipNext();
+  });
 
     // Responsif minimalis
     const fit = () => {
