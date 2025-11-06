@@ -202,23 +202,6 @@ const imageStorage = new CloudinaryStorage({
 });
 const uploadImage = multer({ storage: imageStorage });
 
-// Non-static responses: jangan di-cache
-app.use((req, res, next) => {
-  res.setHeader(
-    "Content-Security-Policy",
-    [
-      "default-src 'self' https:",
-      "img-src 'self' https: data:",
-      "script-src 'self' 'unsafe-inline' https:",
-      "style-src 'self' 'unsafe-inline' https:",
-      "object-src 'none'",
-      "worker-src 'self' blob:",
-      "connect-src 'self' https:"
-    ].join("; ")
-  );
-  next();
-});
-
 /* ------------------------------------------------------------
    APP MIDDLEWARE & VIEW ENGINE
 ------------------------------------------------------------ */
@@ -267,7 +250,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// CSP yang ramah CDN/image (Cloudinary dll) + blob: untuk preview file
+// CSP yang ramah CDN/image (Cloudinary dll) + PDF.js worker + flipbook
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -276,8 +259,9 @@ app.use((req, res, next) => {
       "img-src 'self' https: data: blob:",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
       "style-src  'self' 'unsafe-inline' https:",
-      "worker-src 'self' https:",
-      "object-src 'none'",
+      "worker-src 'self' blob: https:",
+      "connect-src 'self' https: blob:",
+      "object-src 'none'"
     ].join("; ")
   );
   next();
