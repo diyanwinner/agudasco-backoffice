@@ -12,87 +12,67 @@
   </div>
 </div>
 
-<!-- CSS Flipbook -->
+<!-- CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/css/stpageflip.min.css">
 
 <!-- PDF.js -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-  // worker wajib eksplisit agar lolos CSP
+  // set worker eksplisit
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
-<!-- STPageFlip -->
+<!-- STPageFlip JS (UMD) -->
 <script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
 
 <script>
 (async () => {
   const pdfUrl = '/docs/adart.pdf';
-  const errBox = document.getElementById('errBox');
-  const showErr = (msg) => { errBox.style.display = 'block'; errBox.textContent = msg; };
 
-  let pdf;
-  try {
-    pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-  } catch (e) {
-    showErr('Gagal memuat PDF. Pastikan /docs/adart.pdf tersedia & lolos CSP.');
+  // --- render PDF jadi gambar ---
+  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+  const imgs = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    const page = await pdf.getPage(p);
+    const base = page.getViewport({ scale: 1 });
+    const targetH = 1000;
+    const scale = targetH / base.height;
+    const vp = page.getViewport({ scale });
+
+    const c = document.createElement('canvas');
+    c.width = Math.ceil(vp.width);
+    c.height = Math.ceil(vp.height);
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    imgs.push(c.toDataURL('image/jpeg', 0.92));
+  }
+
+  // --- inisialisasi PageFlip ---
+  const FlipCtor =
+    (window.St && window.St.PageFlip) ? window.St.PageFlip :
+    (window.PageFlip) ? window.PageFlip :
+    null;
+
+  if (!FlipCtor) {
+    console.error('PageFlip global not found'); 
+    document.getElementById('errBox').style.display = 'block';
+    document.getElementById('errBox').textContent =
+      'Gagal memuat komponen flipbook. Coba refresh (Ctrl+F5).';
     return;
   }
 
-  // Render semua halaman → dataURL
-  async function renderAllPages() {
-    const imgs = [];
-    for (let p = 1; p <= pdf.numPages; p++) {
-      const page = await pdf.getPage(p);
-
-      // target tinggi utk kualitas bagus (nanti di-fit oleh flipbook)
-      const targetH = 1200;
-      const vp0 = page.getViewport({ scale: 1 });
-      const scale = targetH / vp0.height;
-      const vp = page.getViewport({ scale });
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d', { willReadFrequently: false, alpha: false });
-      canvas.width  = Math.ceil(vp.width);
-      canvas.height = Math.ceil(vp.height);
-
-      await page.render({ canvasContext: ctx, viewport: vp }).promise;
-      imgs.push(canvas.toDataURL('image/jpeg', 0.92));
-    }
-    return imgs;
-  }
-
-  const images = await renderAllPages();
-
-  const host = document.getElementById('flipbook');
-
-  // helper: set ukuran responsif satu halaman
-  function getSize() {
-    // padding global kita kasih napas tipis
-    const vw = Math.min(1080, host.parentElement.clientWidth - 24);
-    // rasio kertas A4-ish (≈ 1 : 1.414). Supaya teks proporsional & satu halaman saja.
-    const w = Math.max(480, vw);
-    const h = Math.floor(w * 1.414);
-    return { w, h };
-  }
-
-  let { w, h } = getSize();
-
-  const flip = new St.PageFlip(host, {
-    width:  w,           // ukuran 1 halaman (bukan spread)
-    height: h,
+  const el = document.getElementById('flipbook');
+  const flip = new FlipCtor(el, {
+    width:  600,   // ukuran 1 halaman (bukan spread)
+    height: 800,
     size: 'stretch',
-    maxShadowOpacity: 0.18,
-    showCover: false,
-    usePortrait: true,   // paksa single page
+    showCover: true,
     mobileScrollSupport: true,
-    autoSize: true,
-    drawShadow: true,
-    showPageCorners: true
+    maxShadowOpacity: 0.3,
+    autoSize: true
   });
 
-  flip.loadFromImages(images);
+  flip.loadFromImages(imgs);
 
   // navigasi: klik kiri/kanan atau drag. Tambah keyboard (opsional)
   document.addEventListener('keydown', (e) => {
