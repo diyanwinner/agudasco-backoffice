@@ -76,12 +76,19 @@
       return;
     }
 
-    // Ambil konstruktor dari global UMD
-    var FlipCtor = window.PageFlip || (window.St && window.St.PageFlip);
-    if (!FlipCtor) {
-      showErr('Komponen flipbook tidak berhasil dimuat. Coba refresh (Ctrl+F5).');
-      console.error('St.PageFlip tidak ditemukan');
-      return;
+    <!-- Ambil konstruktor dari global UMD -->
+<script>
+  var FlipCtor = window.PageFlip || (window.St && window.St.PageFlip);
+  if (!FlipCtor) {
+    (function(){
+      var errBox = document.getElementById('errBox');
+      if (errBox) {
+        errBox.style.display = 'block';
+        errBox.textContent = 'Komponen flipbook tidak berhasil dimuat. Coba refresh (Ctrl+F5).';
+      }
+      console.error('PageFlip global not found (cek CDN st-pageflip).');
+    })();
+    return;
     }
 
     var el   = document.getElementById('flipbook');
