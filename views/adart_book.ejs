@@ -8,11 +8,14 @@
 
   <div class="card border-0 form-dark">
     <div class="card-body">
-      <div id="flipbook" class="mx-auto" style="width: 920px; max-width: 100%; height: 600px;"></div>
+      <div id="flipWrap" class="position-relative">
+        <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:600px;"></div>
+        <div id="flipErr" class="alert alert-warning d-none mt-3"></div>
+      </div>
 
       <div class="d-flex justify-content-center gap-2 mt-3">
-        <button id="prevBtn" class="btn btn-outline-light btn-sm">← Sebelumnya</button>
-        <button id="nextBtn" class="btn btn-primary btn-sm">Berikutnya →</button>
+        <button id="prevBtn" class="btn btn-outline-light btn-sm" type="button">← Sebelumnya</button>
+        <button id="nextBtn" class="btn btn-primary btn-sm" type="button">Berikutnya →</button>
       </div>
     </div>
   </div>
@@ -22,69 +25,93 @@
   </p>
 </div>
 
-<!-- CDN: PDF.js & StPageFlip -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/css/stpageflip.min.css">
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
 
 <script>
 (async () => {
-  // ====== PDF.js config (WAJIB) ======
+  const errBox = document.getElementById('flipErr');
+
+  // WAJIB: set workerSrc agar PDF.js bisa render
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.min.js';
 
-  // Cache-buster supaya nggak ke-cache di Render/CDN
+  // Cache-buster biar nggak nyangkut cache
   const pdfUrl = '/public/docs/adart.pdf?v=<%= buildId %>';
 
-  const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-
-  // Render semua halaman ke <canvas> lalu jadi dataURL
-  const pageImages = [];
-  for (let p = 1; p <= pdf.numPages; p++) {
-    const page = await pdf.getPage(p);
-
-    // target height yang tajam; flipbook nanti menyesuaikan container
-    const viewport = page.getViewport({ scale: 1.5 });
-    const targetH  = 1000;
-    const scale    = targetH / viewport.height;
-    const vp       = page.getViewport({ scale });
-
-    const canvas = document.createElement('canvas');
-    const ctx    = canvas.getContext('2d');
-    canvas.width  = vp.width;
-    canvas.height = vp.height;
-
-    await page.render({ canvasContext: ctx, viewport: vp }).promise;
-    pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+  function showError(msg) {
+    errBox.textContent = msg;
+    errBox.classList.remove('d-none');
+    console.error('[ADART Flipbook]', msg);
   }
 
-  // ====== Inisialisasi Flipbook ======
-  const el = document.getElementById('flipbook');
-  const flip = new St.PageFlip(el, {
-    width:  600,
-    height: 800,
-    size: 'stretch',
-    showCover: true,
-    useMouseEvents: true,
-    maxShadowOpacity: 0.3,
-    mobileScrollSupport: true,
-    autoSize: true
-  });
+  try {
+    // Cek akses PDF (opsional tapi membantu debug cepat)
+    const ping = await fetch(pdfUrl, { method:'HEAD' });
+    if (!ping.ok) {
+      showError('PDF tidak bisa diakses (' + ping.status + '). Pastikan file ada di /public/docs/adart.pdf');
+      return;
+    }
 
-  flip.loadFromImages(pageImages);
+    const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
 
-  // Navigasi
-  document.getElementById('prevBtn').addEventListener('click', () => flip.flipPrev());
-  document.getElementById('nextBtn').addEventListener('click', () => flip.flipNext());
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft')  flip.flipPrev();
-    if (e.key === 'ArrowRight') flip.flipNext();
-  });
+    const pageImages = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const targetH  = 1000;                       // kualitas bagus
+      const scale    = targetH / viewport.height;
+      const vp       = page.getViewport({ scale });
+
+      const canvas = document.createElement('canvas');
+      const ctx    = canvas.getContext('2d', { willReadFrequently: true });
+      canvas.width  = vp.width;
+      canvas.height = vp.height;
+
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+    }
+
+    if (!pageImages.length) {
+      showError('PDF berhasil dibuka, tetapi tidak ada halaman yang dirender.');
+      return;
+    }
+
+    const el = document.getElementById('flipbook');
+    const flip = new St.PageFlip(el, {
+      width:  600,
+      height: 800,
+      size: 'stretch',
+      showCover: true,
+      useMouseEvents: true,
+      maxShadowOpacity: 0.3,
+      mobileScrollSupport: true,
+      autoSize: true
+    });
+
+    flip.loadFromImages(pageImages);
+
+    document.getElementById('prevBtn').addEventListener('click', () => flip.flipPrev());
+    document.getElementById('nextBtn').addEventListener('click', () => flip.flipNext());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft')  flip.flipPrev();
+      if (e.key === 'ArrowRight') flip.flipNext();
+    });
+
+  } catch (e) {
+    showError('Gagal memuat flipbook: ' + (e?.message || e));
+    // Fallback: tampilkan PDF langsung supaya tetap bisa dibaca
+    const wrap = document.getElementById('flipWrap');
+    const iframe = document.createElement('iframe');
+    iframe.src = '/public/docs/adart.pdf#view=FitH';
+    iframe.style = 'width:100%;height:600px;border:0;';
+    wrap.appendChild(iframe);
+  }
 })();
 </script>
 
 <style>
-  /* Dark skin selaras tema */
   .form-dark .page { background:#0f172a; }
   #flipbook .page img { width:100%; height:100%; object-fit:contain; }
 </style>
