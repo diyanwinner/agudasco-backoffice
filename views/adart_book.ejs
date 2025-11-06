@@ -77,7 +77,7 @@
     }
 
     // Ambil konstruktor dari global UMD
-    var FlipCtor = (window.St && window.St.PageFlip) ? window.St.PageFlip : null;
+    var FlipCtor = window.PageFlip || (window.St && window.St.PageFlip);
     if (!FlipCtor) {
       showErr('Komponen flipbook tidak berhasil dimuat. Coba refresh (Ctrl+F5).');
       console.error('St.PageFlip tidak ditemukan');
