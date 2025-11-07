@@ -18,10 +18,10 @@
   </div>
 </div>
 
-<!-- PageFlip CSS (lokal) -->
-<link rel="stylesheet" href="/public/vendor/pageflip/stPageFlip.min.css">
+<!-- PageFlip CSS: sesuai lokasi kamu (/public/vendor/...) -->
+<link rel="stylesheet" href="/public/vendor/stPageFlip.min.css">
 
-<!-- PDF.js -->
+<!-- PDF.js (via CDN). CSP kamu sudah allow 'https:' + worker-src -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
   // Worker wajib di-set eksplisit agar tidak diblokir CSP
@@ -29,8 +29,8 @@
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
-<!-- PageFlip JS (lokal, browser build) -->
-<script defer src="/public/vendor/pageflip/page-flip.browser.min.js"></script>
+<!-- PageFlip JS (browser build) dari vendor lokal -->
+<script defer src="/public/vendor/page-flip.browser.min.js"></script>
 
 <script>
 (async () => {
@@ -51,9 +51,9 @@
 
       // target tinggi bagus; flipbook nanti stretch responsif
       const base = page.getViewport({ scale: 1 });
-      const targetH = 1000; // px
-      const scale = targetH / base.height;
-      const vp = page.getViewport({ scale });
+      const targetH = 1000;            // px
+      const scale   = targetH / base.height;
+      const vp      = page.getViewport({ scale });
 
       const c = document.createElement('canvas');
       c.width  = Math.ceil(vp.width);
@@ -65,7 +65,7 @@
 
     // --- Tunggu PageFlip ter-load (dari file lokal) ---
     let tries = 0;
-    while (!(window.St && window.St.PageFlip) && tries < 40) { // ~2 detik
+    while (!(window.St && window.St.PageFlip) && tries < 80) { // sampai ~4 detik
       await new Promise(r => setTimeout(r, 50));
       tries++;
     }
@@ -87,7 +87,7 @@
 
     flip.loadFromImages(imgs);
 
-    // Navigasi keyboard (opsional)
+    // Navigasi keyboard (optional)
     document.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft')  flip.flipPrev();
       if (e.key === 'ArrowRight') flip.flipNext();
