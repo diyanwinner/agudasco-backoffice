@@ -8,8 +8,8 @@
 
   <div class="card border-0 form-dark">
     <div class="card-body p-2">
-      <div id="flipbook" class="mx-auto"></div>
-      <div id="errBox" class="text-danger small mt-3" style="display:none"></div>
+      <div id="flipbook" class="mx-auto" style="max-width:1000px; width:100%; height:70vh;"></div>
+      <div id="errBox" class="alert alert-danger mt-3 py-2 px-3 small" style="display:none"></div>
       <p class="text-center small text-secondary mt-2">
         Sumber file: <code>/docs/adart.pdf</code>
       </p>
@@ -17,96 +17,137 @@
   </div>
 </div>
 
+<!-- ===== CSS Flipbook ===== -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/css/stpageflip.min.css">
+
+<!-- ===== PDF.js ===== -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
+  // Worker PDF.js
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
 </script>
-<script src="https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js"></script>
 
 <script>
-(async () => {
-  const errBox = document.getElementById("errBox");
-  const showErr = (msg) => { errBox.style.display = "block"; errBox.textContent = msg; console.error(msg); };
+/** Util: muat <script> dari URL dan tunggu selesai */
+function loadScriptOnce(src) {
+  return new Promise((resolve, reject) => {
+    // kalau sudah ada tag yang sama, sukseskan saja
+    if ([...document.scripts].some(s => s.src === src)) return resolve();
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('Fail load ' + src));
+    document.head.appendChild(s);
+  });
+}
 
-  // pastikan file ini benar2 ada: /public/docs/adart.pdf juga boleh dipakai
-  const pdfUrl = "/docs/adart.pdf";
+/** Muat PageFlip dari banyak CDN sampai berhasil */
+async function ensurePageFlip() {
+  const urls = [
+    // 1) jsDelivr (utama)
+    "https://cdn.jsdelivr.net/npm/st-pageflip@2.0.7/dist/js/stpageflip.min.js",
+    // 2) unpkg (fallback)
+    "https://unpkg.com/st-pageflip@2.0.7/dist/js/stpageflip.min.js",
+    // 3) alternatif paket lama (sebagian CDN)
+    "https://cdn.jsdelivr.net/npm/page-flip@1.2.2/dist/js/page-flip.browser.min.js"
+  ];
 
-  console.log("[ADART] mulai load PDF:", pdfUrl);
-  let pdf;
-  try {
-    pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-  } catch (e) {
-    return showErr("❌ Tidak bisa memuat PDF: " + e.message);
+  for (const u of urls) {
+    try {
+      await loadScriptOnce(u);
+      if (window.St?.PageFlip || window.PageFlip) return true;
+    } catch (_) { /* lanjut ke CDN lain */ }
   }
-  console.log("[ADART] halaman PDF:", pdf.numPages);
+  return false;
+}
 
-  const imgs = [];
-  try {
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const base = page.getViewport({ scale: 1 });
-      const targetH = 1200;
-      const scale = targetH / base.height;
-      const vp = page.getViewport({ scale });
+(function(){
+  const errBox = document.getElementById('errBox');
+  const showErr = (msg) => { errBox.style.display='block'; errBox.textContent = msg; console.error(msg); };
 
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.ceil(vp.width);
-      canvas.height = Math.ceil(vp.height);
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport: vp }).promise;
-      const url = canvas.toDataURL("image/jpeg", 0.92);
-      imgs.push(url);
-      // log 1 saja untuk verifikasi
-      if (i === 1) console.log("[ADART] sample image length:", url.length);
+  (async () => {
+    const pdfUrl = "/docs/adart.pdf";
+    console.log("[ADART] mulai load PDF:", pdfUrl);
+
+    // 1) Muat PageFlip dulu (multi-CDN)
+    const okFlip = await ensurePageFlip();
+    if (!okFlip) {
+      showErr("❌ Library PageFlip tidak ter-load. Coba refresh (Ctrl+F5).");
+      return;
     }
-  } catch (e) {
-    return showErr("❌ Gagal merender halaman PDF: " + e.message);
-  }
 
-  if (!imgs.length) return showErr("❌ Tidak ada halaman yang dirender dari PDF.");
+    // 2) Ambil PDF
+    let pdf;
+    try {
+      pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+    } catch (e) {
+      showErr("❌ Tidak bisa memuat PDF: " + e.message);
+      return;
+    }
+    console.log("[ADART] halaman PDF:", pdf.numPages);
 
-  const FlipCtor = window.PageFlip || (window.St && window.St.PageFlip);
-  if (!FlipCtor) return showErr("❌ Library PageFlip tidak ter-load. Coba refresh (Ctrl+F5).");
+    // 3) Render semua halaman jadi image
+    const images = [];
+    try {
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const base = page.getViewport({ scale: 1 });
+        const targetH = 1200; // resolusi internal bagus
+        const scale = targetH / base.height;
+        const vp = page.getViewport({ scale });
 
-  const el = document.getElementById("flipbook");
-  // ukuran 1 halaman; tinggi mengikuti layar
-  const pageWidth = 600;
-  const pageHeight = 850;
+        const c = document.createElement('canvas');
+        c.width  = Math.ceil(vp.width);
+        c.height = Math.ceil(vp.height);
+        await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+        const url = c.toDataURL('image/jpeg', 0.92);
+        images.push(url);
+        if (p === 1) console.log("[ADART] sample image length:", url.length);
+      }
+    } catch (e) {
+      showErr("❌ Gagal merender halaman PDF: " + e.message);
+      return;
+    }
 
-  // set ukuran kontainer lewat JS + CSS var supaya responsif
-  const vh = Math.max(window.innerHeight, document.documentElement.clientHeight);
-  const availableH = Math.max(500, vh - 180); // header & padding
-  el.style.width = "min(100%, 1000px)";
-  el.style.height = availableH + "px";
+    if (!images.length) {
+      showErr("❌ Tidak ada halaman yang dirender dari PDF.");
+      return;
+    }
 
-  const flip = new FlipCtor(el, {
-    width: pageWidth,
-    height: pageHeight,
-    size: "stretch",
-    showCover: true,
-    autoSize: true,
-    mobileScrollSupport: true,
-    maxShadowOpacity: 0.3,
-    useMouseEvents: true,
-  });
+    // 4) Inisialisasi Flipbook
+    const FlipCtor = window.PageFlip || (window.St && window.St.PageFlip);
+    const el = document.getElementById('flipbook');
 
-  console.log("[ADART] loadFromImages, pages:", imgs.length);
-  flip.loadFromImages(imgs);
+    // ukuran default 1 halaman; 'size:stretch' akan menyesuaikan container
+    const flip = new FlipCtor(el, {
+      width: 600,
+      height: 850,
+      size: "stretch",
+      showCover: true,
+      autoSize: true,
+      mobileScrollSupport: true,
+      maxShadowOpacity: 0.3,
+      useMouseEvents: true
+    });
 
-  // keyboard
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowLeft")  flip.flipPrev();
-    if (e.key === "ArrowRight") flip.flipNext();
-  });
+    flip.loadFromImages(images);
 
-  // resize responsif
-  window.addEventListener("resize", () => {
-    const vh2 = Math.max(window.innerHeight, document.documentElement.clientHeight);
-    const h2 = Math.max(500, vh2 - 180);
-    el.style.height = h2 + "px";
-    // flip.update akan otomatis menyesuaikan karena size:'stretch'
-  }, { passive: true });
+    // keyboard
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft')  flip.flipPrev();
+      if (e.key === 'ArrowRight') flip.flipNext();
+    });
+
+    // responsif: jaga tinggi kontainer
+    const fit = () => {
+      const vh = Math.max(window.innerHeight, document.documentElement.clientHeight);
+      el.style.height = Math.max(500, vh - 180) + "px";
+    };
+    fit();
+    window.addEventListener('resize', fit, { passive: true });
+  })();
 })();
 </script>
 
