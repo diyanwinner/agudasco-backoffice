@@ -3,24 +3,17 @@
 <div class="container py-4">
   <div class="d-flex align-items-center gap-2 mb-3">
     <h1 class="h4 mb-0">AD/ART — Mode Flipbook</h1>
-    <a id="zoomBtn" href="/docs/adart.pdf" target="_blank" rel="noopener"
-       class="btn btn-outline-light btn-sm ms-auto">Mode Zoom</a>
+    <!-- Hanya Mode Zoom -->
+    <a href="/docs/adart.pdf" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm ms-auto">
+      Mode Zoom
+    </a>
   </div>
 
   <div class="card border-0 form-dark">
     <div class="card-body">
-      <!-- Instant cover supaya tidak blank -->
-      <div id="instantCover" class="ratio ratio-3x4 d-flex align-items-center justify-content-center"
-           style="max-width:920px;margin:0 auto;background:#0b1223;border-radius:12px;">
-        <div class="text-secondary small">Menyiapkan pratinjau…</div>
-      </div>
+      <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:620px"></div>
 
-      <!-- Flipbook -->
-      <div id="flipWrap" class="mx-auto" style="width:920px;max-width:100%;display:none;">
-        <div id="flipbook" style="height:620px"></div>
-      </div>
-
-      <div id="hint" class="text-secondary small mt-3" style="display:none;">
+      <div id="hint" class="text-secondary small mt-3">
         Memuat pratinjau cepat… versi tajam akan muncul otomatis.
       </div>
       <div id="errBox" class="text-danger small mt-2" style="display:none;"></div>
@@ -32,23 +25,69 @@
   </div>
 </div>
 
-<!-- ===== CRITICAL MIN CSS (anti-numpuk jika stylesheet gagal) ===== -->
-<style id="stf-critical">
-  .stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0)}
-  .stf__wrapper{position:relative;width:100%;height:100%;box-sizing:border-box}
-  .stf__block{position:absolute;inset:0;box-sizing:border-box}
-  .stf__item{position:absolute;inset:0;display:none;box-sizing:border-box;transform-style:preserve-3d}
-  .stf__outerShadow,.stf__innerShadow,.stf__hardShadow{position:absolute;left:0;top:0}
-</style>
+<!-- ================== CSS PageFlip: robust loader ================== -->
+<script>
+async function loadStfCss() {
+  // 1) coba CSS lokal
+  const l1 = document.createElement('link');
+  l1.rel = 'stylesheet';
+  l1.href = '/public/vendor/stPageFlip.min.css';
+  document.head.appendChild(l1);
 
-<!-- ===== PDF.js ===== -->
+  const cssReady = () => {
+    const probe = document.createElement('div');
+    probe.className = 'stf__block';
+    document.body.appendChild(probe);
+    const pos = getComputedStyle(probe).position;
+    probe.remove();
+    return pos === 'absolute';
+  };
+
+  for (let i=0;i<15;i++){ await new Promise(r=>setTimeout(r,100)); if (cssReady()) return true; }
+
+  // 2) fallback CDN
+  const l2 = document.createElement('link');
+  l2.rel = 'stylesheet';
+  l2.href = 'https://cdn.jsdelivr.net/npm/page-flip@2.0.7/src/Style/stPageFlip.min.css';
+  document.head.appendChild(l2);
+
+  for (let i=0;i<15;i++){ await new Promise(r=>setTimeout(r,100)); if (cssReady()) return true; }
+
+  // 3) inline CSS dari CDN
+  try {
+    const res = await fetch('https://cdn.jsdelivr.net/npm/page-flip@2.0.7/src/Style/stPageFlip.min.css', { cache:'force-cache' });
+    const css = await res.text();
+    const style = document.createElement('style');
+    style.id = 'stf-inline';
+    style.textContent = css;
+    document.head.appendChild(style);
+    for (let i=0;i<10;i++){ await new Promise(r=>setTimeout(r,80)); if (cssReady()) return true; }
+  } catch(e) { /* ignore */ }
+
+  // 4) minimal safety net (supaya tidak “numpuk”)
+  const minimal = `
+    .stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0)}
+    .stf__wrapper{position:relative;width:100%;height:100%;box-sizing:border-box}
+    .stf__block{position:absolute;inset:0;box-sizing:border-box}
+    .stf__item{position:absolute;inset:0;display:block;box-sizing:border-box;transform-style:preserve-3d}
+    .stf__outerShadow,.stf__innerShadow,.stf__hardShadow{position:absolute;left:0;top:0}
+  `;
+  const style = document.createElement('style');
+  style.textContent = minimal;
+  document.head.appendChild(style);
+  return true;
+}
+</script>
+
+<!-- ================== PDF.js ================== -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
-<!-- ===== PageFlip JS (lokal + fallback) ===== -->
+<!-- ================== PageFlip JS (lokal + fallback) ================== -->
+<script src="/public/vendor/page-flip.browser.min.js"></script>
 <script>
 (function ensureFlip(){
   if (window.PageFlip || (window.St && window.St.PageFlip)) return;
@@ -57,128 +96,68 @@
   document.head.appendChild(s);
 })();
 </script>
-<script src="/public/vendor/page-flip.browser.min.js"></script>
 
-<!-- ===== Loader CSS robust (lokal→CDN) + deteksi siap ===== -->
-<script>
-async function loadStfCss() {
-  // 1) coba lokal
-  const l1=document.createElement('link');
-  l1.rel='stylesheet';
-  l1.href='/public/vendor/stPageFlip.min.css';
-  document.head.appendChild(l1);
-
-  // fungsi cek siap: apakah rule .stf__block sudah absolute?
-  const cssReady = () => {
-    const probe = document.createElement('div');
-    probe.className = 'stf__block';
-    document.body.appendChild(probe);
-    const pos = getComputedStyle(probe).position;
-    document.body.removeChild(probe);
-    return pos === 'absolute'; // true kalau stylesheet PageFlip termuat
-  };
-
-  // tunggu sebentar
-  for (let i=0;i<12;i++){ // ~1.2s
-    await new Promise(r=>setTimeout(r,100));
-    if (cssReady()) return true;
-  }
-
-  // 2) fallback ke CDN
-  const l2=document.createElement('link');
-  l2.rel='stylesheet';
-  l2.href='https://cdn.jsdelivr.net/npm/page-flip@2.0.7/src/Style/stPageFlip.min.css';
-  document.head.appendChild(l2);
-
-  for (let i=0;i<12;i++){
-    await new Promise(r=>setTimeout(r,100));
-    if (cssReady()) return true;
-  }
-  // 3) kalau tetap gagal, critical CSS di <style> sudah cukup mencegah numpuk
-  return false;
-}
-</script>
-
-<!-- ================= MAIN ================= -->
+<!-- ================== MAIN ================== -->
 <script>
 (async () => {
+  await loadStfCss(); // pastikan CSS siap dulu
+
   const pdfUrl = '/docs/adart.pdf';
-  const $ = (q)=>document.querySelector(q);
-  const coverBox = $('#instantCover');
-  const flipWrap = $('#flipWrap');
-  const flipEl   = $('#flipbook');
-  const errBox   = $('#errBox');
-  const hint     = $('#hint');
-  const showErr  = (m)=>{ errBox.style.display='block'; errBox.textContent=m };
+  const el = document.getElementById('flipbook');
+  const errBox = document.getElementById('errBox');
+  const hint = document.getElementById('hint');
+  const showErr = (m)=>{ errBox.style.display='block'; errBox.textContent=m };
 
-  // Pastikan CSS siap dulu (biar gak numpuk)
-  await loadStfCss();
-
-  // Deteksi perangkat & jaringan
-  const isPhone  = matchMedia('(max-width: 576px)').matches;
-  const net      = navigator.connection || {};
+  const isPhone = matchMedia('(max-width: 576px)').matches;
+  const net = navigator.connection || {};
   const saveData = !!net.saveData;
-  const down     = net.downlink || 0;
-  const DPR      = Math.min(window.devicePixelRatio || 1, saveData ? 1.25 : 2.5);
+  const down = net.downlink || 0;
 
-  // Target tinggi
-  const H_INSTANT = isPhone ? 900 : 1100;
-  const H_PREVIEW = isPhone ? (down>=2.5?1100:900) : 1300;
-  const H_FINAL   = isPhone ? (down>=2.5?1700:1400) : 2100;
+  const DPR = Math.min(window.devicePixelRatio || 1, saveData ? 1.5 : 3);
 
-  const USE_WEBP  = (function(){
-    try { return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp'); }
-    catch { return false; }
-  })();
+  const H_PREVIEW =
+    saveData ? 900 :
+    isPhone ? (down >= 2.5 ? 1200 : 1000) :
+    1200;
 
-  async function renderPage(page, targetH, format) {
-    const base = page.getViewport({ scale: 1 });
-    const scale = (targetH / base.height) * DPR;
-    const vp = page.getViewport({ scale });
+  const H_FINAL =
+    saveData ? 1400 :
+    isPhone ? (down >= 2.5 ? 1800 : 1500) :
+    2100;
 
-    const c = document.createElement('canvas');
-    c.width  = Math.ceil(vp.width);
-    c.height = Math.ceil(vp.height);
-    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-
-    if (format === 'png')  return c.toDataURL('image/png');
-    if (format === 'webp') return c.toDataURL('image/webp', 0.86);
-    return c.toDataURL('image/jpeg', 0.86);
-  }
-
-  async function renderPdfToImages(pdf, targetH, preferPng) {
-    const arr = [];
+  async function renderPdfToImages(pdf, targetH, usePng) {
+    const imgs = [];
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p);
-      const fmt  = preferPng ? 'png' : (USE_WEBP ? 'webp' : 'jpeg');
-      arr.push(await renderPage(page, targetH, fmt));
-      await new Promise(r=>requestAnimationFrame(r));
+      const vp0 = page.getViewport({ scale: 1 });
+      const scale = (targetH / vp0.height) * DPR;
+      const vp = page.getViewport({ scale });
+
+      const c = document.createElement('canvas');
+      const ctx = c.getContext('2d');
+
+      c.width = Math.ceil(vp.width);
+      c.height = Math.ceil(vp.height);
+
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+      const url = usePng ? c.toDataURL('image/png')
+                         : c.toDataURL('image/jpeg', 0.86);
+      imgs.push(url);
+      await new Promise(r => requestAnimationFrame(r)); // beri napas
     }
-    return arr;
+    return imgs;
   }
 
-  // Muat PDF (stream/range)
+  // load PDF
   let pdf;
   try {
-    pdf = await pdfjsLib.getDocument({
-      url: pdfUrl,
-      rangeChunkSize: 65536,
-      disableAutoFetch: false,
-      disableStream: false
-    }).promise;
+    pdf = await pdfjsLib.getDocument(pdfUrl).promise;
   } catch(e) {
     return showErr('Gagal memuat PDF. Pastikan /docs/adart.pdf tersedia.');
   }
 
-  // Instant cover
-  try {
-    const page1 = await pdf.getPage(1);
-    const img1  = await renderPage(page1, H_INSTANT, USE_WEBP ? 'webp' : 'jpeg');
-    coverBox.innerHTML = `<img src="${img1}" alt="Cover"
-                              style="width:100%;height:100%;object-fit:contain;border-radius:12px;">`;
-  } catch(e) { /* tidak fatal */ }
-
-  // PageFlip ctor
+  // siapkan PageFlip
   function getFlipCtor(){ return window.PageFlip || (window.St && window.St.PageFlip) || null; }
   for (let i=0;i<30 && !getFlipCtor();i++) { await new Promise(r=>setTimeout(r,100)); }
   const Flip = getFlipCtor();
@@ -186,9 +165,9 @@ async function loadStfCss() {
 
   const singlePage = isPhone;
   const pageW = singlePage ? 520 : 660;
-  const pageH = singlePage ? 840 : 900;
+  const pageH = singlePage ? 860 : 900;
 
-  const flip = new Flip(flipEl, {
+  const flip = new Flip(el, {
     width: pageW, height: pageH,
     size: 'stretch',
     showCover: true,
@@ -198,69 +177,60 @@ async function loadStfCss() {
     useMouseEvents: true,
   });
 
-  // Pratinjau cepat → tampilkan flipbook
-  hint.style.display = 'block';
-  let previewImages = [];
+  // fase 1: pratinjau cepat
   try {
-    previewImages = await renderPdfToImages(pdf, H_PREVIEW, false);
-    coverBox.style.display = 'none';
-    flipWrap.style.display = 'block';
+    const previewImages = await renderPdfToImages(pdf, H_PREVIEW, /*usePng*/ false);
     flip.loadFromImages(previewImages);
   } catch(e) {
     console.error(e);
     return showErr('Gagal membuat pratinjau.');
   }
 
-  // Responsive
+  // keyboard (desktop)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft')  flip.flipPrev();
+    if (e.key === 'ArrowRight') flip.flipNext();
+  });
+
+  // responsive
   const onResize = () => {
-    const w = flipWrap.clientWidth || pageW;
+    const w = el.clientWidth || pageW;
     const ratio = pageH / pageW;
     flip.update({ width: w, height: Math.round(w * ratio) });
   };
   addEventListener('resize', onResize, { passive: true });
   setTimeout(onResize, 0);
 
-  // Upgrade HD (on-demand dulu, lalu semua)
-  const preferPngHD = !isPhone;
-  const getIdx = () => {
-    try { return flip.getCurrentPageIndex ? flip.getCurrentPageIndex() : 0; }
-    catch { return 0; }
-  };
-  async function upgradeHD() {
-    const hemat = saveData || (isPhone && down < 1.2);
-    if (hemat) { hint.textContent = 'Mode hemat data aktif.'; return; }
+  // fase 2: upgrade HD (timeout 25s)
+  const abort = new AbortController();
+  const t = setTimeout(() => abort.abort(), 25000);
 
-    try {
-      const cur = getIdx() + 1;
-      const page = await pdf.getPage(cur);
-      const hd1  = await renderPage(page, H_FINAL, preferPngHD ? 'png' : (USE_WEBP?'webp':'jpeg'));
-      previewImages[cur-1] = hd1;
-      flip.loadFromImages(previewImages);
-      hint.textContent = 'Mode tajam aktif. Halaman lain menyusul…';
-    } catch {}
-
-    try {
-      const all = await renderPdfToImages(pdf, H_FINAL, preferPngHD);
-      previewImages = all;
-      flip.loadFromImages(previewImages);
-      hint.textContent = 'Mode tajam aktif.';
-    } catch {
-      hint.textContent = 'Pratinjau cepat digunakan.';
+  try {
+    const shouldUpgrade = !saveData && (down >= 1.2 || !isPhone);
+    if (shouldUpgrade) {
+      const hdImages = await renderPdfToImages(pdf, H_FINAL, /*usePng*/ !isPhone);
+      flip.loadFromImages(hdImages);
+      hint.textContent = 'Mode tajam aktif. Ketuk untuk membalik halaman.';
+    } else {
+      hint.textContent = 'Mode hemat data aktif.';
     }
+  } catch(e) {
+    console.warn('Upgrade ke HD dibatalkan/timeout:', e?.message || e);
+    hint.textContent = 'Pratinjau cepat digunakan.';
+  } finally {
+    clearTimeout(t);
   }
-  setTimeout(upgradeHD, 400);
 })();
 </script>
 
 <style>
+  /* Dark skin + anti “numpuk” */
   .form-dark .page { background:#0f172a; }
   #flipbook .page img{ width:100%; height:100%; object-fit:contain; image-rendering:auto; }
-  .ratio.ratio-3x4{ position:relative; width:100%; }
-  .ratio.ratio-3x4::before{ content:""; display:block; padding-top:133.333%; } /* 3:4 */
-  .ratio.ratio-3x4 > *{ position:absolute; inset:0; }
+
   @media (max-width:576px){
     .container{ padding-left:.5rem; padding-right:.5rem; }
-    #flipbook{ height:72vh !important; }
+    #flipbook{ height:74vh !important; }
   }
 </style>
 
