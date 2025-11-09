@@ -3,20 +3,19 @@
 <div class="container py-4">
   <div class="d-flex align-items-center gap-2 mb-3">
     <h1 class="h4 mb-0">AD/ART — Mode Flipbook</h1>
-    <!-- Hanya Mode Zoom -->
     <a id="zoomBtn" href="/docs/adart.pdf" target="_blank" rel="noopener"
        class="btn btn-outline-light btn-sm ms-auto">Mode Zoom</a>
   </div>
 
   <div class="card border-0 form-dark">
     <div class="card-body">
-      <!-- Instant cover (halaman 1) supaya tidak blank -->
+      <!-- Instant cover supaya tidak blank -->
       <div id="instantCover" class="ratio ratio-3x4 d-flex align-items-center justify-content-center"
            style="max-width:920px;margin:0 auto;background:#0b1223;border-radius:12px;">
         <div class="text-secondary small">Menyiapkan pratinjau…</div>
       </div>
 
-      <!-- Flipbook container -->
+      <!-- Flipbook -->
       <div id="flipWrap" class="mx-auto" style="width:920px;max-width:100%;display:none;">
         <div id="flipbook" style="height:620px"></div>
       </div>
@@ -33,20 +32,23 @@
   </div>
 </div>
 
-<!-- ============ CSS PageFlip (lokal + fallback CDN) ============ -->
-<link rel="stylesheet" href="/public/vendor/stPageFlip.min.css" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/src/Style/stPageFlip.min.css"
-      media="print" onload="this.media='all'">
+<!-- ===== CRITICAL MIN CSS (anti-numpuk jika stylesheet gagal) ===== -->
+<style id="stf-critical">
+  .stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0)}
+  .stf__wrapper{position:relative;width:100%;height:100%;box-sizing:border-box}
+  .stf__block{position:absolute;inset:0;box-sizing:border-box}
+  .stf__item{position:absolute;inset:0;display:none;box-sizing:border-box;transform-style:preserve-3d}
+  .stf__outerShadow,.stf__innerShadow,.stf__hardShadow{position:absolute;left:0;top:0}
+</style>
 
-<!-- ============ PDF.js ============ -->
+<!-- ===== PDF.js ===== -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 
-<!-- ============ PageFlip (lokal + fallback JS) ============ -->
-<script src="/public/vendor/page-flip.browser.min.js"></script>
+<!-- ===== PageFlip JS (lokal + fallback) ===== -->
 <script>
 (function ensureFlip(){
   if (window.PageFlip || (window.St && window.St.PageFlip)) return;
@@ -55,8 +57,49 @@
   document.head.appendChild(s);
 })();
 </script>
+<script src="/public/vendor/page-flip.browser.min.js"></script>
 
-<!-- ============ MAIN ============ -->
+<!-- ===== Loader CSS robust (lokal→CDN) + deteksi siap ===== -->
+<script>
+async function loadStfCss() {
+  // 1) coba lokal
+  const l1=document.createElement('link');
+  l1.rel='stylesheet';
+  l1.href='/public/vendor/stPageFlip.min.css';
+  document.head.appendChild(l1);
+
+  // fungsi cek siap: apakah rule .stf__block sudah absolute?
+  const cssReady = () => {
+    const probe = document.createElement('div');
+    probe.className = 'stf__block';
+    document.body.appendChild(probe);
+    const pos = getComputedStyle(probe).position;
+    document.body.removeChild(probe);
+    return pos === 'absolute'; // true kalau stylesheet PageFlip termuat
+  };
+
+  // tunggu sebentar
+  for (let i=0;i<12;i++){ // ~1.2s
+    await new Promise(r=>setTimeout(r,100));
+    if (cssReady()) return true;
+  }
+
+  // 2) fallback ke CDN
+  const l2=document.createElement('link');
+  l2.rel='stylesheet';
+  l2.href='https://cdn.jsdelivr.net/npm/page-flip@2.0.7/src/Style/stPageFlip.min.css';
+  document.head.appendChild(l2);
+
+  for (let i=0;i<12;i++){
+    await new Promise(r=>setTimeout(r,100));
+    if (cssReady()) return true;
+  }
+  // 3) kalau tetap gagal, critical CSS di <style> sudah cukup mencegah numpuk
+  return false;
+}
+</script>
+
+<!-- ================= MAIN ================= -->
 <script>
 (async () => {
   const pdfUrl = '/docs/adart.pdf';
@@ -67,6 +110,9 @@
   const errBox   = $('#errBox');
   const hint     = $('#hint');
   const showErr  = (m)=>{ errBox.style.display='block'; errBox.textContent=m };
+
+  // Pastikan CSS siap dulu (biar gak numpuk)
+  await loadStfCss();
 
   // Deteksi perangkat & jaringan
   const isPhone  = matchMedia('(max-width: 576px)').matches;
@@ -85,7 +131,7 @@
     catch { return false; }
   })();
 
-  async function renderPage(page, targetH, format /* 'jpeg' | 'png' | 'webp' */) {
+  async function renderPage(page, targetH, format) {
     const base = page.getViewport({ scale: 1 });
     const scale = (targetH / base.height) * DPR;
     const vp = page.getViewport({ scale });
@@ -111,7 +157,7 @@
     return arr;
   }
 
-  // Muat PDF (stream/range aktif)
+  // Muat PDF (stream/range)
   let pdf;
   try {
     pdf = await pdfjsLib.getDocument({
@@ -132,7 +178,7 @@
                               style="width:100%;height:100%;object-fit:contain;border-radius:12px;">`;
   } catch(e) { /* tidak fatal */ }
 
-  // Siapkan PageFlip
+  // PageFlip ctor
   function getFlipCtor(){ return window.PageFlip || (window.St && window.St.PageFlip) || null; }
   for (let i=0;i<30 && !getFlipCtor();i++) { await new Promise(r=>setTimeout(r,100)); }
   const Flip = getFlipCtor();
@@ -152,7 +198,7 @@
     useMouseEvents: true,
   });
 
-  // Render pratinjau cepat → tampilkan flipbook
+  // Pratinjau cepat → tampilkan flipbook
   hint.style.display = 'block';
   let previewImages = [];
   try {
@@ -174,33 +220,31 @@
   addEventListener('resize', onResize, { passive: true });
   setTimeout(onResize, 0);
 
-  // Upgrade HD (on-demand dulu lalu semua)
+  // Upgrade HD (on-demand dulu, lalu semua)
   const preferPngHD = !isPhone;
-  const currentGetter = () => {
+  const getIdx = () => {
     try { return flip.getCurrentPageIndex ? flip.getCurrentPageIndex() : 0; }
     catch { return 0; }
   };
-
   async function upgradeHD() {
-    if (saveData || (isPhone && down < 1.2)) {
-      hint.textContent = 'Mode hemat data aktif.';
-      return;
-    }
+    const hemat = saveData || (isPhone && down < 1.2);
+    if (hemat) { hint.textContent = 'Mode hemat data aktif.'; return; }
+
     try {
-      const cur = currentGetter() + 1;
+      const cur = getIdx() + 1;
       const page = await pdf.getPage(cur);
       const hd1  = await renderPage(page, H_FINAL, preferPngHD ? 'png' : (USE_WEBP?'webp':'jpeg'));
       previewImages[cur-1] = hd1;
       flip.loadFromImages(previewImages);
       hint.textContent = 'Mode tajam aktif. Halaman lain menyusul…';
-    } catch(e) { /* lanjut */ }
+    } catch {}
 
     try {
-      const hdImages = await renderPdfToImages(pdf, H_FINAL, preferPngHD);
-      previewImages = hdImages;
+      const all = await renderPdfToImages(pdf, H_FINAL, preferPngHD);
+      previewImages = all;
       flip.loadFromImages(previewImages);
       hint.textContent = 'Mode tajam aktif.';
-    } catch(e) {
+    } catch {
       hint.textContent = 'Pratinjau cepat digunakan.';
     }
   }
