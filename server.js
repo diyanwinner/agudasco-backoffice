@@ -145,7 +145,7 @@ async function ensureTables() {
     INSERT INTO site_contact (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
   `);
 }
-ensureTables().catch(err => console.error("ensureTables error:", err?.message || String(err)));
+// ensureTables().catch(err => console.error("ensureTables error:", err));
 
 /* ------------------------------------------------------------
    CLOUDINARY + MULTER (image only)
