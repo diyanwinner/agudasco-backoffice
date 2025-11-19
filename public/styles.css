@@ -313,61 +313,97 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   text-align: center;
 }
 
-/* ====== Anggota: layout tabel rapat ====== */
+/* ====== Anggota: grid 3 kolom ====== */
 
-.members-list--compact {
+/* UL pembungkus */
+.members-grid {
   list-style: none;
   margin: 0;
   padding: 0;
-}
 
-.member-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
+  /* 3 kolom di semua ukuran layar */
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
-  padding: 10px 16px;
-  margin-bottom: 8px;
-  border-radius: 12px;
-  background: #111827; /* samakan dengan kartu yang lain di situsmu */
 }
 
-.member-col--no {
+/* tiap LI */
+.members-grid > li {
+  min-width: 0; /* biar isi bisa wrap dengan rapi */
+}
+
+/* link kartu anggota */
+.member-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 12px;
+
+  background: #111827;
+  color: inherit;
+  text-decoration: none;
+
+  min-height: 52px;
+}
+
+.member-link:hover {
+  background: rgba(255,255,255,.06);
+}
+
+/* nomor urut */
+.member-index {
+  flex: 0 0 auto;
+  width: 16px;
   text-align: right;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   opacity: 0.8;
 }
 
-.member-col--main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
+/* foto kecil */
+.avatar {
+  display: block;
+  object-fit: cover;
+  border-radius: 999px;
 }
 
-.member-col--main .member-name {
-  font-weight: 500;
+.avatar--sm {
+  width: 34px;
+  height: 34px;
 }
 
-/* Kolom kosong, cuma buat ngejaga grid */
-.member-col--empty {
-  min-height: 1em;
+/* nama */
+.member-name {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+  word-wrap: break-word;
 }
 
-/* Mobile: cuma tampil 2 kolom (nomor + nama), kolom kosong disembunyiin */
-@media (max-width: 640px) {
-  .member-row {
-    grid-template-columns: auto minmax(0, 1fr);
+/* kalau nanti dipakai lagi */
+.member-date {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* Sedikit dibesarin di layar lebih lebar */
+@media (min-width: 768px) {
+  .member-link {
+    padding: 8px 10px;
   }
-  .member-col--empty {
-    display: none;
+
+  .avatar--sm {
+    width: 40px;
+    height: 40px;
+  }
+
+  .member-name {
+    font-size: 13px;
   }
 }
-.member-link:hover{ background: rgba(255,255,255,.06) }
-.avatar{ display:block; object-fit:cover; border-radius:10px; }
-.avatar--sm{ width:48px; height:48px; }
-.member-name{ font-weight:600 }
-.member-date{ color:var(--muted) }
 
 /* ====== Detail anggota ====== */
 /* foto header: tidak terlalu besar */
