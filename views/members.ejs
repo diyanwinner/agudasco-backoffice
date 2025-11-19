@@ -6,28 +6,20 @@
         <div class="muted">Klik nama untuk lihat detail.</div>
       </div>
 
-      <!-- Daftar anggota: layout seperti tabel, 3–4 kolom ke samping -->
-      <ol class="members-list members-list--compact">
+      <!-- Daftar anggota dalam bentuk kartu grid -->
+      <ol class="members-list members-grid">
         <% (members || []).forEach(function (m, idx) { %>
-          <li class="member-row">
-            <!-- Kolom 1: nomor urut -->
-            <span class="member-col member-col--no"><%= idx + 1 %>.</span>
+          <li class="member-item">
+            <a class="member-link" href="/anggota/<%= m.id %>">
+              <span class="member-index"><%= idx + 1 %>.</span>
 
-            <!-- Kolom 2: foto + nama (link ke detail) -->
-            <a class="member-col member-col--main" href="/anggota/<%= m.id %>">
-              <img
-                loading="lazy"
-                class="avatar avatar--sm"
-                src="<%= m.avatar || 'https://via.placeholder.com/96x96?text=%20' %>"
-                alt="<%= m.name %>"
-              />
+              <img loading="lazy"
+                   class="avatar avatar--sm"
+                   src="<%= m.avatar || 'https://via.placeholder.com/96x96?text=%20' %>"
+                   alt="<%= m.name %>"/>
+
               <span class="member-name"><%= m.name %></span>
             </a>
-
-            <!-- Kolom 3–5: sementara kosong dulu (buat future data), cuma untuk rapihin layout -->
-            <span class="member-col member-col--empty"></span>
-            <span class="member-col member-col--empty"></span>
-            <span class="member-col member-col--empty"></span>
           </li>
         <% }) %>
       </ol>
