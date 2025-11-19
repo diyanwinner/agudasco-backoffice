@@ -313,26 +313,55 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   text-align: center;
 }
 
-/* ====== Anggota: daftar ala Excel ====== */
-.members-list{
-  list-style: decimal;
+/* ====== Anggota: layout tabel rapat ====== */
+
+.members-list--compact {
+  list-style: none;
   margin: 0;
-  padding-left: 1.25rem; /* spasi nomor */
-  display: grid;
-  gap: 8px;
+  padding: 0;
 }
-.member-item{ 
-  padding-left: .25rem;
-}
-.member-link{
+
+.member-row {
   display: grid;
-  grid-template-columns: 48px 1fr auto;
+  grid-template-columns: auto minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-bottom: 8px;
   border-radius: 12px;
-  background: rgba(255,255,255,.03);
-  border: 1px solid rgba(255,255,255,.06);
+  background: #111827; /* samakan dengan kartu yang lain di situsmu */
+}
+
+.member-col--no {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+}
+
+.member-col--main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.member-col--main .member-name {
+  font-weight: 500;
+}
+
+/* Kolom kosong, cuma buat ngejaga grid */
+.member-col--empty {
+  min-height: 1em;
+}
+
+/* Mobile: cuma tampil 2 kolom (nomor + nama), kolom kosong disembunyiin */
+@media (max-width: 640px) {
+  .member-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .member-col--empty {
+    display: none;
+  }
 }
 .member-link:hover{ background: rgba(255,255,255,.06) }
 .avatar{ display:block; object-fit:cover; border-radius:10px; }
