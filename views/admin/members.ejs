@@ -1,54 +1,40 @@
-<div class="admin-wrap container">
-  <div class="admin-head">
-    <h1 class="admin-title">Anggota</h1>
-    <a href="/admin/members/new" class="btn">+ Tambah Anggota</a>
-  </div>
+<main class="admin-wrap">
+  <div class="container">
+    <div class="admin-head">
+      <h1 class="admin-title">Anggota</h1>
+      <a href="/admin/members/new" class="btn">+ Tambah Anggota</a>
+    </div>
 
-  <div class="card">
-    <div class="card-header">Daftar Anggota</div>
-    <div class="card-body table-wrap">
-      <table class="table table-dark table-striped">
-        <thead>
-          <tr>
-            <th style="width:56px">Foto</th>
-            <th>Nama</th>
-            <th>Tgl Lahir</th>
-            <th>Dibuat</th>
-            <th style="width:120px">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (members && members.length) { %>
-            <% members.forEach(m => { %>
-              <tr>
-                <td>
-                  <% if (m.avatar) { %>
-                    <img src="<%= m.avatar %>" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.1)" />
-                  <% } else { %>
-                    <div style="width:44px;height:44px;border-radius:8px;border:1px dashed #35527a;display:flex;align-items:center;justify-content:center;opacity:.6">–</div>
-                  <% } %>
-                </td>
-                <td class="fw-bold"><%= m.name || '—' %></td>
-                <td>
-                  <% if (m.birthdate) { %>
-                    <%= new Date(m.birthdate).toLocaleDateString('id-ID', { day:'2-digit', month:'long' }) %>
-                  <% } else { %>—<% } %>
-                </td>
-                <td>
-                  <% if (m.created_at) { %>
-                    <%= new Date(m.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }) %>
-                  <% } else { %>—<% } %>
-                </td>
-                <td>
-                  <a class="btn" href="/admin/members/<%= m.id %>/edit">Edit</a>
-                </td>
-              </tr>
-            <% }) %>
-          <% } else { %>
-            <tr><td colspan="5" class="text-muted">Belum ada data anggota.</td></tr>
-          <% } %>
-        </tbody>
-      </table>
+    <div class="admin-members-grid">
+      <% (members || []).forEach(function (m, idx) { %>
+        <article class="member-pill member-pill--admin">
+          <span class="member-no"><%= idx + 1 %>.</span>
+
+          <img
+            loading="lazy"
+            class="avatar avatar--sm"
+            src="<%= m.avatar || 'https://via.placeholder.com/96x96?text=%20' %>"
+            alt="<%= m.name %>"
+          />
+
+          <div class="member-main">
+            <div class="member-name"><%= m.name %></div>
+            <div class="member-meta">
+              <% if (m.birth_date) { %>
+                <span>Tgl lahir: <%= new Date(m.birth_date).toLocaleDateString('id-ID') %></span>
+                &nbsp;•&nbsp;
+              <% } %>
+              <span>Dibuat: <%= new Date(m.created_at).toLocaleDateString('id-ID') %></span>
+            </div>
+          </div>
+
+          <div class="member-admin-actions">
+            <a href="/admin/members/<%= m.id %>/edit" class="btn btn-sm">Edit</a>
+          </div>
+        </article>
+      <% }) %>
     </div>
   </div>
-</div>
+</main>
+
+<%- include('./layout-bottom', { active: 'admin' }) %>
