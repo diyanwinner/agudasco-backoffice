@@ -52,13 +52,20 @@ export default function (q, q1) {
   });
 
   // Publik
-  router.get("/kontak", async (_req, res) => {
+  router.get("/kontak", async (req, res) => {
     try {
-      const info = await q1("SELECT * FROM site_info WHERE id=1");
-      res.render("kontak", { title: "Kontak", active: "kontak", contact: info || {} });
+      const info = await q1(
+        "SELECT org_name, address, email, phone, whatsapp FROM site_contact WHERE id = 1"
+      );
+
+      res.render("kontak", {
+        title: "Kontak",
+        active: "kontak",
+        contact: info || {}
+      });
     } catch (e) {
-      console.error("Kontak error:", e);
-      res.render("kontak", { title: "Kontak", active: "kontak", contact: {} });
+      console.error("Kontak load err:", e);
+      res.status(500).send("Terjadi kesalahan saat memuat kontak");
     }
   });
   router.get("/tentang", (_req, res) => res.render("tentang", { title: "Tentang", active: "tentang" }));
