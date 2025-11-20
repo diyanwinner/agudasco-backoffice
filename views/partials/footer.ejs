@@ -11,7 +11,7 @@
       <div class="footer-col">
         <h4 class="footer-heading">Tentang</h4>
         <p>
-          AGUDASCO adalah wadah organisasi yang bertujuan untuk membangun persaudaraan,
+          AGUDASCO adalah wadah organisasi alumni yang bertujuan untuk membangun persaudaraan,
           kegiatan sosial, dan pengembangan komunitas.
         </p>
       </div>
@@ -33,35 +33,42 @@
         <h4 class="footer-heading">Kontak</h4>
 
         <%
-        // Ambil data kontak dari mana saja yang tersedia:
-        // 1. footerContact dari server.js (res.locals)
-        // 2. contact (dipakai di halaman /kontak)
-        const src =
-          (typeof footerContact !== 'undefined' && footerContact) ||
-          (typeof contact !== 'undefined' && contact) ||
-          {};
+          const src =
+            (typeof footerContact !== 'undefined' && footerContact) ||
+            (typeof contact !== 'undefined' && contact) ||
+            {};
 
-        const safe = v => (v && String(v).trim()) ? String(v).trim() : null;
+          const safe = v => (v && String(v).trim()) ? String(v).trim() : null;
 
-        const address = safe(src.address || src.alamat);
-        const email   = safe(src.email   || src.org_email || src.contact_email);
-        const phone   = safe(src.phone   || src.telepon   || src.telepon_wa);
-        const wa      = safe(src.whatsapp);
+          const address = safe(src.address || src.alamat);
+          const email   = safe(src.email   || src.org_email || src.contact_email);
+          const phone   = safe(src.phone   || src.telepon   || src.telepon_wa);
+          const wa      = safe(src.whatsapp);
         %>
 
         <p><%= address || 'Belum diisi' %></p>
         <p><%= email   || 'Belum diisi' %></p>
+
         <p>
           <% if (phone) { %>
             Telp: <%= phone %><br>
           <% } %>
+
           <% if (wa) { %>
             WA: <%= wa %>
           <% } %>
+
           <% if (!phone && !wa) { %>
             Belum diisi
           <% } %>
         </p>
       </div>
+
+    </div> <!-- END footer-grid -->
+
+    <div class="footer-bottom">
+      © <%= new Date().getFullYear() %> <%= ORG %> — All rights reserved.
+    </div>
+
   </div>
 </footer>
