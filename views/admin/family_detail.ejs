@@ -3,14 +3,20 @@
 <div class="container admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title"><%= title %></h1>
-    <a class="btn ghost" href="/admin/family">← Kembali</a>
+
+    <!-- tombol kembali: PASTI ke /admin/family -->
+    <a class="btn ghost"
+       href="/admin/family"
+       onclick="if(history.length > 1){ history.back(); return false; }">
+      ← Kembali
+    </a>
   </div>
 
   <form class="card" action="/admin/family/<%= family.id %>" method="post">
     <div class="field">
       <label>Anggota</label>
       <select name="member_id" required>
-        <% (members||[]).forEach(m => { %>
+        <% (members || []).forEach(m => { %>
           <option value="<%= m.id %>" <%= m.id === family.member_id ? 'selected' : '' %>>
             <%= m.name %>
           </option>
@@ -30,7 +36,13 @@
 
     <div class="form-actions">
       <button class="btn" type="submit">Simpan Perubahan</button>
-      <a class="btn ghost" href="/admin/family">Batal</a>
+
+      <!-- tombol batal juga ke /admin/family -->
+      <a class="btn ghost"
+         href="/admin/family"
+         onclick="if(history.length > 1){ history.back(); return false; }">
+        Batal
+      </a>
     </div>
   </form>
 </div>
