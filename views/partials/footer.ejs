@@ -1,8 +1,3 @@
-<%
-  const f = (typeof footerContact !== 'undefined' && footerContact) ? footerContact : {};
-  const ORG = f.org_name || 'AGUDASCO';
-%>
-
 <footer class="site-footer">
   <div class="container">
     <div class="footer-grid">
@@ -11,64 +6,41 @@
       <div class="footer-col">
         <h4 class="footer-heading">Tentang</h4>
         <p>
-          AGUDASCO adalah wadah organisasi alumni yang bertujuan untuk membangun persaudaraan,
-          kegiatan sosial, dan pengembangan komunitas.
+          AGUDASCO adalah wadah organisasi alumni yang bertujuan untuk
+          membangun persaudaraan, kegiatan sosial, dan pengembangan komunitas.
         </p>
       </div>
 
       <!-- KOL 2 – Navigasi -->
       <div class="footer-col">
         <h4 class="footer-heading">Navigasi</h4>
-        <ul class="footer-links">
-          <li><a href="/">Beranda</a></li>
-          <li><a href="/artikel">Artikel</a></li>
-          <li><a href="/laporan">Laporan</a></li>
-          <li><a href="/anggota">Anggota</a></li>
-          <li><a href="/kontak">Kontak</a></li>
-        </ul>
+        <p><a href="/">Beranda</a></p>
+        <p><a href="/artikel">Artikel</a></p>
+        <p><a href="/laporan">Laporan</a></p>
+        <p><a href="/anggota">Anggota</a></p>
+        <p><a href="/kontak">Kontak</a></p>
       </div>
 
       <!-- KOL 3 – Kontak -->
+      <% 
+        // ambil dari footerContact kalau ada,
+        // kalau tidak ada pakai contact (halaman /kontak)
+        const fc = (typeof footerContact !== 'undefined' && footerContact) 
+          ? footerContact 
+          : (typeof contact !== 'undefined' ? contact : {});
+      %>
       <div class="footer-col">
         <h4 class="footer-heading">Kontak</h4>
-
-        <%
-          const src =
-            (typeof footerContact !== 'undefined' && footerContact) ||
-            (typeof contact !== 'undefined' && contact) ||
-            {};
-
-          const safe = v => (v && String(v).trim()) ? String(v).trim() : null;
-
-          const address = safe(src.address || src.alamat);
-          const email   = safe(src.email   || src.org_email || src.contact_email);
-          const phone   = safe(src.phone   || src.telepon   || src.telepon_wa);
-          const wa      = safe(src.whatsapp);
-        %>
-
-        <p><%= address || 'Belum diisi' %></p>
-        <p><%= email   || 'Belum diisi' %></p>
-
-        <p>
-          <% if (phone) { %>
-            Telp: <%= phone %><br>
-          <% } %>
-
-          <% if (wa) { %>
-            WA: <%= wa %>
-          <% } %>
-
-          <% if (!phone && !wa) { %>
-            Belum diisi
-          <% } %>
-        </p>
+        <p><%= (fc.address && fc.address.trim()) || 'Belum diisi' %></p>
+        <p><%= (fc.email && fc.email.trim())   || 'Belum diisi' %></p>
+        <p><%= (fc.phone && fc.phone.trim())   || 'Belum diisi' %></p>
       </div>
 
-    </div> <!-- END footer-grid -->
-
-    <div class="footer-bottom">
-      © <%= new Date().getFullYear() %> <%= ORG %> — All rights reserved.
     </div>
 
+    <div class="footer-bottom">
+      <div>© 2025 AGUDASCO — All rights reserved.</div>
+      <div class="muted">Dibangun dengan ❤️ untuk keluarga besar AGUDASCO.</div>
+    </div>
   </div>
 </footer>
