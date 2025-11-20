@@ -1,30 +1,27 @@
 <main>
-  <div class="container">
-    <section class="section">
-      <div class="section-head">
-        <h1>Anggota</h1>
-        <div class="muted">Klik nama untuk lihat detail.</div>
-      </div>
+  <div class="container members-page">
+    <header class="section-head">
+      <h1>Anggota</h1>
+      <div class="muted">Klik nama untuk lihat detail.</div>
+    </header>
 
-      <!-- Daftar anggota dalam bentuk kartu grid -->
-      <ol class="members-list members-grid">
-        <% (members || []).forEach(function (m, idx) { %>
-          <li class="member-item">
-            <a class="member-link" href="/anggota/<%= m.id %>">
-              <span class="member-index"><%= idx + 1 %>.</span>
-
-              <img loading="lazy"
-                   class="avatar avatar--sm"
-                   src="<%= m.avatar || 'https://via.placeholder.com/96x96?text=%20' %>"
-                   alt="<%= m.name %>"/>
-
-              <span class="member-name"><%= m.name %></span>
-            </a>
-          </li>
-        <% }) %>
-      </ol>
-    </section>
+    <ol class="members-grid">
+      <% (members || []).forEach(function (m, idx) { %>
+        <li class="members-grid-item">
+          <a class="member-pill" href="/anggota/<%= m.id %>">
+            <span class="member-no"><%= idx + 1 %>.</span>
+            <img
+              loading="lazy"
+              class="avatar avatar--sm"
+              src="<%= m.avatar || 'https://via.placeholder.com/96x96?text=%20' %>"
+              alt="<%= m.name %>"
+            />
+            <span class="member-name"><%= m.name %></span>
+          </a>
+        </li>
+      <% }) %>
+    </ol>
   </div>
 </main>
 
-<%- include('./layout-bottom', { active: 'beranda' }) %>
+<%- include('./layout-bottom', { active: 'anggota' }) %>
