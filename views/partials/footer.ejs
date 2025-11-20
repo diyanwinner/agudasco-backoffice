@@ -8,28 +8,35 @@ const ORG = f.org_name || 'AGUDASCO';
   <div class="container">
     <div class="footer-grid">
       <div class="footer-col">
-        <h4 class="footer-heading"><%= ORG %></h4>
-      </div>
+  <h4 class="footer-heading">Kontak</h4>
 
-      <div class="footer-col">
-        <h4 class="footer-heading">Kontak</h4>
-        <% if (f.email)   { %><p>Email: <%= f.email %></p><% } %>
-        <% if (f.address) { %><p>Alamat: <%= f.address %></p><% } %>
-        <% if (!f.email && !f.address) { %><p>—</p><% } %>
-      </div>
+  <p>
+    <% if (footerContact && footerContact.address) { %>
+      <%= footerContact.address %>
+    <% } else { %>
+      Belum diisi
+    <% } %>
+  </p>
 
-      <div class="footer-col">
-        <h4 class="footer-heading">Tautan</h4>
-        <ul class="footer-links">
-          <li><a href="/laporan">Laporan Keuangan</a></li>
-          <li><a href="/adart">AD/ART</a></li>
-          <li><a href="/kontak">Kontak</a></li>
-        </ul>
-      </div>
-    </div>
+  <p>
+    <% if (footerContact && footerContact.email) { %>
+      <a href="mailto:<%= footerContact.email %>">
+        <%= footerContact.email %>
+      </a>
+    <% } else { %>
+      Belum diisi
+    <% } %>
+  </p>
 
-    <div class="footer-bottom">
-      <div>© <%= new Date().getFullYear() %> <%= ORG %></div>
-    </div>
-  </div>
+  <p>
+    <% if (footerContact && footerContact.phone) { %>
+      <a href="https://wa.me/<%= footerContact.phone.replace(/^0/, '62') %>"
+         target="_blank" rel="noopener">
+        <%= footerContact.phone %>
+      </a>
+    <% } else { %>
+      Belum diisi
+    <% } %>
+  </p>
+</div>
 </footer>
