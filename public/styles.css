@@ -185,32 +185,52 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
 }
 
 /* ===== Lightbox ===== */
-.lightbox-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: none; align-items: center; justify-content: center; z-index: 50; }
+.lightbox-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.8);
+  display: none; align-items: center; justify-content: center;
+  z-index: 50;
+}
 .lightbox-backdrop.active { display: flex; }
-.lightbox-img { max-width: 92vw; max-height: 90vh; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,.5); }
-.lightbox-caption { color: #fff; margin-top: 8px; text-align: center; }
+.lightbox-img {
+  max-width: 92vw; max-height: 90vh;
+  border-radius: 12px; border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
+}
+.lightbox-caption {
+  color: #fff; margin-top: 8px; text-align: center;
+}
 
 /* ===== Admin Modern ===== */
 .admin-wrap { padding-top: 8px; }
-.admin-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 6px 0 14px; }
+.admin-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 16px; margin: 6px 0 14px;
+}
 .admin-title { margin: 0; font-size: clamp(22px,2.2vw,28px); }
 
 .form-modern { padding: 16px; }
-.form-grid-2 { display: grid; grid-template-columns: 1.3fr .9fr; gap: 18px; }
+.form-grid-2 {
+  display: grid; grid-template-columns: 1.3fr .9fr; gap: 18px;
+}
 @media (max-width:900px) { .form-grid-2 { grid-template-columns: 1fr; } }
 
 .label { display: block; margin: 8px 0 6px; font-weight: 600; }
 .input, .textarea {
-  width: 100%; padding: 12px 12px; border-radius: 12px; border: 1px solid var(--border);
+  width: 100%; padding: 12px 12px;
+  border-radius: 12px; border: 1px solid var(--border);
   background: #0b1322; color: var(--text); outline: none;
 }
-.input:focus, .textarea:focus { border-color: #2b72ff; box-shadow: 0 0 0 3px rgba(43,114,255,.15); }
+.input:focus, .textarea:focus {
+  border-color: #2b72ff; box-shadow: 0 0 0 3px rgba(43,114,255,.15);
+}
 .textarea { resize: vertical; min-height: 120px; }
 
 .form-bar {
   position: sticky; bottom: 12px; margin-top: 12px; padding: 10px 12px;
   background: rgba(20,35,58,.85); border: 1px solid var(--border); border-radius: 12px;
-  display: flex; align-items: center; justify-content: space-between; backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(6px);
 }
 
 .btn.ghost { background: transparent; border: 1px solid var(--border); }
@@ -222,8 +242,13 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.02);
   transition: border-color .2s, background .2s; cursor: pointer; overflow: hidden;
 }
-.dropzone.is-drag { border-color: #2b72ff; background: rgba(43,114,255,.06); }
-.dropzone .dz-empty { display: flex; flex-direction: column; gap: 6px; align-items: center; color: #bcd1ff; }
+.dropzone.is-drag {
+  border-color: #2b72ff; background: rgba(43,114,255,.06);
+}
+.dropzone .dz-empty {
+  display: flex; flex-direction: column; gap: 6px;
+  align-items: center; color: #bcd1ff;
+}
 .dropzone .dz-empty svg { opacity: .85; }
 .dz-preview { position: absolute; inset: 0; display: none; }
 .dz-preview img { width: 100%; height: 100%; object-fit: cover; }
@@ -313,17 +338,19 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   text-align: center;
 }
 
-/* ====== Anggota: grid 3 kolom ====== */
+/* =========================
+   ANGGOTA – PUBLIK & ADMIN
+   ========================= */
+
+/* ====== Anggota: grid 3 kolom (publik) ====== */
 
 /* UL pembungkus */
 .members-grid {
   list-style: none;
   margin: 0;
   padding: 0;
-
   display: grid;
-  /* 3 kolom di semua ukuran layar */
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr); /* 3 kolom, termasuk di HP */
   gap: 8px;
 }
 
@@ -332,31 +359,33 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   min-width: 0; /* biar isi bisa wrap dengan rapi */
 }
 
-/* link kartu anggota */
+/* link kartu anggota (publik) */
 .member-link {
   display: flex;
   align-items: center;
   gap: 6px;
-
   width: 100%;
   padding: 6px 8px;
   border-radius: 12px;
-
   background: #111827;
   color: inherit;
   text-decoration: none;
-
   min-height: 52px;
+  border: 1px solid rgba(255,255,255,.06);
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
 }
 
 .member-link:hover {
   background: rgba(255,255,255,.06);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.35);
 }
 
 /* nomor urut */
-.member-index {
+.member-index,
+.member-no {
   flex: 0 0 auto;
-  width: 16px;
+  width: 18px;
   text-align: right;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
@@ -369,21 +398,18 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   object-fit: cover;
   border-radius: 999px;
 }
-
 .avatar--sm {
   width: 34px;
   height: 34px;
 }
 
-/* nama */
+/* nama & tanggal */
 .member-name {
   font-weight: 600;
   font-size: 12px;
   line-height: 1.2;
   word-wrap: break-word;
 }
-
-/* kalau nanti dipakai lagi */
 .member-date {
   color: var(--muted);
   font-size: 11px;
@@ -394,22 +420,54 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   .member-link {
     padding: 8px 10px;
   }
-
   .avatar--sm {
     width: 40px;
     height: 40px;
   }
-
   .member-name {
     font-size: 13px;
   }
 }
 
+/* ====== Anggota: daftar admin (mirip publik) ====== */
+.admin-members-grid {
+  display: grid;
+  gap: 10px 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.member-pill--admin {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: #111827;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.member-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.member-admin-actions {
+  margin-left: auto;
+}
+
+/* tombol kecil untuk admin */
+.btn-sm {
+  padding: 6px 10px;
+  font-size: .86rem;
+  border-radius: 999px;
+}
+
 /* ====== Detail anggota ====== */
-/* foto header: tidak terlalu besar */
+
+/* foto header di halaman detail anggota */
 .media-preview.member .media-fit{
-  height: clamp(180px, 38vh, 440px);
-  object-fit: cover;     /* tetap rapi */
+  height: clamp(200px, 38vh, 420px);  /* satu aturan saja, tidak duplikat */
+  object-fit: cover;
 }
 
 /* dua kolom pada desktop */
@@ -441,12 +499,6 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   line-height:1; padding:8px 12px;
 }
 
-/* Foto member publik: tinggi moderat */
-.media-preview.member .media-fit {
-  max-height: 360px;
-  object-fit: cover;   /* isi kotak tapi tetap rapi */
-}
-
 /* ===== [Fix] Spasi judul aman di bawah header sticky (Anggota & Kontak) ===== */
 :root { --page-top-gap: 24px; }            /* atur 20–32px sesuai selera */
 @media (max-width: 768px){ :root { --page-top-gap: 16px; } }
@@ -467,11 +519,4 @@ body.page-kontak  .section {
 .container > h1:first-child,
 .section   > h1:first-child {
   margin-top: 0;
-}
-
-/* ===== [Fix] Satukan aturan foto header di detail anggota =====
-   (hindari duplikasi selector .media-preview.member .media-fit) */
-.media-preview.member .media-fit{
-  height: clamp(200px, 38vh, 420px);  /* boleh ubah 180–440px */
-  object-fit: cover;
 }
