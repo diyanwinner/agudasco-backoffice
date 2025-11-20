@@ -6,7 +6,7 @@
       <div class="footer-col">
         <h4 class="footer-heading">Tentang</h4>
         <p>
-          AGUDASCO adalah wadah organisasi alumni yang bertujuan untuk
+          AGUDASCO adalah wadah organisasi yang bertujuan untuk
           membangun persaudaraan, kegiatan sosial, dan pengembangan komunitas.
         </p>
       </div>
@@ -22,18 +22,16 @@
       </div>
 
       <!-- KOL 3 – Kontak -->
-      <% 
-        // ambil dari footerContact kalau ada,
-        // kalau tidak ada pakai contact (halaman /kontak)
-        const fc = (typeof footerContact !== 'undefined' && footerContact) 
-          ? footerContact 
+      <%
+        const fc = (typeof footerContact !== 'undefined' && footerContact)
+          ? footerContact
           : (typeof contact !== 'undefined' ? contact : {});
       %>
       <div class="footer-col">
         <h4 class="footer-heading">Kontak</h4>
         <p><%= (fc.address && fc.address.trim()) || 'Belum diisi' %></p>
-        <p><%= (fc.email && fc.email.trim())   || 'Belum diisi' %></p>
-        <p><%= (fc.phone && fc.phone.trim())   || 'Belum diisi' %></p>
+        <p><%= (fc.email   && fc.email.trim())   || 'Belum diisi' %></p>
+        <p><%= (fc.phone   && fc.phone.trim())   || 'Belum diisi' %></p>
       </div>
 
     </div>
