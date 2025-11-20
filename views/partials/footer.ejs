@@ -32,37 +32,36 @@
       <div class="footer-col">
         <h4 class="footer-heading">Kontak</h4>
 
-        <p>
-          <% if (footerContact && footerContact.address) { %>
-            <%= footerContact.address %>
-          <% } else { %>
-            Belum diisi
-          <% } %>
-        </p>
+        <%
+        // Ambil data kontak dari mana saja yang tersedia:
+        // 1. footerContact dari server.js (res.locals)
+        // 2. contact (dipakai di halaman /kontak)
+        const src =
+          (typeof footerContact !== 'undefined' && footerContact) ||
+          (typeof contact !== 'undefined' && contact) ||
+          {};
 
-        <p>
-          <% if (footerContact && footerContact.email) { %>
-            <a href="mailto:<%= footerContact.email %>"><%= footerContact.email %></a>
-          <% } else { %>
-            Belum diisi
-          <% } %>
-        </p>
+        const safe = v => (v && String(v).trim()) ? String(v).trim() : null;
 
+        const address = safe(src.address || src.alamat);
+        const email   = safe(src.email   || src.org_email || src.contact_email);
+        const phone   = safe(src.phone   || src.telepon   || src.telepon_wa);
+        const wa      = safe(src.whatsapp);
+        %>
+
+        <p><%= address || 'Belum diisi' %></p>
+        <p><%= email   || 'Belum diisi' %></p>
         <p>
-          <% if (footerContact && footerContact.phone) { %>
-            <a href="https://wa.me/<%= footerContact.phone.replace(/^0/, '62') %>" target="_blank" rel="noopener">
-              <%= footerContact.phone %>
-            </a>
-          <% } else { %>
+          <% if (phone) { %>
+            Telp: <%= phone %><br>
+          <% } %>
+          <% if (wa) { %>
+            WA: <%= wa %>
+          <% } %>
+          <% if (!phone && !wa) { %>
             Belum diisi
           <% } %>
         </p>
       </div>
-
-    </div>
-
-    <div class="footer-bottom">
-      <p>© <%= new Date().getFullYear() %> <%= ORG %> — All rights reserved.</p>
-    </div>
   </div>
 </footer>
