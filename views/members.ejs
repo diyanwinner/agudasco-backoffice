@@ -8,8 +8,8 @@
     <ol class="members-grid">
       <% (members || []).forEach(function (m, idx) { %>
         <li class="members-grid-item">
-          <a class="member-pill" href="/anggota/<%= m.id %>">
-            <span class="member-no"><%= idx + 1 %>.</span>
+          <a class="member-link" href="/anggota/<%= m.id %>">
+            <span class="member-index"><%= idx + 1 %>.</span>
             <img
               loading="lazy"
               class="avatar avatar--sm"
