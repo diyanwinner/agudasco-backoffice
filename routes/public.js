@@ -58,29 +58,27 @@ export default function (q, q1) {
     });
   });
 
-  // ========= Laporan =========
-  router.get("/laporan", async (_req, res) => {
-    const reports = await q("SELECT * FROM reports ORDER BY id DESC");
-    res.render("reports", {
-      title: "Laporan Keuangan",
+  // ===== Laporan (langsung flipbook) =====
+router.get("/laporan", (req, res) => {
+  // langsung arahkan ke halaman flipbook
+  res.redirect("/laporan/book");
+});
+
+router.get("/laporan/book", (req, res) => {
+  res.render("report_book", {
+    title: "Laporan Keuangan (Flipbook)",
+    active: "laporan",
+  });
+});
+
+  // Laporan Keuangan (Flipbook)
+  router.get("/laporan/book", (_req, res) => {
+    res.render("report_book", {
+      title: "Laporan Keuangan 2025 (Flipbook)",
       active: "laporan",
-      reports,
-      footerContact: res.locals.footerContact
     });
   });
-
-  router.get("/laporan/:id", async (req, res) => {
-    const report = await q1("SELECT * FROM reports WHERE id=$1", [req.params.id]);
-    if (!report) return res.status(404).send("Laporan tidak ditemukan");
-
-    res.render("report_view", {
-      title: report.title,
-      active: "laporan",
-      report,
-      footerContact: res.locals.footerContact
-    });
-  });
-
+  
   /* ===== AD/ART ===== */
   router.get("/adart", (_req, res) => res.redirect("/adart/book"));
 
@@ -89,14 +87,6 @@ export default function (q, q1) {
       title: "AD/ART (Flipbook)",
       active: "adart",
       footerContact: res.locals.footerContact
-    });
-  });
-
-  // Laporan Keuangan (Flipbook)
-  router.get("/laporan/book", (_req, res) => {
-    res.render("report_book", {
-      title: "Laporan Keuangan 2025 (Flipbook)",
-      active: "laporan",
     });
   });
 
