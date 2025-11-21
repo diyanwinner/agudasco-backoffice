@@ -1,51 +1,165 @@
 <%- include('layout-top', { title: 'Laporan Keuangan 2025 (Flipbook)', active: 'laporan' }) %>
 
-<main class="section">
-  <header class="section-head">
-    <h1>Laporan Keuangan — Mode Flipbook</h1>
-    <div class="muted">Gunakan tampilan flipbook untuk membaca laporan keuangan tahun 2025 secara nyaman.</div>
-  </header>
+<div class="container py-4">
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <h1 class="h4 mb-0">laporam — Mode Flipbook</h1>
+    <!-- Hanya Mode Zoom (PDF asli) -->
+    <a href="/docs/laporankeuangantahun2025.pdf" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm ms-auto">
+      Mode Zoom
+    </a>
+  </div>
 
-  <div class="book-wrap form-dark">
-    <div id="flipbook" class="flipbook-container">
-      <!-- Fallback jika JS mati -->
-      <iframe
-        src="/docs/laporankeuangantahun2025.pdf#view=FitH"
-        title="Laporan Keuangan 2025"
-        style="width:100%;height:100%;border:0;"
-      ></iframe>
+  <div class="card border-0 form-dark">
+    <div class="card-body">
+      <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:620px"></div>
+
+      <div id="hint" class="text-secondary small mt-3">
+        Pratinjau cepat dimuat untuk performa. Tekan tombol <strong>Mode Zoom</strong> untuk baca super tajam.
+      </div>
+      <div id="errBox" class="text-danger small mt-2" style="display:none;"></div>
+
+      <p class="text-center small text-secondary mt-2 mb-0">
+        Sumber file: <code>/docs/laporankeuangantahun2025.pdf</code>
+      </p>
     </div>
   </div>
-</main>
+</div>
 
+<!-- ================== CSS PageFlip ================== -->
+<link rel="stylesheet" href="/public/vendor/stPageFlip.min.css" />
+<!-- Minimal fallback agar tidak “numpuk” bila CSS gagal (aman dipakai bersamaan) -->
+<style>
+  .stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0)}
+  .stf__wrapper{position:relative;width:100%;height:100%;box-sizing:border-box}
+  .stf__block{position:absolute;inset:0;box-sizing:border-box}
+  .stf__item{position:absolute;inset:0;display:block;box-sizing:border-box;transform-style:preserve-3d}
+  .stf__outerShadow,.stf__innerShadow,.stf__hardShadow{position:absolute;left:0;top:0}
+</style>
+
+<!-- ================== PDF.js ================== -->
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-  // Inisialisasi flipbook simpel dengan PDF.js / turn.js kalau sudah di-load di layout
-  (function () {
-    const el = document.getElementById('flipbook');
-    if (!el) return;
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+</script>
 
-    // Kalau kamu nanti punya inisialisasi khusus (kayak di AD/ART),
-    // bisa dipanggil di sini. Untuk sekarang kita biarkan iframe-nya yang kerja.
-    //
-    // Contoh (kalau ada helper global):
-    // if (window.initFlipbook) {
-    //   window.initFlipbook(el, '/docs/laporankeuangantahun2025.pdf');
-    // }
+<!-- ================== PageFlip JS (lokal + fallback) ================== -->
+<script src="/public/vendor/page-flip.browser.min.js"></script>
+<script>
+(function ensureFlip(){
+  if (window.PageFlip || (window.St && window.St.PageFlip)) return;
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js';
+  document.head.appendChild(s);
+})();
+</script>
 
-    // Kita kasih info kecil buat user mobile supaya mereka zoom sendiri
-    el.setAttribute('aria-label', 'Laporan keuangan 2025, tampilan flipbook. Untuk membaca dengan super tajam, gunakan Mode Zoom.');
-  })();
+<!-- ================== MAIN (enteng, tanpa HD) ================== -->
+<script>
+(async () => {
+  const pdfUrl = '/docs/laporankeuangantahun2025.pdf';
+  const el = document.getElementById('flipbook');
+  const errBox = document.getElementById('errBox');
+  const hint = document.getElementById('hint');
+  const showErr = (m)=>{ errBox.style.display='block'; errBox.textContent=m };
+
+  // Deteksi perangkat & hemat data
+  const isPhone = matchMedia('(max-width: 576px)').matches;
+  const net = navigator.connection || {};
+  const saveData = !!net.saveData;
+
+  // Batas DPR supaya canvas tidak berat
+  const DPR = Math.min(window.devicePixelRatio || 1, saveData ? 1.25 : 2);
+
+  // Target tinggi pratinjau (tanpa HD)
+  const H_PREVIEW = isPhone ? 1100 : 1300;
+
+  async function renderPdfToImages(pdf, targetH) {
+    const imgs = [];
+    // Render berurutan (RAM friendly)
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const base = page.getViewport({ scale: 1 });
+      const scale = (targetH / base.height) * DPR;
+      const vp = page.getViewport({ scale });
+
+      const c = document.createElement('canvas');
+      const ctx = c.getContext('2d');
+
+      c.width = Math.ceil(vp.width);
+      c.height = Math.ceil(vp.height);
+
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+
+      // JPEG quality 0.82 cukup tajam & kecil
+      imgs.push(c.toDataURL('image/jpeg', 0.82));
+      await new Promise(r => requestAnimationFrame(r)); // beri napas UI
+    }
+    return imgs;
+  }
+
+  // Load PDF
+  let pdf;
+  try {
+    pdf = await pdfjsLib.getDocument(pdfUrl).promise;
+  } catch(e) {
+    return showErr('Gagal memuat PDF. Pastikan /docs/laporankeuangantahun2025.pdf tersedia.');
+  }
+
+  // Tunggu PageFlip siap
+  function getFlipCtor(){ return window.PageFlip || (window.St && window.St.PageFlip) || null; }
+  for (let i=0;i<30 && !getFlipCtor();i++) { await new Promise(r=>setTimeout(r,100)); }
+  const Flip = getFlipCtor();
+  if (!Flip) return showErr('Library PageFlip tidak ter-load. Coba refresh.');
+
+  // Ukuran halaman flip (single-page di HP, spread di desktop)
+  const singlePage = isPhone;
+  const pageW = singlePage ? 520 : 660;
+  const pageH = singlePage ? 860 : 900;
+
+  const flip = new Flip(el, {
+    width: pageW, height: pageH,
+    size: 'stretch',
+    showCover: true,
+    mobileScrollSupport: true,
+    maxShadowOpacity: 0.22,
+    minWidth: 320, minHeight: 480,
+    useMouseEvents: true,
+  });
+
+  // Render pratinjau & load
+  try {
+    const preview = await renderPdfToImages(pdf, H_PREVIEW);
+    flip.loadFromImages(preview);
+  } catch(e) {
+    console.error(e);
+    return showErr('Gagal membuat pratinjau.');
+  }
+
+  // Navigasi keyboard (desktop)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft')  flip.flipPrev();
+    if (e.key === 'ArrowRight') flip.flipNext();
+  });
+
+  // Responsif
+  const onResize = () => {
+    const w = el.clientWidth || pageW;
+    const ratio = pageH / pageW;
+    flip.update({ width: w, height: Math.round(w * ratio) });
+  };
+  addEventListener('resize', onResize, { passive: true });
+  setTimeout(onResize, 0);
+
+  // Pesan hint final
+  hint.textContent = 'Pratinjau cepat aktif. Untuk teks super tajam, gunakan Mode Zoom.';
+})();
 </script>
 
 <style>
   /* Dark skin & gambar fit */
   .form-dark .page { background:#0f172a; }
-  #flipbook .page img{
-    width:100%;
-    height:100%;
-    object-fit:contain;
-    image-rendering:auto;
-  }
+  #flipbook .page img{ width:100%; height:100%; object-fit:contain; image-rendering:auto; }
 
   @media (max-width:576px){
     .container{ padding-left:.5rem; padding-right:.5rem; }
