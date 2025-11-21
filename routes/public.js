@@ -92,6 +92,14 @@ export default function (q, q1) {
     });
   });
 
+  // Laporan Keuangan (Flipbook)
+  router.get("/laporan/book", (_req, res) => {
+    res.render("report_book", {
+      title: "Laporan Keuangan 2025 (Flipbook)",
+      active: "laporan",
+    });
+  });
+
   // ========= Anggota =========
   router.get("/anggota", async (_req, res) => {
     const members = await q("SELECT id, name, avatar FROM members ORDER BY name ASC");
