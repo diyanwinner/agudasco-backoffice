@@ -1,282 +1,56 @@
-<%- include('layout-top', { title: 'Laporan Keuangan (Flipbook)', active: 'laporan' }) %>
+<%- include('layout-top', { title: 'Laporan Keuangan 2025 (Flipbook)', active: 'laporan' }) %>
 
-<main class="container">
+<main class="section">
   <header class="section-head">
     <h1>Laporan Keuangan — Mode Flipbook</h1>
-    <a
-      href="/docs/laporankeuangantahun2025.pdf"
-      target="_blank"
-      rel="noopener"
-      class="btn ghost"
-    >
-      Buka versi PDF (Zoom)
-    </a>
+    <div class="muted">Gunakan tampilan flipbook untuk membaca laporan keuangan tahun 2025 secara nyaman.</div>
   </header>
 
-  <section class="media-preview">
-    <div id="reportFlip" class="flip-container">
-      <div class="flip-book">
-        <!-- Halaman akan di-generate via JS dari PDF -->
-        <div class="flip-loading">
-          Memuat Laporan Keuangan...
-        </div>
-      </div>
+  <div class="book-wrap form-dark">
+    <div id="flipbook" class="flipbook-container">
+      <!-- Fallback jika JS mati -->
+      <iframe
+        src="/docs/laporankeuangantahun2025.pdf#view=FitH"
+        title="Laporan Keuangan 2025"
+        style="width:100%;height:100%;border:0;"
+      ></iframe>
     </div>
-    <p class="media-caption">
-      Laporan Keuangan AGUDASCO Tahun 2025 dalam tampilan buku.
-    </p>
-  </section>
+  </div>
 </main>
 
+<script>
+  // Inisialisasi flipbook simpel dengan PDF.js / turn.js kalau sudah di-load di layout
+  (function () {
+    const el = document.getElementById('flipbook');
+    if (!el) return;
+
+    // Kalau kamu nanti punya inisialisasi khusus (kayak di AD/ART),
+    // bisa dipanggil di sini. Untuk sekarang kita biarkan iframe-nya yang kerja.
+    //
+    // Contoh (kalau ada helper global):
+    // if (window.initFlipbook) {
+    //   window.initFlipbook(el, '/docs/laporankeuangantahun2025.pdf');
+    // }
+
+    // Kita kasih info kecil buat user mobile supaya mereka zoom sendiri
+    el.setAttribute('aria-label', 'Laporan keuangan 2025, tampilan flipbook. Untuk membaca dengan super tajam, gunakan Mode Zoom.');
+  })();
+</script>
+
 <style>
-  /* Layout khusus halaman flipbook */
-  body.page-adart-book {
-    background: #020617;
+  /* Dark skin & gambar fit */
+  .form-dark .page { background:#0f172a; }
+  #flipbook .page img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    image-rendering:auto;
   }
 
-  .flip-container {
-    width: 100%;
-    max-width: min(980px, 100%);
-    margin: 0 auto 18px;
-  }
-
-  .flip-book {
-    width: 100%;
-    height: min(620px, 82vh);
-    margin: 0 auto;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
-    background: radial-gradient(circle at top, #0f172a, #020617);
-  }
-
-  .flip-loading {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #cbd5f5;
-    font-size: 0.95rem;
-    letter-spacing: 0.02em;
-  }
-
-  .page-zoom-hint {
-    font-size: 0.9rem;
-    color: #9ca3af;
-    margin-top: 4px;
-    text-align: center;
-  }
-
-  .flip-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    margin: 0 auto 12px;
-    max-width: min(980px, 100%);
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: rgba(15, 23, 42, 0.96);
-    border: 1px solid rgba(148, 163, 184, 0.5);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.85);
-  }
-
-  .flip-toolbar-left,
-  .flip-toolbar-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .flip-btn {
-    border: 0;
-    border-radius: 999px;
-    padding: 6px 10px;
-    background: rgba(30, 64, 175, 0.9);
-    color: #e5e7eb;
-    font-size: 0.8rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.7);
-  }
-
-  .flip-btn.secondary {
-    background: rgba(15, 23, 42, 0.9);
-    box-shadow: none;
-    border: 1px solid rgba(148, 163, 184, 0.7);
-  }
-
-  .flip-btn:active {
-    transform: translateY(1px);
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.6);
-  }
-
-  .flip-label {
-    font-size: 0.8rem;
-    color: #cbd5e1;
-    opacity: 0.9;
-  }
-
-  .flip-page-info {
-    font-size: 0.8rem;
-    color: #e5e7eb;
-    min-width: 88px;
-    text-align: center;
-  }
-
-  .flip-zoom-indicator {
-    font-size: 0.78rem;
-    color: #9ca3af;
-  }
-
-  @media (max-width: 720px) {
-    .flip-book {
-      height: min(520px, 75vh);
-    }
-    .flip-toolbar {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .flip-toolbar-left,
-    .flip-toolbar-right {
-      justify-content: space-between;
-    }
+  @media (max-width:576px){
+    .container{ padding-left:.5rem; padding-right:.5rem; }
+    #flipbook{ height:74vh !important; }
   }
 </style>
-
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.min.js"></script>
-<script src="/vendor/stpageflip/stpageflip.min.js"></script>
-<link rel="stylesheet" href="/vendor/stpageflip/stpageflip.css" />
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Tambah kelas body khusus
-    document.body.classList.add("page-adart-book");
-
-    const pdfUrl = "/docs/laporankeuangantahun2025.pdf";
-    const container = document.querySelector("#reportFlip .flip-book");
-
-    if (!container) return;
-
-    // Buat toolbar di atas flipbook
-    const toolbar = document.createElement("div");
-    toolbar.className = "flip-toolbar";
-    toolbar.innerHTML = `
-      <div class="flip-toolbar-left">
-        <button class="flip-btn" data-action="prev">
-          ‹ Sebelumnya
-        </button>
-        <button class="flip-btn" data-action="next">
-          Berikutnya ›
-        </button>
-        <span class="flip-label">Navigasi halaman</span>
-      </div>
-      <div class="flip-toolbar-right">
-        <span class="flip-page-info">Halaman 1 / 1</span>
-        <span class="flip-zoom-indicator">Gunakan scroll / pinch untuk zoom</span>
-      </div>
-    `;
-    container.parentElement.insertBefore(toolbar, container);
-
-    const pageInfoEl = toolbar.querySelector(".flip-page-info");
-
-    // Inisialisasi PDF.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.worker.min.js";
-
-    let pageFlipInstance = null;
-
-    async function render() {
-      try {
-        const loading = document.createElement("div");
-        loading.className = "flip-loading";
-        loading.textContent = "Memuat Laporan Keuangan...";
-        container.innerHTML = "";
-        container.appendChild(loading);
-
-        const pdf = await pdfjsLib.getDocument(pdfUrl).promise;
-        const totalPages = pdf.numPages;
-
-        const pages = [];
-
-        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-          const page = await pdf.getPage(pageNum);
-          const viewport = page.getViewport({ scale: 1.5 });
-
-          const canvas = document.createElement("canvas");
-          const context = canvas.getContext("2d");
-
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-
-          await page.render({ canvasContext: context, viewport }).promise;
-
-          const pageWrapper = document.createElement("div");
-          pageWrapper.className = "page";
-          pageWrapper.innerHTML = `
-            <div class="page-content">
-              <img src="${canvas.toDataURL("image/png")}" alt="Halaman ${
-            pageNum
-          } Laporan Keuangan" />
-            </div>
-          `;
-          pages.push(pageWrapper);
-        }
-
-        // Hapus loading, masukkan halaman
-        container.innerHTML = "";
-        pages.forEach((p) => container.appendChild(p));
-
-        // Inisialisasi PageFlip
-        pageFlipInstance = new St.PageFlip(container, {
-          width: 800,
-          height: 600,
-          size: "stretch",
-          minWidth: 320,
-          maxWidth: 1200,
-          minHeight: 420,
-          maxHeight: 900,
-          showCover: false,
-          mobileScrollSupport: false,
-          usePortrait: true,
-          autoSize: true,
-          disableFlipByClick: false,
-        });
-
-        pageFlipInstance.loadFromHTML(pages);
-
-        function updatePageInfo(e) {
-          const page = e ? e.data : pageFlipInstance.getCurrentPageIndex();
-          const current = page + 1;
-          pageInfoEl.textContent = `Halaman ${current} / ${totalPages}`;
-        }
-
-        pageFlipInstance.on("flip", updatePageInfo);
-        updatePageInfo({ data: 0 });
-
-        // Tombol navigasi
-        toolbar
-          .querySelector('[data-action="prev"]')
-          .addEventListener("click", () => pageFlipInstance.flipPrev());
-        toolbar
-          .querySelector('[data-action="next"]')
-          .addEventListener("click", () => pageFlipInstance.flipNext());
-      } catch (err) {
-        console.error("Gagal memuat flipbook laporan:", err);
-        container.innerHTML =
-          '<div class="flip-loading">Gagal memuat Laporan Keuangan. ' +
-          '<a href="' +
-          pdfUrl +
-          '" target="_blank" rel="noopener" style="color:#93c5fd;text-decoration:underline;">Buka PDF langsung</a></div>';
-      }
-    }
-
-    render();
-  });
-</script>
 
 <%- include('layout-bottom') %>
