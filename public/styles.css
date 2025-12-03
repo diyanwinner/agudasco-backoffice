@@ -81,15 +81,25 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   padding-left: calc(var(--gutter) + var(--safe-l));
   padding-right: calc(var(--gutter) + var(--safe-r));
 }
+
 .banner-wrapper {
   position: relative;
-  margin: .25rem auto .75rem;
+  
+  /* --- [FIX] UBAH JADI FULL WIDTH --- */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-top: .25rem;
+  margin-bottom: .75rem;
+  border-radius: 0; /* Hapus lengkungan */
+  /* ---------------------------------- */
+
   height: clamp(240px,36vw,460px);
-  border-radius: 18px;
   overflow: hidden;
   background: rgba(255,255,255,.03);
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
+
 .banner-track { display: flex; height: 100%; transition: transform .55s ease-in-out; will-change: transform; }
 .banner-slide { flex: 0 0 100%; height: 100%; }
 .banner-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
