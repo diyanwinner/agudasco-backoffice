@@ -93,15 +93,13 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   margin-bottom: .75rem;
   border-radius: 0; /* Hapus lengkungan */
   
-  /* --- PERBAIKAN BIAR GAK KEPOTONG --- */
-  /* Kita hapus 'height: clamp(...)' yang lama */
-  /* Ganti pakai aspect-ratio sesuai standar gambar banner (biasanya 16:9) */
-  aspect-ratio: 16/9; 
-  height: auto; 
-  /* ----------------------------------- */
-
+  /* --- TINGGI BANNER DIBATASI (BIAR GA KEGEDEAN) --- */
+  /* Gw set minimal 300px, maksimal 550px. Bisa lu atur angkanya. */
+  height: clamp(300px, 45vw, 550px); 
+  
   overflow: hidden;
-  background: #0f1a2b; /* Warna cadangan kalau gambar loading */
+  /* Warna background untuk ngisi sisa ruang kiri-kanan (ambil dari warna gelap foto) */
+  background: #1a1512; 
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
 
