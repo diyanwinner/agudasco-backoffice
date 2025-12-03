@@ -92,11 +92,16 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
   margin-top: .25rem;
   margin-bottom: .75rem;
   border-radius: 0; /* Hapus lengkungan */
-  /* ---------------------------------- */
+  
+  /* --- PERBAIKAN BIAR GAK KEPOTONG --- */
+  /* Kita hapus 'height: clamp(...)' yang lama */
+  /* Ganti pakai aspect-ratio sesuai standar gambar banner (biasanya 16:9) */
+  aspect-ratio: 16/9; 
+  height: auto; 
+  /* ----------------------------------- */
 
-  height: clamp(240px,36vw,460px);
   overflow: hidden;
-  background: rgba(255,255,255,.03);
+  background: #0f1a2b; /* Warna cadangan kalau gambar loading */
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
 
