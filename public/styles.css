@@ -102,10 +102,9 @@ main {
   margin-top: .25rem;
   margin-bottom: .75rem;
 
-  /* [FIX] Tambah border merah & radius biar elegan */
-  border: 2px solid var(--red); /* Pakai variabel warna merah tema */
-  border-radius: 12px;          /* Kasih lengkungan dikit biar manis */
-  /* -------------------------------------------------- */
+  /* [FIX] Border jadi PUTIH (#ffffff) */
+  border: 2px solid #ffffff; 
+  border-radius: 12px;          
   
   /* --- TINGGI BANNER & BACKGROUND --- */
   height: clamp(300px, 45vw, 550px); 
