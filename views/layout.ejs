@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
-  <!-- Favicon (Cloudinary) -->
   <link rel="icon" href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="/public/styles.css?v=<%= buildId %>" />
 
-  <!-- FIX: header & mobile overlay -->
   <style>
     :root{
       --header-h: 64px;
@@ -21,70 +18,92 @@
     }
     /* Header fixed + offset konten */
     body{ padding-top: var(--header-h); background: var(--bg); color: var(--text); }
+    
     .site-header{
       position: fixed; inset: 0 0 auto 0; height: var(--header-h);
       z-index: 3000; background: var(--bg); border-bottom: 1px solid var(--border);
     }
-    .header-wrap{ height: 100%; display:flex; align-items:center; gap:12px; }
-    .brand{ color: inherit; text-decoration:none; font-weight:700; }
 
-    /* Desktop nav */
-    .nav-desktop a{ color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; }
-    .nav-desktop a.active{ font-weight:700; }
+    /* --- [FIX] HEADER LAYOUT --- */
+    .header-wrap { 
+      height: 100%; 
+      display: flex; 
+      align-items: center;
+      position: relative; /* Penting buat logo absolute */
+      justify-content: space-between; /* Default Mobile: Kiri-Kanan */
+    }
+
+    .brand { 
+      color: inherit; text-decoration:none; font-weight:700; 
+      display: flex; align-items: center; gap: 10px;
+      z-index: 10;
+    }
+
+    /* Desktop Nav Styles */
+    .nav-desktop a { 
+      color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; 
+      transition: color .2s;
+    }
+    .nav-desktop a.active, .nav-desktop a:hover { 
+      color: #9ec1ff; font-weight:700; 
+    }
+
+    /* [FIX] Logic Desktop: MENU TENGAH, LOGO KIRI */
+    @media (min-width: 993px) {
+      .header-wrap {
+        justify-content: center; /* Menu didorong ke tengah */
+      }
+      .brand {
+        position: absolute; /* Cabut logo dari antrian flex */
+        left: var(--gutter); /* Tempel logo di kiri mengikuti garis gutter container */
+      }
+    }
 
     /* Hamburger */
-    .nav-toggle{ display:none; margin-left:auto; border:0; background:transparent; padding:10px; }
+    .nav-toggle{ display:none; border:0; background:transparent; padding:10px; }
     .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
     .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
     .nav-toggle.is-open span:nth-child(2){ opacity:0; }
     .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
 
     /* Mobile overlay nav */
-    .mobile-nav{ position: fixed; inset: 0; z-index: 9999;
-      background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
+    .mobile-nav{ position: fixed; inset: 0; z-index: 9999; background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
     .mobile-nav.active{ display:block; }
     .mobile-nav__list{ list-style:none; padding:12px; margin:0; display:grid; gap:8px; }
     .mobile-nav__list a{
       display:block; padding:14px 16px; border:1px solid var(--border);
       border-radius:12px; text-decoration:none; color:#fff; background: rgba(255,255,255,.04);
     }
-
-    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998;
-      background: rgba(0,0,0,.4); display:none; }
+    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.4); display:none; }
     .nav-backdrop.active{ display:block; }
-
-    /* Lock scroll saat menu buka */
     .body--lock{ overflow:hidden; height:100vh; }
 
     /* Responsif */
     @media (max-width: 992px){
       .nav-desktop{ display:none; }
-      .nav-toggle{ display:inline-flex; flex-direction:column; margin-left:auto; }
+      .nav-toggle{ display:inline-flex; flex-direction:column; }
     }
     @media (min-width: 993px){
       .mobile-nav, .nav-backdrop{ display:none !important; }
       .nav-toggle{ display:none; }
     }
-
-    /* Pastikan overlay tidak ter-clipped */
     main, .container, .admin-wrap, .card, .page-wrap{ overflow:visible !important; }
   </style>
 </head>
 
 <body class="page-<%= (typeof active !== 'undefined' ? active : '') %>">
-  <!-- ===== Header ===== -->
   <header class="site-header">
     <div class="container header-wrap">
-      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO" style="display:flex;align-items:center;gap:10px">
+      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
         <img class="logo"
           src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png"
           srcset="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png 1x,
                   https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_88/v1760066670/AgudascoLogo_resize_injtq2.png 2x"
-          alt="Logo AGUDASCO" width="44" height="44" loading="eager" decoding="async"/>
+          alt="Logo AGUDASCO" 
+          width="44" height="44" loading="eager" decoding="async"/>
         <div class="title">AGUDASCO</div>
       </a>
 
-      <!-- Desktop nav -->
       <nav class="nav-desktop" aria-label="Navigasi utama">
         <a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a>
         <a href="/artikel" class="<%= active==='artikel'  ? 'active' : '' %>">Artikel</a>
@@ -97,14 +116,12 @@
         <a href="/admin"   class="<%= active==='admin'    ? 'active' : '' %>">Admin</a>
       </nav>
 
-      <!-- Tombol hamburger -->
       <button id="navToggle" class="nav-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Buka navigasi">
         <span></span><span></span><span></span>
       </button>
     </div>
   </header>
 
-  <!-- ===== Mobile overlay nav ===== -->
   <nav id="mobileNav" class="mobile-nav" aria-label="Navigasi utama (mobile)">
     <ul class="mobile-nav__list">
       <li><a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a></li>
@@ -120,17 +137,14 @@
   </nav>
   <div id="navBackdrop" class="nav-backdrop"></div>
 
-  <!-- ===== Main ===== -->
   <main>
     <div class="container">
       <%- body %>
     </div>
   </main>
 
-  <!-- ===== Footer partial ===== -->
   <%- include('partials/footer') %>
 
-  <!-- ===== Lightbox ===== -->
   <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
     <div>
       <img id="lightbox-img" class="lightbox-img" src="" alt=""/>
