@@ -1,33 +1,27 @@
-<%- include('layout-top', { title: 'AD/ART', active: 'adart' }) %>
+<%- include('layout-top', { title: 'AD/ART (Flipbook)', active: 'ad/art' }) %>
 
-<div class="container py-4">
+<div style="padding-top: 10px; min-height: 85vh;">
+  
   <div class="d-flex align-items-center gap-2 mb-3">
     <h1 class="h4 mb-0">AD/ART</h1>
-    <!-- Hanya Mode Zoom (PDF asli) -->
     <a href="/docs/adart.pdf" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm ms-auto">
       Mode Zoom
     </a>
   </div>
 
-  <div class="card border-0 form-dark">
-    <div class="card-body">
-      <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:620px"></div>
+  <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:620px"></div>
 
-      <div id="hint" class="text-secondary small mt-3">
-        Pratinjau cepat dimuat untuk performa. Tekan tombol <strong>Mode Zoom</strong> untuk baca super tajam.
-      </div>
-      <div id="errBox" class="text-danger small mt-2" style="display:none;"></div>
-
-      <p class="text-center small text-secondary mt-2 mb-0">
-        Sumber file: <code>/docs/adart.pdf</code>
-      </p>
-    </div>
+  <div id="hint" class="text-secondary small mt-3">
+    Pratinjau cepat dimuat untuk performa. Tekan tombol <strong>Mode Zoom</strong> untuk baca super tajam.
   </div>
+  <div id="errBox" class="text-danger small mt-2" style="display:none;"></div>
+
+  <p class="text-center small text-secondary mt-2 mb-0">
+    Sumber file: <code>/docs/adart.pdf</code>
+  </p>
 </div>
 
-<!-- ================== CSS PageFlip ================== -->
 <link rel="stylesheet" href="/public/vendor/stPageFlip.min.css" />
-<!-- Minimal fallback agar tidak “numpuk” bila CSS gagal (aman dipakai bersamaan) -->
 <style>
   .stf__parent{position:relative;display:block;box-sizing:border-box;transform:translateZ(0)}
   .stf__wrapper{position:relative;width:100%;height:100%;box-sizing:border-box}
@@ -36,14 +30,11 @@
   .stf__outerShadow,.stf__innerShadow,.stf__hardShadow{position:absolute;left:0;top:0}
 </style>
 
-<!-- ================== PDF.js ================== -->
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
-
-<!-- ================== PageFlip JS (lokal + fallback) ================== -->
 <script src="/public/vendor/page-flip.browser.min.js"></script>
 <script>
 (function ensureFlip(){
@@ -54,7 +45,6 @@
 })();
 </script>
 
-<!-- ================== MAIN (enteng, tanpa HD) ================== -->
 <script>
 (async () => {
   const pdfUrl = '/docs/adart.pdf';
@@ -63,42 +53,30 @@
   const hint = document.getElementById('hint');
   const showErr = (m)=>{ errBox.style.display='block'; errBox.textContent=m };
 
-  // Deteksi perangkat & hemat data
   const isPhone = matchMedia('(max-width: 576px)').matches;
   const net = navigator.connection || {};
   const saveData = !!net.saveData;
-
-  // Batas DPR supaya canvas tidak berat
   const DPR = Math.min(window.devicePixelRatio || 1, saveData ? 1.25 : 2);
-
-  // Target tinggi pratinjau (tanpa HD)
   const H_PREVIEW = isPhone ? 1100 : 1300;
 
   async function renderPdfToImages(pdf, targetH) {
     const imgs = [];
-    // Render berurutan (RAM friendly)
     for (let p = 1; p <= pdf.numPages; p++) {
       const page = await pdf.getPage(p);
       const base = page.getViewport({ scale: 1 });
       const scale = (targetH / base.height) * DPR;
       const vp = page.getViewport({ scale });
-
       const c = document.createElement('canvas');
       const ctx = c.getContext('2d');
-
       c.width = Math.ceil(vp.width);
       c.height = Math.ceil(vp.height);
-
       await page.render({ canvasContext: ctx, viewport: vp }).promise;
-
-      // JPEG quality 0.82 cukup tajam & kecil
       imgs.push(c.toDataURL('image/jpeg', 0.82));
-      await new Promise(r => requestAnimationFrame(r)); // beri napas UI
+      await new Promise(r => requestAnimationFrame(r));
     }
     return imgs;
   }
 
-  // Load PDF
   let pdf;
   try {
     pdf = await pdfjsLib.getDocument(pdfUrl).promise;
@@ -106,13 +84,11 @@
     return showErr('Gagal memuat PDF. Pastikan /docs/adart.pdf tersedia.');
   }
 
-  // Tunggu PageFlip siap
   function getFlipCtor(){ return window.PageFlip || (window.St && window.St.PageFlip) || null; }
   for (let i=0;i<30 && !getFlipCtor();i++) { await new Promise(r=>setTimeout(r,100)); }
   const Flip = getFlipCtor();
   if (!Flip) return showErr('Library PageFlip tidak ter-load. Coba refresh.');
 
-  // Ukuran halaman flip (single-page di HP, spread di desktop)
   const singlePage = isPhone;
   const pageW = singlePage ? 520 : 660;
   const pageH = singlePage ? 860 : 900;
@@ -127,7 +103,6 @@
     useMouseEvents: true,
   });
 
-  // Render pratinjau & load
   try {
     const preview = await renderPdfToImages(pdf, H_PREVIEW);
     flip.loadFromImages(preview);
@@ -136,13 +111,11 @@
     return showErr('Gagal membuat pratinjau.');
   }
 
-  // Navigasi keyboard (desktop)
   document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowLeft')  flip.flipPrev();
     if (e.key === 'ArrowRight') flip.flipNext();
   });
 
-  // Responsif
   const onResize = () => {
     const w = el.clientWidth || pageW;
     const ratio = pageH / pageW;
@@ -151,18 +124,15 @@
   addEventListener('resize', onResize, { passive: true });
   setTimeout(onResize, 0);
 
-  // Pesan hint final
   hint.textContent = 'Pratinjau cepat aktif. Untuk teks super tajam, gunakan Mode Zoom.';
 })();
 </script>
 
 <style>
-  /* Dark skin & gambar fit */
-  .form-dark .page { background:#0f172a; }
+  #flipbook .page { background:#0f172a; }
   #flipbook .page img{ width:100%; height:100%; object-fit:contain; image-rendering:auto; }
-
   @media (max-width:576px){
-    .container{ padding-left:.5rem; padding-right:.5rem; }
+    .container{ padding-left:.25rem; padding-right:.25rem; }
     #flipbook{ height:74vh !important; }
   }
 </style>
