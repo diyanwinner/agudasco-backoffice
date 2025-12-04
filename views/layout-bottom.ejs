@@ -1,72 +1,40 @@
 </main>
 
-<footer class="site-footer">
-  <div class="container footer-grid">
-    <div class="footer-col">
-      <h4 class="footer-heading">Tentang</h4>
-      <p>AGUDASCO adalah wadah kebersamaan karyawan di lingkungan perusahaan,
-        untuk kegiatan sosial, simpan pinjam, dan pengembangan komunitas internal.</p>
-    </div>
+  <%- include('partials/footer') %>
 
-    <div class="footer-col">
-      <h4 class="footer-heading">Navigasi</h4>
-      <ul class="footer-links">
-        <li><a href="/">Beranda</a></li>
-        <li><a href="/artikel">Artikel</a></li>
-        <li><a href="/laporan">Laporan</a></li>
-        <li><a href="/adart">AD/ART</a></li>
-        <li><a href="/anggota">Anggota</a></li>
-        <li><a href="/kontak">Kontak</a></li>
-      </ul>
-    </div>
-
-    <div class="footer-col">
-      <h4 class="footer-heading">Kontak</h4>
-      <p><%= (footerContact && footerContact.address) || 'Jl. Kamal Muara VII No. 1, Penjaringan Jakarta Utara' %></p>
-      <p><%= (footerContact && footerContact.email)   || 'agudasco18@gmail.com' %></p>
-      <p><%= (footerContact && footerContact.phone)   || '0895340169646' %></p>
-    </div>
+  <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
+    <div><img id="lightbox-img" class="lightbox-img" src="" alt=""/><div id="lightbox-cap" class="lightbox-caption"></div></div>
   </div>
 
-  <div class="container footer-bottom">
-    <span>© 2025 AGUDASCO — All rights reserved.</span>
-    <span>Dibangun dengan ❤️ untuk keluarga besar AGUDASCO.</span>
-  </div>
-</footer>
-
-<script>
-// ====== Mobile nav toggle ======
-(function() {
-  const navToggle = document.getElementById('navToggle');
-  const siteNav   = document.getElementById('siteNav');
-
-  if (!navToggle || !siteNav) return;
-
-  navToggle.addEventListener('click', () => {
-    navToggle.classList.toggle('is-open');
-    siteNav.classList.toggle('is-open');
-
-    // lock scroll saat menu mobile kebuka
-    if (siteNav.classList.contains('is-open')) {
-      document.documentElement.classList.add('no-scroll');
-      document.body.classList.add('no-scroll');
-    } else {
-      document.documentElement.classList.remove('no-scroll');
-      document.body.classList.remove('no-scroll');
+  <script>
+    // Lightbox Logic
+    function openLightbox(src, cap){
+      const b=document.getElementById('lightbox'); if(b){
+        document.getElementById('lightbox-img').src=src;
+        document.getElementById('lightbox-cap').textContent=cap||'';
+        b.classList.add('active');
+      }
     }
-  });
+    function closeLightbox(e){ if(e.target.id==='lightbox')document.getElementById('lightbox').classList.remove('active'); }
 
-  // tutup nav saat klik link
-  siteNav.addEventListener('click', (e) => {
-    if (e.target.tagName === 'A' && siteNav.classList.contains('is-open')) {
-      navToggle.classList.remove('is-open');
-      siteNav.classList.remove('is-open');
-      document.documentElement.classList.remove('no-scroll');
-      document.body.classList.remove('no-scroll');
-    }
-  });
-})();
-</script>
+    // UNIVERSAL MOBILE MENU LOGIC
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('navToggle');
+      const panel = document.getElementById('mobileNav');
+      const backdrop = document.getElementById('navBackdrop');
 
+      if(btn && panel && backdrop){
+        const close = () => {
+          btn.classList.remove('is-open'); panel.classList.remove('active'); backdrop.classList.remove('active'); document.body.classList.remove('body--lock');
+        };
+        const open = () => {
+          btn.classList.add('is-open'); panel.classList.add('active'); backdrop.classList.add('active'); document.body.classList.add('body--lock');
+        };
+        btn.addEventListener('click', (e) => { e.stopPropagation(); panel.classList.contains('active') ? close() : open(); });
+        backdrop.addEventListener('click', close);
+        panel.querySelectorAll('a').forEach(l => l.addEventListener('click', close));
+      }
+    });
+  </script>
 </body>
 </html>
