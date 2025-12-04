@@ -1,145 +1,185 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title><%= (typeof title !== 'undefined' ? title + ' · ' : '') %>AGUDASCO</title>
+  <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="icon" href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png" />
 
-  <!-- THEME utama gelap + util -->
+  <link rel="stylesheet" href="/public/styles.css" />
+
   <style>
-    :root { --navH: 64px; }
-    @media (min-width: 992px) { :root { --navH: 72px; } }
-
-    body { background:#0b1220; color:#eaeef7; padding-top:var(--navH); }
-    .border-dashed { border:1px dashed #445; }
-    .nav-link.active { font-weight:600; color:#0dcaf0 !important; }
-    .navbar-brand { font-weight:600; letter-spacing:.5px; }
-    footer { color:#99a3b3; }
-
-    /* ==== Skin gelap untuk halaman form (pakai class .form-dark di body) ==== */
-    .form-dark .card,
-    .form-dark .card-header,
-    .form-dark .card-body {
-      background:#111827;
-      border-color:#293248;
-      color:#e5e7eb;
+    :root{
+      --header-h: 64px;
+      --bg: #0b1220;
+      --border: #223241;
+      --text: #fff;
+      --gutter: 24px; /* Jarak aman dari pinggir layar */
     }
-    .form-dark .form-label { color:#cbd5e1; }
-
-    .form-dark .form-control,
-    .form-dark .form-select,
-    .form-dark .form-control:disabled,
-    .form-dark .form-select:disabled {
-      background:#0f172a;
-      color:#e5e7eb;
-      border-color:#334155;
-    }
-    .form-dark .form-control::placeholder { color:#94a3b8; }
-    .form-dark .form-control:focus,
-    .form-dark .form-select:focus {
-      background:#0f172a;
-      color:#fff;
-      border-color:#38bdf8;
-      box-shadow:0 0 0 .2rem rgba(56,189,248,.15);
-    }
-    .form-dark .input-group-text {
-      background:#0f172a;
-      color:#cbd5e1;
-      border-color:#334155;
-    }
-    .form-dark .form-check-input { background:#0f172a; border-color:#334155; }
-    .form-dark .form-check-input:checked { background:#38bdf8; border-color:#38bdf8; }
-
-    .form-dark .placeholder-panel {
-      background:#0f172a; border:1px dashed #334155; color:#94a3b8;
+    
+    /* Reset & Base */
+    body { padding-top: var(--header-h); background: var(--bg); color: var(--text); margin: 0; }
+    
+    /* Header Container Fixed */
+    .site-header {
+      position: fixed; inset: 0 0 auto 0; height: var(--header-h);
+      z-index: 3000; background: var(--bg); border-bottom: 1px solid var(--border);
     }
 
-    .btn-primary { background:#0ea5e9; border-color:#0ea5e9; }
-    .btn-primary:hover { background:#0284c7; border-color:#0284c7; }
-    .btn-outline-light { color:#e5e7eb; border-color:#475569; }
-    .btn-outline-light:hover { background:#1f2937; border-color:#64748b; color:#fff; }
-
-    /* ==== Floating WhatsApp ==== */
-    .wa-float{
-      position: fixed;
-      right: 16px;
-      bottom: 16px;
-      z-index: 2147483647 !important;   /* paling atas */
-      display: flex;
+    /* [FIX] HAPUS CLASS 'CONTAINER' -> GANTI 'HEADER-WRAP' BIAR PLONG */
+    .header-wrap { 
+      height: 100%; 
+      display: flex; 
       align-items: center;
-      gap: .5rem;
-      pointer-events: auto;
+      padding: 0 var(--gutter); /* Padding kiri-kanan biar ga nempel banget */
+      position: relative; 
+      justify-content: space-between; /* Default Mobile: Kiri-Kanan */
+      width: 100%; /* Paksa Full Width */
     }
-    .wa-float .wa-btn{
-      width: 56px; height: 56px;
-      border: 0; border-radius: 9999px;
-      background: #25D366;
-      color: #0b1220;
-      display: grid; place-items: center;
-      box-shadow: 0 12px 24px rgba(37,211,102,.35);
-      cursor: pointer;
-      transition: transform .15s ease, box-shadow .15s ease;
-    }
-    .wa-float .wa-btn:hover{ transform: translateY(-1px); box-shadow: 0 16px 28px rgba(37,211,102,.45); }
-    .wa-float .wa-btn:active{ transform: translateY(0); box-shadow: 0 8px 18px rgba(37,211,102,.35); }
 
-    .wa-float .wa-label{
-      background:#111827;
-      color:#e5e7eb;
-      border:1px solid #293248;
-      font-weight:600; font-size:14px;
-      padding:.45rem .65rem;
-      border-radius:9999px;
-      white-space:nowrap;
-      box-shadow:0 10px 24px rgba(0,0,0,.35);
-      opacity:0;
-      transform: translateX(8px) scale(.98);
-      transition: opacity .18s ease, transform .18s ease;
-      pointer-events:none;
+    /* Logo Brand */
+    .brand { 
+      color: inherit; text-decoration:none; font-weight:700; 
+      display: flex; align-items: center; gap: 10px;
+      z-index: 10;
     }
-    .wa-float:hover .wa-label,
-    .wa-float:focus-within .wa-label{
-      opacity:1; transform: translateX(0) scale(1);
+    .brand img { display: block; }
+
+    /* Desktop Nav Styles */
+    .nav-desktop a { 
+      color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; 
+      transition: color .2s;
     }
-    @media (max-width:576px){
-      .wa-float{ right:12px; bottom:12px; }
-      .wa-float .wa-btn{ width:54px; height:54px; }
-      .wa-float .wa-label{ display:none; }
+    .nav-desktop a.active, .nav-desktop a:hover { 
+      color: #9ec1ff; font-weight:700; 
     }
-    @media (prefers-reduced-motion:reduce){
-      .wa-float .wa-btn, .wa-float .wa-label{ transition:none; }
+
+    /* [LOGIC DESKTOP] MENU TENGAH, LOGO KIRI, FULL WIDTH */
+    @media (min-width: 993px) {
+      .header-wrap {
+        justify-content: center; /* Menu didorong ke tengah */
+      }
+      .brand {
+        position: absolute; /* Cabut logo dari antrian flex */
+        left: var(--gutter); /* Tempel logo di kiri */
+      }
+      .nav-desktop {
+        /* Menu otomatis di tengah karena parent justify-content: center */
+      }
     }
+
+    /* Hamburger Mobile */
+    .nav-toggle{ display:none; border:0; background:transparent; padding:10px; cursor: pointer; }
+    .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
+    .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
+    .nav-toggle.is-open span:nth-child(2){ opacity:0; }
+    .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
+
+    /* Mobile Overlay Menu */
+    .mobile-nav{ position: fixed; inset: 0; z-index: 9999; background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
+    .mobile-nav.active{ display:block; }
+    .mobile-nav__list{ list-style:none; padding:12px; margin:0; display:grid; gap:8px; }
+    .mobile-nav__list a{
+      display:block; padding:14px 16px; border:1px solid var(--border);
+      border-radius:12px; text-decoration:none; color:#fff; background: rgba(255,255,255,.04);
+    }
+    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.4); display:none; }
+    .nav-backdrop.active{ display:block; }
+    .body--lock{ overflow:hidden; height:100vh; }
+
+    /* Responsive Visibility */
+    @media (max-width: 992px){
+      .nav-desktop{ display:none; }
+      .nav-toggle{ display:inline-flex; flex-direction:column; }
+    }
+    @media (min-width: 993px){
+      .mobile-nav, .nav-backdrop{ display:none !important; }
+      .nav-toggle{ display:none; }
+    }
+    
+    /* Utilities */
+    main, .container-fluid, .admin-wrap, .card, .page-wrap{ overflow:visible !important; }
   </style>
 </head>
 
-<!-- bodyClass opsional, misal 'form-dark' untuk halaman form -->
-<body class="<%= typeof bodyClass !== 'undefined' ? bodyClass : '' %>">
-  <!-- Navbar -->
-  <nav class="navbar navbar-dark bg-dark fixed-top border-bottom border-secondary navbar-expand-lg">
-    <div class="container">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="/">
-        <img src="/public/logo.png" alt="AGUDASCO" height="28" />
-        <span>AGUDASCO</span>
+<body class="page-<%= (typeof active !== 'undefined' ? active : '') %>">
+
+  <header class="site-header">
+    <div class="header-wrap">
+      
+      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
+        <img class="logo"
+          src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png"
+          srcset="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png 1x,
+                  https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_88/v1760066670/AgudascoLogo_resize_injtq2.png 2x"
+          alt="Logo AGUDASCO" 
+          width="44" height="44" loading="eager" decoding="async"/>
+        <div class="title">AGUDASCO</div>
       </a>
 
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <nav class="nav-desktop" aria-label="Navigasi utama">
+        <a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a>
+        <a href="/artikel" class="<%= active==='artikel'  ? 'active' : '' %>">Artikel</a>
+        <a href="/laporan" class="<%= active==='laporan'  ? 'active' : '' %>">Laporan</a>
+        <a href="/adart"   class="<%= active==='adart'    ? 'active' : '' %>">AD/ART</a>
+        <a href="/anggota" class="<%= active==='anggota'  ? 'active' : '' %>">Anggota</a>
+        <a href="/galeri"  class="<%= active==='galeri'   ? 'active' : '' %>">Galeri</a>
+        <a href="/tentang" class="<%= active==='tentang'  ? 'active' : '' %>">Tentang</a>
+        <a href="/kontak"  class="<%= active==='kontak'   ? 'active' : '' %>">Kontak</a>
+        <a href="/admin"   class="<%= active==='admin'    ? 'active' : '' %>">Admin</a>
+      </nav>
 
-      <div class="collapse navbar-collapse" id="mainNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link <%= active==='admin'?'active':'' %>" href="/admin">Admin</a></li>
-          <li class="nav-item"><a class="nav-link" href="/admin/members">Anggota</a></li>
-          <li class="nav-item"><a class="nav-link" href="/admin/articles">Artikel</a></li>
-          <li class="nav-item"><a class="nav-link" href="/admin/banners">Banner</a></li>
-          <li class="nav-item"><a class="nav-link" href="/admin/reports">Laporan</a></li>
-          <li class="nav-item"><a class="nav-link" href="/admin/adarts">AD/ART</a></li>
-          <li class="nav-item"><a class="nav-link" href="/admin/contact">Kontak</a></li>
-        </ul>
-      </div>
+      <button id="navToggle" class="nav-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Buka navigasi">
+        <span></span><span></span><span></span>
+      </button>
     </div>
+  </header>
+
+  <nav id="mobileNav" class="mobile-nav" aria-label="Navigasi utama (mobile)">
+    <ul class="mobile-nav__list">
+      <li><a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a></li>
+      <li><a href="/artikel" class="<%= active==='artikel'  ? 'active' : '' %>">Artikel</a></li>
+      <li><a href="/laporan" class="<%= active==='laporan'  ? 'active' : '' %>">Laporan</a></li>
+      <li><a href="/adart"   class="<%= active==='adart'    ? 'active' : '' %>">AD/ART</a></li>
+      <li><a href="/anggota" class="<%= active==='anggota'  ? 'active' : '' %>">Anggota</a></li>
+      <li><a href="/galeri"  class="<%= active==='galeri'   ? 'active' : '' %>">Galeri</a></li>
+      <li><a href="/tentang" class="<%= active==='tentang'  ? 'active' : '' %>">Tentang</a></li>
+      <li><a href="/kontak"  class="<%= active==='kontak'   ? 'active' : '' %>">Kontak</a></li>
+      <li><a href="/admin"   class="<%= active==='admin'    ? 'active' : '' %>">Admin</a></li>
+    </ul>
   </nav>
+  <div id="navBackdrop" class="nav-backdrop"></div>
+
+  <script>
+    (function(){
+      const btn = document.getElementById('navToggle');
+      const panel = document.getElementById('mobileNav');
+      const backdrop = document.getElementById('navBackdrop');
+      if(!btn || !panel || !backdrop) return;
+
+      function openMenu(){
+        btn.classList.add('is-open');
+        btn.setAttribute('aria-expanded','true');
+        panel.classList.add('active');
+        backdrop.classList.add('active');
+        document.body.classList.add('body--lock');
+      }
+      function closeMenu(){
+        btn.classList.remove('is-open');
+        btn.setAttribute('aria-expanded','false');
+        panel.classList.remove('active');
+        backdrop.classList.remove('active');
+        document.body.classList.remove('body--lock');
+      }
+
+      btn.addEventListener('click', () => {
+        panel.classList.contains('active') ? closeMenu() : openMenu();
+      });
+      backdrop.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
+    })();
+  </script>
+
+  <main>
+    ```
