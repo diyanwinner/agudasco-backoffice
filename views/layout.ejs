@@ -15,8 +15,9 @@
       --bg: #0b1220;
       --border: #223241;
       --text: #fff;
+      --gutter: clamp(12px, 3vw, 24px); /* Samakan dengan styles.css */
     }
-    /* Header fixed + offset konten */
+    
     body{ padding-top: var(--header-h); background: var(--bg); color: var(--text); }
     
     .site-header{
@@ -24,13 +25,15 @@
       z-index: 3000; background: var(--bg); border-bottom: 1px solid var(--border);
     }
 
-    /* --- [FIX] HEADER LAYOUT --- */
+    /* [FIX] Header Wrap Full Width (Hapus .container) */
     .header-wrap { 
       height: 100%; 
+      width: 100%;
       display: flex; 
       align-items: center;
-      position: relative; /* Penting buat logo absolute */
-      justify-content: space-between; /* Default Mobile: Kiri-Kanan */
+      padding: 0 var(--gutter);
+      position: relative; 
+      justify-content: space-between; /* Default Mobile */
     }
 
     .brand { 
@@ -38,8 +41,8 @@
       display: flex; align-items: center; gap: 10px;
       z-index: 10;
     }
+    .brand img { display: block; }
 
-    /* Desktop Nav Styles */
     .nav-desktop a { 
       color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; 
       transition: color .2s;
@@ -48,25 +51,24 @@
       color: #9ec1ff; font-weight:700; 
     }
 
-    /* [FIX] Logic Desktop: MENU TENGAH, LOGO KIRI */
+    /* [LOGIC DESKTOP] Menu Center, Logo Kiri Absolute */
     @media (min-width: 993px) {
       .header-wrap {
-        justify-content: center; /* Menu didorong ke tengah */
+        justify-content: center; /* Menu otomatis ke tengah */
       }
       .brand {
-        position: absolute; /* Cabut logo dari antrian flex */
-        left: var(--gutter); /* Tempel logo di kiri mengikuti garis gutter container */
+        position: absolute; /* Lepas dari flow */
+        left: var(--gutter); /* Tempel kiri */
       }
     }
 
-    /* Hamburger */
-    .nav-toggle{ display:none; border:0; background:transparent; padding:10px; }
+    /* Hamburger & Mobile Nav */
+    .nav-toggle{ display:none; border:0; background:transparent; padding:10px; cursor:pointer; }
     .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
     .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
     .nav-toggle.is-open span:nth-child(2){ opacity:0; }
     .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
 
-    /* Mobile overlay nav */
     .mobile-nav{ position: fixed; inset: 0; z-index: 9999; background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
     .mobile-nav.active{ display:block; }
     .mobile-nav__list{ list-style:none; padding:12px; margin:0; display:grid; gap:8px; }
@@ -78,7 +80,6 @@
     .nav-backdrop.active{ display:block; }
     .body--lock{ overflow:hidden; height:100vh; }
 
-    /* Responsif */
     @media (max-width: 992px){
       .nav-desktop{ display:none; }
       .nav-toggle{ display:inline-flex; flex-direction:column; }
@@ -93,8 +94,7 @@
 
 <body class="page-<%= (typeof active !== 'undefined' ? active : '') %>">
   <header class="site-header">
-    <div class="container header-wrap">
-      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
+    <div class="header-wrap"> <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
         <img class="logo"
           src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png"
           srcset="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png 1x,
@@ -153,7 +153,6 @@
   </div>
 
   <script>
-    /* Lightbox */
     function openLightbox(src, cap){
       const b = document.getElementById('lightbox');
       document.getElementById('lightbox-img').src = src;
@@ -166,7 +165,6 @@
       }
     }
 
-    /* Toggle Mobile Nav Overlay */
     (function(){
       const btn = document.getElementById('navToggle');
       const panel = document.getElementById('mobileNav');
