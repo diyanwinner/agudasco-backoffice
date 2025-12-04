@@ -43,7 +43,14 @@ a:hover { color: #cfe0ff; text-decoration: underline; }
   margin-inline: auto;
   padding-left: calc(var(--gutter) + var(--safe-l));
   padding-right: calc(var(--gutter) + var(--safe-r));
-  padding-top: 24px; padding-bottom: 24px;
+  /* [FIX] Jarak standar halaman lain (24px). Khusus home kita override di bawah */
+  padding-top: 24px; 
+  padding-bottom: 24px;
+}
+
+/* [FIX] Khusus Halaman Home: Pepetin Container ke Atas */
+body.page-home main > .container {
+  padding-top: 8px !important; /* Jarak minimalis dari header */
 }
 
 /* ===== Header Sticky ===== */
@@ -65,10 +72,17 @@ a:hover { color: #cfe0ff; text-decoration: underline; }
 .nav a.active, .nav a:hover { background: var(--blue); color: #fff; }
 
 /* ===== Hero & spacing dekat header ===== */
-main { padding-top: 8px; scroll-margin-top: var(--header-h); }
+main { 
+  /* [FIX] Nol-kan padding main supaya bisa mepet */
+  padding-top: 0; 
+  scroll-margin-top: var(--header-h); 
+}
 .hero { text-align: center; margin-top: 0; padding: 0 0 8px; }
+
 .hero-title {
-  margin: 8px 0 10px;
+  /* [FIX] Nol-kan margin atas judul */
+  margin-top: 0;
+  margin-bottom: 10px;
   font-size: clamp(1.6rem, 2.2vw + 1rem, 2.4rem);
   font-weight: 800;
 }
@@ -85,27 +99,32 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
 .banner-wrapper {
   position: relative;
   
-  /* --- [FIX] UBAH JADI FULL WIDTH --- */
+  /* --- FULL WIDTH SETUP --- */
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   margin-top: .25rem;
   margin-bottom: .75rem;
-  border-radius: 0; /* Hapus lengkungan */
+  border-radius: 0; 
   
-  /* --- TINGGI BANNER DIBATASI (BIAR GA KEGEDEAN) --- */
-  /* Gw set minimal 300px, maksimal 550px. Bisa lu atur angkanya. */
+  /* --- TINGGI BANNER & BACKGROUND --- */
   height: clamp(300px, 45vw, 550px); 
-  
   overflow: hidden;
-  /* Warna background untuk ngisi sisa ruang kiri-kanan (ambil dari warna gelap foto) */
-  background: #1a1512; 
+  background: #1a1512; /* Warna background pengisi sisa ruang */
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
 
 .banner-track { display: flex; height: 100%; transition: transform .55s ease-in-out; will-change: transform; }
 .banner-slide { flex: 0 0 100%; height: 100%; }
-.banner-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.banner-slide img { 
+  width: 100%; 
+  height: 100%; 
+  /* [FIX] CONTAIN: Biar gambar utuh (nyesuain kotak) & tidak kepotong */
+  object-fit: contain; 
+  display: block; 
+}
+
 .hero-caption { opacity: .85; margin-top: .25rem; }
 
 /* Tombol prev/next */
@@ -513,7 +532,7 @@ main { padding-top: 8px; scroll-margin-top: var(--header-h); }
 }
 
 /* ===== [Fix] Spasi judul aman di bawah header sticky (Anggota & Kontak) ===== */
-:root { --page-top-gap: 24px; }            /* atur 20–32px sesuai selera */
+:root { --page-top-gap: 24px; }
 @media (max-width: 768px){ :root { --page-top-gap: 16px; } }
 
 /* Halaman yang kontennya langsung di dalam .container */
