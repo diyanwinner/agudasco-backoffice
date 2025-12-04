@@ -1,40 +1,21 @@
-</main>
+</main> <%- include('partials/footer') %>
 
-  <%- include('partials/footer') %>
-
-  <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
-    <div><img id="lightbox-img" class="lightbox-img" src="" alt=""/><div id="lightbox-cap" class="lightbox-caption"></div></div>
+  <div id="lightbox" class="lightbox-backdrop" onclick="this.classList.remove('active')">
+    <div>
+      <img id="lightbox-img" class="lightbox-img" src="" alt=""/>
+      <div id="lightbox-cap" class="lightbox-caption"></div>
+    </div>
   </div>
 
   <script>
-    // Lightbox Logic
     function openLightbox(src, cap){
-      const b=document.getElementById('lightbox'); if(b){
+      const b=document.getElementById('lightbox');
+      if(b){
         document.getElementById('lightbox-img').src=src;
         document.getElementById('lightbox-cap').textContent=cap||'';
         b.classList.add('active');
       }
     }
-    function closeLightbox(e){ if(e.target.id==='lightbox')document.getElementById('lightbox').classList.remove('active'); }
-
-    // UNIVERSAL MOBILE MENU LOGIC
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('navToggle');
-      const panel = document.getElementById('mobileNav');
-      const backdrop = document.getElementById('navBackdrop');
-
-      if(btn && panel && backdrop){
-        const close = () => {
-          btn.classList.remove('is-open'); panel.classList.remove('active'); backdrop.classList.remove('active'); document.body.classList.remove('body--lock');
-        };
-        const open = () => {
-          btn.classList.add('is-open'); panel.classList.add('active'); backdrop.classList.add('active'); document.body.classList.add('body--lock');
-        };
-        btn.addEventListener('click', (e) => { e.stopPropagation(); panel.classList.contains('active') ? close() : open(); });
-        backdrop.addEventListener('click', close);
-        panel.querySelectorAll('a').forEach(l => l.addEventListener('click', close));
-      }
-    });
   </script>
 </body>
 </html>
