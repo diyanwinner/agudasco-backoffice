@@ -18,42 +18,48 @@
       --gutter: clamp(12px, 3vw, 24px);
     }
     
+    /* Reset Body biar ga ketabrak header */
     body { padding-top: var(--header-h); background: var(--bg); color: var(--text); margin: 0; }
     
+    /* Header Fixed */
     .site-header {
       position: fixed; inset: 0 0 auto 0; height: var(--header-h);
       z-index: 3000; background: var(--bg); border-bottom: 1px solid var(--border);
     }
 
+    /* Container Header */
     .header-wrap { 
       height: 100%; width: 100%; display: flex; align-items: center;
       padding: 0 var(--gutter); position: relative; justify-content: space-between;
     }
 
+    /* Logo */
     .brand { 
       color: inherit; text-decoration:none; font-weight:700; 
       display: flex; align-items: center; gap: 10px; z-index: 10;
     }
     .brand img { display: block; }
 
+    /* Desktop Menu */
     .nav-desktop a { 
       color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; transition: color .2s;
     }
     .nav-desktop a.active, .nav-desktop a:hover { color: #9ec1ff; font-weight:700; }
 
-    /* Desktop Logic */
+    /* Logic Desktop: Menu Tengah, Logo Kiri */
     @media (min-width: 993px) {
       .header-wrap { justify-content: center; }
       .brand { position: absolute; left: var(--gutter); }
     }
 
-    /* Mobile Menu Logic */
+    /* Hamburger Button */
     .nav-toggle { display:none; border:0; background:transparent; padding:10px; cursor: pointer; z-index: 10001; }
     .nav-toggle span { width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
     .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
     .nav-toggle.is-open span:nth-child(2){ opacity:0; }
     .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
 
+    /* Mobile Overlay */
     .mobile-nav { 
       position: fixed; inset: 0; z-index: 9999; background: var(--bg); 
       padding-top: var(--header-h); overflow:auto; display:none;
@@ -126,18 +132,50 @@
   </nav>
   <div id="navBackdrop" class="nav-backdrop"></div>
 
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const btn = document.getElementById('navToggle');
+      const panel = document.getElementById('mobileNav');
+      const backdrop = document.getElementById('navBackdrop');
+
+      if(btn && panel && backdrop) {
+        function toggleMenu() {
+          const isOpen = btn.classList.contains('is-open');
+          if(isOpen) {
+            // Tutup
+            btn.classList.remove('is-open');
+            panel.classList.remove('active');
+            backdrop.classList.remove('active');
+            document.body.classList.remove('body--lock');
+          } else {
+            // Buka
+            btn.classList.add('is-open');
+            panel.classList.add('active');
+            backdrop.classList.add('active');
+            document.body.classList.add('body--lock');
+          }
+        }
+
+        btn.addEventListener('click', toggleMenu);
+        backdrop.addEventListener('click', toggleMenu);
+      }
+    });
+  </script>
+
   <main>
     ```
 
 ---
 
-### 2. `layout-bottom.ejs` (Script Pindah ke Sini)
-Nah, ini kuncinya. Kita taruh script Navigasinya di sini supaya dia membaca elemen tombol yang sudah selesai dimuat. File ini juga menutup `<main>`, `<body>`, dan `<html>`.
+### 2. `layout-bottom.ejs` (Bersih-bersih)
+Karena script menu udah ada di atas, file ini cukup buat nutup tag HTML dan Footer aja. Hapus semua script JS Navigasi dari sini biar gak bentrok.
 
-**Copy & Replace file `layout-bottom.ejs`:**
+**Copy & Replace `layout-bottom.ejs`:**
 
 ```html
-  </main> <%- include('partials/footer') %>
+  </main>
+
+  <%- include('partials/footer') %>
 
   <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
     <div>
@@ -147,58 +185,19 @@ Nah, ini kuncinya. Kita taruh script Navigasinya di sini supaya dia membaca elem
   </div>
 
   <script>
-    // 1. Script Lightbox
     function openLightbox(src, cap){
       const b = document.getElementById('lightbox');
-      if(!b) return;
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('lightbox-cap').textContent = cap || '';
-      b.classList.add('active');
+      if(b) {
+        document.getElementById('lightbox-img').src = src;
+        document.getElementById('lightbox-cap').textContent = cap || '';
+        b.classList.add('active');
+      }
     }
     function closeLightbox(e){
       if (e.target.id === 'lightbox') {
         document.getElementById('lightbox').classList.remove('active');
       }
     }
-
-    // 2. Script Menu Mobile (Hamburger)
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('navToggle');
-      const panel = document.getElementById('mobileNav');
-      const backdrop = document.getElementById('navBackdrop');
-      
-      if(!btn || !panel || !backdrop) return; // Stop jika elemen gak ada
-
-      function openMenu(){
-        btn.classList.add('is-open');
-        btn.setAttribute('aria-expanded','true');
-        panel.classList.add('active');
-        backdrop.classList.add('active');
-        document.body.classList.add('body--lock');
-      }
-      
-      function closeMenu(){
-        btn.classList.remove('is-open');
-        btn.setAttribute('aria-expanded','false');
-        panel.classList.remove('active');
-        backdrop.classList.remove('active');
-        document.body.classList.remove('body--lock');
-      }
-
-      // Klik Tombol
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        panel.classList.contains('active') ? closeMenu() : openMenu();
-      });
-
-      // Klik Backdrop (Area hitam)
-      backdrop.addEventListener('click', closeMenu);
-
-      // Klik Link apapun di menu -> Tutup
-      panel.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', closeMenu);
-      });
-    });
   </script>
 </body>
 </html>
