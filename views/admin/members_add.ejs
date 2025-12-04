@@ -1,79 +1,113 @@
 <%- include('../layout-top', { title: 'Tambah Anggota', active: 'admin' }) %>
 
-<div class="container py-4 form-dark">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Tambah Anggota</h1>
-    <a href="/admin/members" class="btn btn-outline-secondary">← Kembali</a>
+<div class="container admin-wrap">
+  <div class="admin-head">
+    <h1 class="admin-title">Tambah Anggota</h1>
+    <a href="/admin/members" class="btn ghost">← Kembali</a>
   </div>
 
-  <form class="card shadow-sm border-0" action="/admin/members" method="post" enctype="multipart/form-data">
-    <div class="card-body p-4">
-      <div class="row g-4">
-        <div class="col-lg-7">
-          <div class="mb-3">
-            <label class="form-label">Nama Lengkap</label>
-            <input name="name" class="form-control" placeholder="Nama anggota" required />
+  <form action="/admin/members" method="POST" enctype="multipart/form-data" class="form-modern">
+    
+    <div class="form-grid-2">
+      
+      <div class="card pad">
+        <label class="label">Foto Anggota</label>
+        
+        <div class="dropzone" id="dropArea">
+          <input type="file" name="avatar" id="fileInput" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;z-index:2">
+          
+          <div class="dz-empty" id="dzEmpty">
+            <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+            <span>Klik / Tarik Foto ke Sini</span>
+            <span style="font-size:12px;opacity:.5">(JPG, PNG, WebP)</span>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label">Tanggal Lahir</label>
-            <input name="birthdate" type="date" class="form-control" placeholder="YYYY-MM-DD" />
-            <div class="form-text">Opsional, format YYYY-MM-DD.</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Bio / Keterangan</label>
-            <textarea name="bio" class="form-control" rows="4" placeholder="Deskripsi singkat"></textarea>
-          </div>
-
-          <div class="mb-2">
-            <label class="form-label d-block">Foto Anggota</label>
-            <ul class="nav nav-pills mb-3" role="tablist">
-              <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#up" type="button">Upload</button>
-              </li>
-              <li class="nav-item">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#url" type="button">Pakai URL</button>
-              </li>
-            </ul>
-            <div class="tab-content">
-              <div class="tab-pane fade show active" id="up">
-                <input class="form-control" type="file" name="avatar" accept="image/*" />
-                <div class="form-text">Pilih gambar (JPG/PNG/WebP).</div>
-              </div>
-              <div class="tab-pane fade" id="url">
-                <input class="form-control" name="avatar_url" placeholder="https://..." />
-                <div class="form-text">Jika keduanya diisi, yang dipakai adalah upload.</div>
-              </div>
-            </div>
+          <div class="dz-preview" id="dzPreview">
+            <img id="imgPreview" src="" alt="Preview">
+            <button type="button" class="dz-remove" id="btnRemove">×</button>
           </div>
         </div>
 
-        <div class="col-lg-5">
-          <label class="form-label">Preview Foto</label>
-          <div class="placeholder-panel rounded-3 p-4 text-center" id="previewBox">
-            <div class="opacity-75">Belum ada gambar</div>
-          </div>
+        <div class="mt-3 pt-3" style="border-top:1px solid rgba(255,255,255,0.1)">
+          <label class="label" style="font-size:12px; margin-top:0;">Atau pakai URL Foto</label>
+          <input type="text" name="avatar_url" class="input" placeholder="https://..." style="font-size:13px; padding:8px;">
+          <p class="text-secondary small mt-1" style="font-size:11px;">
+            *Jika upload diisi, URL akan diabaikan.
+          </p>
         </div>
       </div>
-    </div>
 
-    <div class="card-footer d-flex gap-2 justify-content-end">
-      <a href="/admin/members" class="btn btn-outline-secondary">Batal</a>
-      <button class="btn btn-primary">Simpan</button>
+      <div class="card pad">
+        <div class="mb-3">
+          <label for="name" class="label">Nama Lengkap *</label>
+          <input type="text" name="name" id="name" class="input" placeholder="Nama anggota" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="birthdate" class="label">Tanggal Lahir</label>
+          <input type="date" name="birthdate" id="birthdate" class="input">
+          <p class="text-secondary small mt-1" style="font-size:11px;">Opsional, format YYYY-MM-DD.</p>
+        </div>
+
+        <div class="mb-3">
+          <label for="bio" class="label">Bio / Keterangan</label>
+          <textarea name="bio" id="bio" class="textarea" rows="5" placeholder="Deskripsi singkat atau jabatan..."></textarea>
+        </div>
+
+        <div class="form-bar" style="position:static; margin-top:20px; background:transparent; border:0; padding:0;">
+          <a href="/admin/members" class="btn ghost">Batal</a>
+          <button type="submit" class="btn">Simpan Anggota</button>
+        </div>
+      </div>
+      
     </div>
   </form>
 </div>
 
 <script>
-  const file = document.querySelector('input[name="avatar"]');
-  const box  = document.getElementById('previewBox');
-  file?.addEventListener('change', (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return (box.innerHTML = '<div class="opacity-75">Belum ada gambar</div>');
-    const url = URL.createObjectURL(f);
-    box.innerHTML = '<img class="img-fluid rounded" alt="preview" />';
-    box.querySelector('img').src = url;
+  const fileInput = document.getElementById('fileInput');
+  const dzEmpty = document.getElementById('dzEmpty');
+  const dzPreview = document.getElementById('dzPreview');
+  const imgPreview = document.getElementById('imgPreview');
+  const btnRemove = document.getElementById('btnRemove');
+  const dropArea = document.getElementById('dropArea');
+
+  // 1. Saat file dipilih
+  fileInput?.addEventListener('change', function(){
+    const file = this.files[0];
+    if(file){
+      const reader = new FileReader();
+      reader.onload = function(e){
+        imgPreview.src = e.target.result;
+        dzEmpty.style.display = 'none';
+        dzPreview.style.display = 'block';
+        dropArea.classList.add('is-drag');
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // 2. Tombol Hapus Preview
+  btnRemove?.addEventListener('click', function(e){
+    e.preventDefault();
+    fileInput.value = ''; // Reset input
+    imgPreview.src = '';
+    dzEmpty.style.display = 'flex';
+    dzPreview.style.display = 'none';
+    dropArea.classList.remove('is-drag');
+  });
+
+  // 3. Efek Visual Drag & Drop
+  dropArea?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropArea.style.borderColor = '#2b72ff';
+    dropArea.style.background = 'rgba(43,114,255,.06)';
+  });
+  dropArea?.addEventListener('dragleave', () => {
+    if(!fileInput.value) {
+      dropArea.style.borderColor = '';
+      dropArea.style.background = '';
+    }
   });
 </script>
 
