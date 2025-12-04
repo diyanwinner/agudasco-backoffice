@@ -15,7 +15,7 @@
       --bg: #0b1220;
       --border: #223241;
       --text: #fff;
-      --gutter: 24px; /* Jarak aman dari pinggir layar */
+      --gutter: clamp(12px, 3vw, 24px);
     }
     
     /* Reset & Base */
@@ -27,15 +27,15 @@
       z-index: 3000; background: var(--bg); border-bottom: 1px solid var(--border);
     }
 
-    /* [FIX] HAPUS CLASS 'CONTAINER' -> GANTI 'HEADER-WRAP' BIAR PLONG */
+    /* Header Wrap Full Width */
     .header-wrap { 
       height: 100%; 
+      width: 100%;
       display: flex; 
       align-items: center;
-      padding: 0 var(--gutter); /* Padding kiri-kanan biar ga nempel banget */
+      padding: 0 var(--gutter);
       position: relative; 
-      justify-content: space-between; /* Default Mobile: Kiri-Kanan */
-      width: 100%; /* Paksa Full Width */
+      justify-content: space-between; /* Mobile: Logo Kiri, Menu Kanan */
     }
 
     /* Logo Brand */
@@ -55,38 +55,58 @@
       color: #9ec1ff; font-weight:700; 
     }
 
-    /* [LOGIC DESKTOP] MENU TENGAH, LOGO KIRI, FULL WIDTH */
+    /* LOGIC DESKTOP: Menu Center, Logo Kiri Absolute */
     @media (min-width: 993px) {
       .header-wrap {
         justify-content: center; /* Menu didorong ke tengah */
       }
       .brand {
-        position: absolute; /* Cabut logo dari antrian flex */
-        left: var(--gutter); /* Tempel logo di kiri */
-      }
-      .nav-desktop {
-        /* Menu otomatis di tengah karena parent justify-content: center */
+        position: absolute; 
+        left: var(--gutter); 
       }
     }
 
-    /* Hamburger Mobile */
-    .nav-toggle{ display:none; border:0; background:transparent; padding:10px; cursor: pointer; }
-    .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
+    /* --- CSS UNTUK MOBILE MENU (HAMBURGER) --- */
+    .nav-toggle { 
+      display:none; 
+      border:0; background:transparent; padding:10px; cursor: pointer; 
+      z-index: 10001; /* Pastikan di atas overlay */
+    }
+    .nav-toggle span { 
+      width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; 
+    }
+    /* Animasi X saat dibuka */
     .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
     .nav-toggle.is-open span:nth-child(2){ opacity:0; }
     .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
 
     /* Mobile Overlay Menu */
-    .mobile-nav{ position: fixed; inset: 0; z-index: 9999; background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
-    .mobile-nav.active{ display:block; }
-    .mobile-nav__list{ list-style:none; padding:12px; margin:0; display:grid; gap:8px; }
-    .mobile-nav__list a{
+    .mobile-nav { 
+      position: fixed; inset: 0; z-index: 9999; 
+      background: var(--bg); 
+      padding-top: var(--header-h); 
+      overflow:auto; 
+      display:none; /* Default hidden */
+      transform: translateY(-10px); opacity: 0; transition: .2s;
+    }
+    .mobile-nav.active { 
+      display:block; 
+      transform: translateY(0); opacity: 1;
+    }
+    
+    .mobile-nav__list { list-style:none; padding:12px; margin:0; display:grid; gap:8px; }
+    .mobile-nav__list a {
       display:block; padding:14px 16px; border:1px solid var(--border);
       border-radius:12px; text-decoration:none; color:#fff; background: rgba(255,255,255,.04);
     }
-    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.4); display:none; }
-    .nav-backdrop.active{ display:block; }
-    .body--lock{ overflow:hidden; height:100vh; }
+    .mobile-nav__list a:active, .mobile-nav__list a.active {
+      background: #1f3f7f; border-color: #2b72ff;
+    }
+
+    /* Backdrop Gelap */
+    .nav-backdrop { position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.5); display:none; }
+    .nav-backdrop.active { display:block; }
+    .body--lock { overflow:hidden; height:100vh; }
 
     /* Responsive Visibility */
     @media (max-width: 992px){
@@ -152,10 +172,12 @@
   <div id="navBackdrop" class="nav-backdrop"></div>
 
   <script>
-    (function(){
+    document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('navToggle');
       const panel = document.getElementById('mobileNav');
       const backdrop = document.getElementById('navBackdrop');
+      
+      // Kalau elemen gak ketemu, stop biar ga error
       if(!btn || !panel || !backdrop) return;
 
       function openMenu(){
@@ -165,6 +187,7 @@
         backdrop.classList.add('active');
         document.body.classList.add('body--lock');
       }
+      
       function closeMenu(){
         btn.classList.remove('is-open');
         btn.setAttribute('aria-expanded','false');
@@ -173,12 +196,26 @@
         document.body.classList.remove('body--lock');
       }
 
-      btn.addEventListener('click', () => {
+      // Klik tombol hamburger
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Biar ga bubble
         panel.classList.contains('active') ? closeMenu() : openMenu();
       });
+
+      // Klik backdrop hitam -> tutup
       backdrop.addEventListener('click', closeMenu);
-      document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
-    })();
+
+      // Klik link di dalam menu -> tutup juga biar enak
+      panel.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+      });
+    });
   </script>
 
   <main>
+    ```
+
+**Setelah Deploy:**
+Jangan lupa **Clear Cache** di browser HP lu (biasanya karena file JS lama masih nyangkut). Caranya buka website lu di Tab Penyamaran (Incognito), kalau menunya jalan berarti di tab biasa tinggal clear cache aja.
+
+Selamat mencoba bro, harusnya ini solved 100%!
