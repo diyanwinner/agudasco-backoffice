@@ -485,6 +485,41 @@ main {
   transform: translateX(4px);
 }
 
+/* --- CSS BARU BUAT HEADER & BADGE --- */
+
+/* Bikin Judul & Badge sejajar ke samping */
+.title-wrapper {
+  display: flex;
+  align-items: center; /* Biar vertikal tengah */
+  gap: 12px; /* Jarak judul ke badge */
+  margin-bottom: 8px; /* Jarak ke tulisan "Klik nama..." */
+}
+
+/* Judul Anggota */
+.section-head h1 {
+  margin: 0; /* Reset margin bawaan biar rapi */
+  font-size: 28px; /* Ukuran font judul */
+}
+
+/* Badge Kapsul Glowing */
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  height: 28px;
+  border-radius: 99px; /* Bentuk kapsul */
+  
+  /* Warna Biru Transparan (Glassy) */
+  background: rgba(59, 130, 246, 0.15); 
+  color: #60a5fa; /* Biru muda */
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.1); /* Efek cahaya dikit */
+}
+
 /* Sedikit dibesarin di layar lebih lebar */
 @media (min-width: 768px) {
   .member-link {
