@@ -520,17 +520,40 @@ main {
   box-shadow: 0 0 10px rgba(59, 130, 246, 0.1); /* Efek cahaya dikit */
 }
 
-/* Sedikit dibesarin di layar lebih lebar */
-@media (min-width: 768px) {
-  .member-link {
-    padding: 8px 10px;
+/* --- PERBAIKAN RESPONSIF UNTUK HP --- */
+
+/* 1. Pastikan teks di dalam Badge TIDAK turun ke bawah (wrap) */
+.count-badge {
+  white-space: nowrap; /* Wajib: biar teks '54 Members' tetep satu baris */
+  flex-shrink: 0; /* Biar badge gak penyok kegencet */
+}
+
+/* 2. Styling Khusus Layar Kecil (HP) */
+@media (max-width: 640px) {
+  
+  /* Container Header jadi susun ke bawah */
+  .section-head {
+    flex-direction: column; /* Ubah arah jadi vertikal */
+    align-items: flex-start; /* Rata kiri */
+    gap: 8px; /* Jarak antara judul & keterangan */
   }
-  .avatar--sm {
-    width: 40px;
-    height: 40px;
+
+  /* Judul & Badge tetep sebelahan, tapi font disesuaikan dikit */
+  .title-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
-  .member-name {
-    font-size: 13px;
+
+  .section-head h1 {
+    font-size: 24px; /* Kecilin dikit font judul di HP biar proporsional */
+  }
+
+  /* Opsional: Sembunyikan tulisan 'Klik nama...' di HP biar BERSIH */
+  /* Karena card member udah ada panahnya, user udah tau itu bisa diklik */
+  .section-head .muted {
+    display: none; 
   }
 }
 
