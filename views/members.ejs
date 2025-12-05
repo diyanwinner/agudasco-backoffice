@@ -1,7 +1,12 @@
 <main>
   <div class="container members-page">
     <header class="section-head">
-      <h1>Anggota</h1>
+      <div class="title-wrapper">
+        <h1>Anggota</h1>
+        <span class="count-badge">
+          <%= (members || []).length %> Members
+        </span>
+      </div>
       <div class="muted">Klik nama untuk lihat detail.</div>
     </header>
 
