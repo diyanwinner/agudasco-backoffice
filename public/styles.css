@@ -592,32 +592,35 @@ main {
 
 /* ====== Detail anggota ====== */
 
-/* [UPDATED] Foto header detail anggota */
+/* --- UPDATE FOTO DETAIL MEMBER --- */
 .media-preview.member .media-fit {
   display: block;
   width: 100%;
   border-radius: 12px;
   
-  /* --- Default (Tampilan HP) --- */
-  /* Tetap pakai cover biar di HP menuhin layar dan rapi */
-  height: clamp(300px, 50vh, 500px); 
-  object-fit: cover; 
-  object-position: top center; /* KUNCI: Biar fokus ke wajah, bukan dada/perut */
+  /* TAMPILAN HP (Tetap Crop rapi) */
+  height: clamp(350px, 50vh, 550px); 
+  object-fit: cover;
+  /* Ganti 'top' jadi 'center 20%' biar fokusnya turun dikit (pas ke wajah), bukan ke lampu atas */
+  object-position: center 20%; 
 }
 
-/* --- Tampilan Desktop/Laptop (Layar > 768px) --- */
+/* TAMPILAN LAPTOP / PC (Wajib Full Body) */
 @media (min-width: 768px) {
   .media-preview.member .media-fit {
-    /* Di laptop, kita biarkan tingginya otomatis menyesuaikan foto */
-    height: auto; 
-    max-height: 80vh; /* Batasi biar gak kegedean banget */
+    /* Paksa reset tinggi biar ngikutin tinggi asli foto */
+    height: auto !important;
+    max-height: 85vh !important; /* Batas maksimal biar gak kegedean seleayar penuh */
     
-    /* Ganti jadi CONTAIN biar gambar UTUH dari kepala sampe kaki */
-    object-fit: contain; 
+    /* Paksa gambar utuh, jangan di-crop/zoom */
+    object-fit: contain !important; 
     
-    /* Kasih background gelap kalau fotonya gak selebar layar */
-    background: #0b1322; 
-    box-shadow: 0 4px 20px rgba(0,0,0,0.5); /* Efek bayangan biar nimbul */
+    /* Posisikan di tengah */
+    margin: 0 auto;
+    
+    /* Background gelap buat ngisi sisa ruang kiri-kanan */
+    background: #0b1322;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   }
 }
 
