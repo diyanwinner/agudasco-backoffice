@@ -592,10 +592,33 @@ main {
 
 /* ====== Detail anggota ====== */
 
-/* foto header di halaman detail anggota */
-.media-preview.member .media-fit{
-  height: clamp(200px, 38vh, 420px);  /* satu aturan saja, tidak duplikat */
-  object-fit: cover;
+/* [UPDATED] Foto header detail anggota */
+.media-preview.member .media-fit {
+  display: block;
+  width: 100%;
+  border-radius: 12px;
+  
+  /* --- Default (Tampilan HP) --- */
+  /* Tetap pakai cover biar di HP menuhin layar dan rapi */
+  height: clamp(300px, 50vh, 500px); 
+  object-fit: cover; 
+  object-position: top center; /* KUNCI: Biar fokus ke wajah, bukan dada/perut */
+}
+
+/* --- Tampilan Desktop/Laptop (Layar > 768px) --- */
+@media (min-width: 768px) {
+  .media-preview.member .media-fit {
+    /* Di laptop, kita biarkan tingginya otomatis menyesuaikan foto */
+    height: auto; 
+    max-height: 80vh; /* Batasi biar gak kegedean banget */
+    
+    /* Ganti jadi CONTAIN biar gambar UTUH dari kepala sampe kaki */
+    object-fit: contain; 
+    
+    /* Kasih background gelap kalau fotonya gak selebar layar */
+    background: #0b1322; 
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5); /* Efek bayangan biar nimbul */
+  }
 }
 
 /* dua kolom pada desktop */
