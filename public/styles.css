@@ -133,8 +133,8 @@ main {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    rgba(8, 21, 38, 0.65),
-    rgba(8, 21, 38, 0.65)
+    rgba(8, 21, 38, 0.25),
+    rgba(8, 21, 38, 0.35)
   );
   pointer-events: none;
 }
@@ -145,7 +145,7 @@ main {
   height: 100%; 
   object-fit: contain; 
   display: block;
-  filter: brightness(0.9) saturate(1.05);
+  filter: none; /* biar warna asli tetap terang */
 }
 
 /* Caption di bawah slider */
