@@ -22,9 +22,9 @@
           <a href="<%= photo.image_url %>" 
              class="insta-item" 
              target="_blank"
-             data-pswp-width="0" 
-             data-pswp-height="0">
-            <img src="<%= photo.image_url %>" loading="lazy" alt="Foto">
+             data-pswp-width="" 
+             data-pswp-height="">
+            <img src="<%= photo.image_url %>" loading="lazy" alt="Foto Dokumentasi">
           </a>
         <% }) %>
       </div>
@@ -34,11 +34,11 @@
 </main>
 
 <style>
-  /* --- GRID INSTAGRAM (Kotak Rapi) --- */
+  /* --- GRID LAYOUT (Tampilan Luar) --- */
   .insta-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* 3 Kolom di HP */
-    gap: 2px; /* Jarak tipis ala IG */
+    gap: 2px;
   }
   @media (min-width: 768px) {
     .insta-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -59,12 +59,16 @@
   .insta-item img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Crop jadi kotak sempurna */
+    object-fit: cover; /* Crop jadi kotak sempurna HANYA untuk thumbnail */
     transition: opacity 0.3s;
   }
   .insta-item:hover img {
-    opacity: 0.9;
+    opacity: 0.8;
   }
+
+  /* HAPUS CSS .pswp__img YANG KEMARIN!
+     Jangan ada style apapun yang ganggu gambar di dalem Lightbox.
+  */
 </style>
 
 <link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.css">
@@ -77,29 +81,30 @@
     children: 'a',
     pswpModule: PhotoSwipe,
     
-    // Konfigurasi UX
+    // Konfigurasi UX Biar Enak
     zoom: true,
     tapAction: 'close',        // Sekali tap tutup (biar cepet)
     doubleTapAction: 'zoom',   // Double tap buat zoom
-    bgOpacity: 0.9,            // Background gelap
+    bgOpacity: 0.95,           // Background gelap pekat
     padding: { top: 0, bottom: 0, left: 0, right: 0 }
   });
 
-  // --- LOGIKA PENTING: DETEKSI UKURAN ASLI ---
-  // Ini yang bikin foto gak gepeng. Dia ngecek ukuran asli pas foto mau dibuka.
+  // --- LOGIKA PENTING: DETEKSI UKURAN ASLI (JUST IN TIME) ---
+  // Script ini jalan pas foto mau dibuka. Dia ngecek ukuran aslinya dulu.
   lightbox.on('uiRegister', function() {
     lightbox.pswp.on('contentLoad', (e) => {
       const { content, isLazy } = e;
 
-      // Jika ukuran foto belum diketahui (masih 0), kita cek dulu
-      if (content.data.width < 1 || content.data.height < 1) {
+      // Jika ukuran foto belum diketahui (masih kosong), kita cek dulu
+      if (!content.data.w || !content.data.h) {
+        // Cegah render sembarangan
+        e.preventDefault();
+
         const img = new Image();
         img.onload = () => {
           // Update ukuran di PhotoSwipe sesuai aslinya
           content.data.w = img.width;
           content.data.h = img.height;
-          content.data.width = img.width;
-          content.data.height = img.height;
           content.update(img.width, img.height);
         };
         img.src = content.data.src;
