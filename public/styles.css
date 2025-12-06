@@ -102,27 +102,53 @@ main {
   margin-top: .25rem;
   margin-bottom: .75rem;
 
-  /* [FIX] Border jadi PUTIH (#ffffff) */
+  /* Border putih */
   border: 2px solid #ffffff; 
   border-radius: 12px;          
   
-  /* --- TINGGI BANNER & BACKGROUND --- */
+  /* Tinggi banner & background */
   height: clamp(300px, 45vw, 550px); 
   overflow: hidden;
-  background: #1a1512;
+  background: var(--navy-2); /* DULU coklat, sekarang navy senada tema */
   box-shadow: 0 6px 18px rgba(0,0,0,.35);
 }
 
-.banner-track { display: flex; height: 100%; transition: transform .55s ease-in-out; will-change: transform; }
-.banner-slide { flex: 0 0 100%; height: 100%; }
+.banner-track {
+  display: flex;
+  height: 100%;
+  transition: transform .55s ease-in-out;
+  will-change: transform;
+}
 
+.banner-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Overlay navy supaya warna banner senada */
+.banner-slide::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    rgba(8, 21, 38, 0.65),
+    rgba(8, 21, 38, 0.65)
+  );
+  pointer-events: none;
+}
+
+/* Gambar tetap utuh (tidak kepotong), tapi tone sedikit digelapkan */
 .banner-slide img { 
   width: 100%; 
   height: 100%; 
   object-fit: contain; 
-  display: block; 
+  display: block;
+  filter: brightness(0.9) saturate(1.05);
 }
 
+/* Caption di bawah slider */
 .hero-caption { opacity: .85; margin-top: .25rem; }
 
 /* Tombol prev/next */
@@ -131,6 +157,7 @@ main {
   width: 42px; height: 42px; border-radius: 50%; border: 0;
   background: rgba(0,0,0,.45); color: #fff; font-size: 28px; line-height: 42px;
   cursor: pointer; transition: background .2s;
+  z-index: 5;
 }
 .banner-wrapper .nav:hover { background: rgba(0,0,0,.65); }
 .banner-wrapper .prev { left: 10px; }
