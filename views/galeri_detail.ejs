@@ -19,7 +19,7 @@
     <% } else { %>
       <div class="insta-grid">
         <% photos.forEach((photo, index) => { %>
-          <a href="<%= photo.image_url %>" class="insta-item" data-caption="<%= photo.caption || '' %>" data-index="<%= index %>">
+          <a href="<%= photo.image_url %>" class="insta-item" data-caption="<%= photo.caption || '' %>">
             <img src="<%= photo.image_url %>" loading="lazy" alt="Dokumentasi">
           </a>
         <% }) %>
@@ -30,74 +30,82 @@
 </main>
 
 <style>
-  /* Grid 3 Kolom Rapi di Semua Layar */
+  /* Layout Grid Kotak-Kotak (IG Style) */
   .insta-grid {
     display: grid;
-    /* Mobile & Tablet: 3 Kolom. Desktop: 4 Kolom. */
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px; /* Jarak antar foto tipis kayak IG */
+    grid-template-columns: repeat(3, 1fr); /* 3 Kolom di HP */
+    gap: 3px; 
+  }
+  @media (min-width: 768px) {
+    .insta-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
   }
   @media (min-width: 1024px) {
-    .insta-grid { grid-template-columns: repeat(4, 1fr); }
+    .insta-grid { grid-template-columns: repeat(5, 1fr); }
   }
 
-  /* Foto Kotak Sempurna (1:1) */
+  /* Thumbnail Kotak Sempurna */
   .insta-item {
     display: block;
     aspect-ratio: 1 / 1;
     overflow: hidden;
     background: #111;
-    cursor: pointer;
+    cursor: zoom-in;
+    position: relative;
   }
   .insta-item img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Pastikan foto menuhin kotak tanpa gepeng */
-    transition: filter 0.2s;
+    object-fit: cover; /* Crop rapi jadi kotak */
+    transition: transform 0.3s ease, filter 0.3s;
   }
-  /* Efek gelapkan dikit pas ditekan di HP */
-  .insta-item:active img { filter: brightness(0.8); }
-</style>
+  .insta-item:hover img {
+    transform: scale(1.05); /* Efek zoom dikit pas hover */
+    filter: brightness(1.1);
+  }
 
+  /* --- PENTING: FIX TAMPILAN LIGHTBOX BIAR GAK GEPENG --- */
+  .pswp__img {
+    object-fit: contain !important; /* Foto zoom menyesuaikan bentuk asli */
+    width: auto !important;
+    height: auto !important;
+  }
+</style>
 
 <link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.css">
 <script type="module">
   import PhotoSwipeLightbox from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe-lightbox.esm.js';
   import PhotoSwipe from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.esm.js';
 
-  // 2. Inisialisasi Lightbox
-  const lightbox = new PhotoSwipeLightbox({
-    gallery: '.insta-grid', // Target container grid foto
-    children: 'a', // Target elemen yang bisa diklik (link foto)
-    pswpModule: PhotoSwipe,
-
-    // Opsi Biar Enak di HP
-    zoom: true, // Aktifin fitur pinch-to-zoom
-    wheelToZoom: true, // Zoom pake scroll di PC
-    clickToCloseNonZoomable: false, // Klik foto gak langsung nutup (biar bisa double-tap zoom)
-    imageClickAction: 'zoom', // Sekali tap di HP -> Zoom
-    doubleTapAction: 'zoom', // Double tap -> Zoom in/out
-
-    // Styling biar gak nabrak header HP
-    padding: { top: 20, bottom: 20, left: 0, right: 0 },
-    bgOpacity: 0.95 // Background hitam pekat
+  // 1. DETEKSI UKURAN ASLI FOTO OTOMATIS
+  // Biar pas dibuka zoom-nya presisi sesuai bentuk aslinya
+  const links = document.querySelectorAll('.insta-item');
+  links.forEach((link) => {
+    const img = new Image();
+    img.src = link.href;
+    
+    // Pas gambar aslinya berhasil dimuat di background...
+    img.onload = function() {
+      // ...Kita kasih tau Lightbox ukuran aslinya berapa
+      link.setAttribute('data-pswp-width', img.naturalWidth);
+      link.setAttribute('data-pswp-height', img.naturalHeight);
+    };
   });
 
-  // 3. Trik Biar Lightbox Tau Ukuran Gambar Asli (PENTING buat Zoom)
-  lightbox.on('uiRegister', function() {
-    lightbox.pswp.on('contentLoad', (e) => {
-        const { content, isLazy } = e;
-        if (isLazy && content.data.src && !content.data.w) {
-            // Kalo ukuran asli gambar belum diset, kita muat dulu
-            const img = new Image();
-            img.onload = () => {
-                content.data.w = img.width;
-                content.data.h = img.height;
-                content.update(content.data.w, content.data.h);
-            };
-            img.src = content.data.src;
-        }
-    });
+  // 2. SETUP LIGHTBOX
+  const lightbox = new PhotoSwipeLightbox({
+    gallery: '.insta-grid',
+    children: 'a',
+    pswpModule: PhotoSwipe,
+    
+    // Fitur User Experience
+    zoom: true,                 // Pinch to zoom
+    imageClickAction: 'zoom',   // Klik foto = zoom/unzoom
+    tapAction: 'zoom',          // Tap di HP = zoom
+    doubleTapAction: 'zoom',    // Double tap = zoom
+    bgOpacity: 0.95,            // Background gelap pekat biar fokus
+    
+    // Padding biar gak nabrak tepi layar HP
+    padding: { top: 0, bottom: 0, left: 0, right: 0 } 
   });
 
   lightbox.init();
