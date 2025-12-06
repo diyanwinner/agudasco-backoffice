@@ -1,0 +1,67 @@
+<main>
+  <div class="container section">
+    
+    <div style="margin-bottom: 24px;">
+      <a href="/galeri" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; text-decoration: none; margin-bottom: 12px;">
+        &larr; Kembali ke Galeri
+      </a>
+      <h1 style="margin: 0;"><%= album.title %></h1>
+      <p class="muted" style="margin-top: 4px;">
+        <%= new Date(album.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %> 
+        • <%= photos.length %> Foto
+      </p>
+    </div>
+
+    <% if (photos.length === 0) { %>
+      <div class="card" style="padding: 40px; text-align: center;">
+        <p class="muted">Album ini belum ada fotonya.</p>
+      </div>
+    <% } else { %>
+      <div class="masonry-grid">
+        <% photos.forEach(photo => { %>
+          <div class="masonry-item">
+            <img src="<%= photo.image_url %>" loading="lazy" alt="Foto Dokumentasi" onclick="openLightbox(this.src)">
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+  </div>
+</main>
+
+<style>
+  .masonry-grid {
+    column-count: 3;
+    column-gap: 16px;
+  }
+  @media (max-width: 800px) { .masonry-grid { column-count: 2; } }
+  @media (max-width: 500px) { .masonry-grid { column-count: 1; } }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #111;
+  }
+  .masonry-item img {
+    width: 100%;
+    display: block;
+    transition: opacity 0.2s;
+    cursor: zoom-in;
+  }
+  .masonry-item img:hover {
+    opacity: 0.9;
+  }
+</style>
+
+<div id="lightbox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:999; align-items:center; justify-content:center; cursor:zoom-out;" onclick="this.style.display='none'">
+  <img id="lightbox-img" src="" style="max-width:90vw; max-height:90vh; border-radius:8px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+</div>
+
+<script>
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').style.display = 'flex';
+  }
+</script>
