@@ -1,115 +1,32 @@
-<main>
-  <div class="container section">
-    
-    <div style="margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
-      <a href="/galeri" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; text-decoration: none; margin-bottom: 12px;">
-        &larr; Kembali ke Galeri
-      </a>
-      <h1 style="margin: 0; font-size: 22px;"><%= album.title %></h1>
-      <p class="muted" style="margin-top: 4px; font-size: 13px;">
-        <%= new Date(album.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %> 
-        • <%= photos.length %> Foto
-      </p>
-    </div>
-
-    <% if (photos.length === 0) { %>
-      <div class="card" style="padding: 40px; text-align: center;">
-        <p class="muted">Album ini belum ada fotonya.</p>
-      </div>
-    <% } else { %>
-      <div class="insta-grid">
-        <% photos.forEach((photo, index) => { %>
-          <a href="<%= photo.image_url %>" 
-             class="insta-item" 
-             target="_blank"
-             data-pswp-width="" 
-             data-pswp-height="">
-            <img src="<%= photo.image_url %>" loading="lazy" alt="Foto Dokumentasi">
-          </a>
-        <% }) %>
-      </div>
-    <% } %>
-
-  </div>
-</main>
-
-<style>
-  /* --- GRID LAYOUT (Tampilan Luar) --- */
-  .insta-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 Kolom di HP */
-    gap: 2px;
-  }
-  @media (min-width: 768px) {
-    .insta-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  }
-  @media (min-width: 1024px) {
-    .insta-grid { grid-template-columns: repeat(5, 1fr); }
-  }
-
-  /* Thumbnail Kotak (Cropped) */
-  .insta-item {
-    display: block;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    background: #111;
-    position: relative;
-    cursor: zoom-in;
-  }
-  .insta-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Crop jadi kotak sempurna HANYA untuk thumbnail */
-    transition: opacity 0.3s;
-  }
-  .insta-item:hover img {
-    opacity: 0.8;
-  }
-
-  /* HAPUS CSS .pswp__img YANG KEMARIN!
-     Jangan ada style apapun yang ganggu gambar di dalem Lightbox.
-  */
-</style>
-
-<link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.css">
 <script type="module">
   import PhotoSwipeLightbox from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe-lightbox.esm.js';
   import PhotoSwipe from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.esm.js';
 
+  // --- FIX UTAMA: AUTO-DETECT WIDTH & HEIGHT SEBELUM LIGHTBOX DIBUKA ---
+  const links = document.querySelectorAll('.insta-item');
+
+  links.forEach(a => {
+    const url = a.getAttribute('href');
+    const img = new Image();
+
+    img.onload = () => {
+      a.setAttribute('data-pswp-width', img.width);
+      a.setAttribute('data-pswp-height', img.height);
+    };
+
+    img.src = url;
+  });
+
+  // --- INIT PHOTOSWIPE ---
   const lightbox = new PhotoSwipeLightbox({
     gallery: '.insta-grid',
     children: 'a',
     pswpModule: PhotoSwipe,
-    
-    // Konfigurasi UX Biar Enak
+    bgOpacity: 0.95,
     zoom: true,
-    tapAction: 'close',        // Sekali tap tutup (biar cepet)
-    doubleTapAction: 'zoom',   // Double tap buat zoom
-    bgOpacity: 0.95,           // Background gelap pekat
+    tapAction: 'close',
+    doubleTapAction: 'zoom',
     padding: { top: 0, bottom: 0, left: 0, right: 0 }
-  });
-
-  // --- LOGIKA PENTING: DETEKSI UKURAN ASLI (JUST IN TIME) ---
-  // Script ini jalan pas foto mau dibuka. Dia ngecek ukuran aslinya dulu.
-  lightbox.on('uiRegister', function() {
-    lightbox.pswp.on('contentLoad', (e) => {
-      const { content, isLazy } = e;
-
-      // Jika ukuran foto belum diketahui (masih kosong), kita cek dulu
-      if (!content.data.w || !content.data.h) {
-        // Cegah render sembarangan
-        e.preventDefault();
-
-        const img = new Image();
-        img.onload = () => {
-          // Update ukuran di PhotoSwipe sesuai aslinya
-          content.data.w = img.width;
-          content.data.h = img.height;
-          content.update(img.width, img.height);
-        };
-        img.src = content.data.src;
-      }
-    });
   });
 
   lightbox.init();
