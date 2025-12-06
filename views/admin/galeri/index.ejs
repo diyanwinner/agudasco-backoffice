@@ -1,0 +1,87 @@
+<main>
+  <div class="container admin-wrap">
+    
+    <div class="admin-head">
+      <div>
+        <h1 class="admin-title">Kelola Galeri</h1>
+        <p class="muted">Buat album untuk setiap momen/acara AGUDASCO.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 30px; border: 1px solid var(--blue);">
+      <div class="pad">
+        <h3 style="margin-top:0;">+ Buat Album Baru</h3>
+        
+        <form action="/admin/galeri/create" method="POST" enctype="multipart/form-data" class="form-grid-2" style="gap: 16px; display: grid;">
+          
+          <div>
+            <label class="label">Nama Kegiatan / Momen</label>
+            <input type="text" name="title" class="input" placeholder="Contoh: Bukber Ramadhan 2024" required>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+              <div>
+                <label class="label">Tanggal Acara</label>
+                <input type="date" name="event_date" class="input" required>
+              </div>
+              <div>
+                <label class="label">Cover Album</label>
+                <input type="file" name="cover" class="input" accept="image/*" required>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column;">
+            <label class="label">Deskripsi Singkat</label>
+            <textarea name="description" class="textarea" style="flex:1; min-height: 80px;" placeholder="Ceritain dikit serunya momen ini..."></textarea>
+            
+            <button type="submit" class="btn" style="margin-top: 10px; width: 100%;">Simpan Album</button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <hr style="border:0; border-top:1px solid var(--border); margin: 30px 0;">
+
+    <h3 style="margin-bottom: 16px;">Daftar Album (<%= albums.length %>)</h3>
+
+    <div class="grid cards">
+      <% if (albums.length === 0) { %>
+        <div class="muted" style="grid-column: 1/-1; text-align: center; padding: 40px;">
+          Belum ada album. Yuk bikin dulu di atas!
+        </div>
+      <% } %>
+
+      <% albums.forEach(album => { %>
+        <div class="card album-card-admin">
+          <div style="height: 160px; overflow: hidden; position: relative;">
+            <img src="<%= album.cover_image %>" style="width:100%; height:100%; object-fit: cover;">
+            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 12px;">
+              <%= album.photo_count %> Foto
+            </div>
+          </div>
+          
+          <div class="pad">
+            <div class="meta">
+              <%= new Date(album.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+            </div>
+            <h3 style="font-size: 18px; margin-bottom: 6px;"><%= album.title %></h3>
+            <p class="muted" style="font-size: 13px; line-height: 1.4; margin-bottom: 16px;">
+              <%= album.description || "Tidak ada deskripsi." %>
+            </p>
+            
+            <div style="display: flex; gap: 8px;">
+              <a href="/admin/galeri/<%= album.id %>/photos" class="btn" style="flex: 1; text-align: center; background: var(--navy-2); border: 1px solid var(--border);">
+                📂 Kelola Foto
+              </a>
+              <a href="/admin/galeri/delete/<%= album.id %>" class="btn red" style="padding: 8px 12px;" onclick="return confirm('Yakin hapus album ini beserta isinya?')">
+                Hapus
+              </a>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+
+  </div>
+</main>
