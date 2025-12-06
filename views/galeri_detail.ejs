@@ -1,12 +1,12 @@
 <main>
   <div class="container section">
     
-    <div style="margin-bottom: 24px;">
+    <div style="margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
       <a href="/galeri" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; text-decoration: none; margin-bottom: 12px;">
         &larr; Kembali ke Galeri
       </a>
-      <h1 style="margin: 0;"><%= album.title %></h1>
-      <p class="muted" style="margin-top: 4px;">
+      <h1 style="margin: 0; font-size: 24px;"><%= album.title %></h1>
+      <p class="muted" style="margin-top: 4px; font-size: 13px;">
         <%= new Date(album.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %> 
         • <%= photos.length %> Foto
       </p>
@@ -17,11 +17,11 @@
         <p class="muted">Album ini belum ada fotonya.</p>
       </div>
     <% } else { %>
-      <div class="masonry-grid">
-        <% photos.forEach(photo => { %>
-          <div class="masonry-item">
-            <img src="<%= photo.image_url %>" loading="lazy" alt="Foto Dokumentasi" onclick="openLightbox(this.src)">
-          </div>
+      <div class="insta-grid">
+        <% photos.forEach((photo, index) => { %>
+          <a href="<%= photo.image_url %>" class="insta-item" data-caption="<%= photo.caption || '' %>" data-index="<%= index %>">
+            <img src="<%= photo.image_url %>" loading="lazy" alt="Dokumentasi">
+          </a>
         <% }) %>
       </div>
     <% } %>
@@ -30,38 +30,75 @@
 </main>
 
 <style>
-  .masonry-grid {
-    column-count: 3;
-    column-gap: 16px;
+  /* Grid 3 Kolom Rapi di Semua Layar */
+  .insta-grid {
+    display: grid;
+    /* Mobile & Tablet: 3 Kolom. Desktop: 4 Kolom. */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px; /* Jarak antar foto tipis kayak IG */
   }
-  @media (max-width: 800px) { .masonry-grid { column-count: 2; } }
-  @media (max-width: 500px) { .masonry-grid { column-count: 1; } }
+  @media (min-width: 1024px) {
+    .insta-grid { grid-template-columns: repeat(4, 1fr); }
+  }
 
-  .masonry-item {
-    break-inside: avoid;
-    margin-bottom: 16px;
-    border-radius: 12px;
+  /* Foto Kotak Sempurna (1:1) */
+  .insta-item {
+    display: block;
+    aspect-ratio: 1 / 1;
     overflow: hidden;
     background: #111;
+    cursor: pointer;
   }
-  .masonry-item img {
+  .insta-item img {
     width: 100%;
-    display: block;
-    transition: opacity 0.2s;
-    cursor: zoom-in;
+    height: 100%;
+    object-fit: cover; /* Pastikan foto menuhin kotak tanpa gepeng */
+    transition: filter 0.2s;
   }
-  .masonry-item img:hover {
-    opacity: 0.9;
-  }
+  /* Efek gelapkan dikit pas ditekan di HP */
+  .insta-item:active img { filter: brightness(0.8); }
 </style>
 
-<div id="lightbox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:999; align-items:center; justify-content:center; cursor:zoom-out;" onclick="this.style.display='none'">
-  <img id="lightbox-img" src="" style="max-width:90vw; max-height:90vh; border-radius:8px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
-</div>
 
-<script>
-  function openLightbox(src) {
-    document.getElementById('lightbox-img').src = src;
-    document.getElementById('lightbox').style.display = 'flex';
-  }
+<link rel="stylesheet" href="https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.css">
+<script type="module">
+  import PhotoSwipeLightbox from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe-lightbox.esm.js';
+  import PhotoSwipe from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.esm.js';
+
+  // 2. Inisialisasi Lightbox
+  const lightbox = new PhotoSwipeLightbox({
+    gallery: '.insta-grid', // Target container grid foto
+    children: 'a', // Target elemen yang bisa diklik (link foto)
+    pswpModule: PhotoSwipe,
+
+    // Opsi Biar Enak di HP
+    zoom: true, // Aktifin fitur pinch-to-zoom
+    wheelToZoom: true, // Zoom pake scroll di PC
+    clickToCloseNonZoomable: false, // Klik foto gak langsung nutup (biar bisa double-tap zoom)
+    imageClickAction: 'zoom', // Sekali tap di HP -> Zoom
+    doubleTapAction: 'zoom', // Double tap -> Zoom in/out
+
+    // Styling biar gak nabrak header HP
+    padding: { top: 20, bottom: 20, left: 0, right: 0 },
+    bgOpacity: 0.95 // Background hitam pekat
+  });
+
+  // 3. Trik Biar Lightbox Tau Ukuran Gambar Asli (PENTING buat Zoom)
+  lightbox.on('uiRegister', function() {
+    lightbox.pswp.on('contentLoad', (e) => {
+        const { content, isLazy } = e;
+        if (isLazy && content.data.src && !content.data.w) {
+            // Kalo ukuran asli gambar belum diset, kita muat dulu
+            const img = new Image();
+            img.onload = () => {
+                content.data.w = img.width;
+                content.data.h = img.height;
+                content.update(content.data.w, content.data.h);
+            };
+            img.src = content.data.src;
+        }
+    });
+  });
+
+  lightbox.init();
 </script>
