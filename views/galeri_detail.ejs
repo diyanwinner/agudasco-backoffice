@@ -5,7 +5,7 @@
       <a href="/galeri" style="display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; text-decoration: none; margin-bottom: 12px;">
         &larr; Kembali ke Galeri
       </a>
-      <h1 style="margin: 0; font-size: 24px;"><%= album.title %></h1>
+      <h1 style="margin: 0; font-size: 22px;"><%= album.title %></h1>
       <p class="muted" style="margin-top: 4px; font-size: 13px;">
         <%= new Date(album.event_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %> 
         • <%= photos.length %> Foto
@@ -19,8 +19,12 @@
     <% } else { %>
       <div class="insta-grid">
         <% photos.forEach((photo, index) => { %>
-          <a href="<%= photo.image_url %>" class="insta-item" data-caption="<%= photo.caption || '' %>">
-            <img src="<%= photo.image_url %>" loading="lazy" alt="Dokumentasi">
+          <a href="<%= photo.image_url %>" 
+             class="insta-item" 
+             target="_blank"
+             data-pswp-width="0" 
+             data-pswp-height="0">
+            <img src="<%= photo.image_url %>" loading="lazy" alt="Foto">
           </a>
         <% }) %>
       </div>
@@ -30,44 +34,36 @@
 </main>
 
 <style>
-  /* Layout Grid Kotak-Kotak (IG Style) */
+  /* --- GRID INSTAGRAM (Kotak Rapi) --- */
   .insta-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr); /* 3 Kolom di HP */
-    gap: 3px; 
+    gap: 2px; /* Jarak tipis ala IG */
   }
   @media (min-width: 768px) {
-    .insta-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .insta-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
   }
   @media (min-width: 1024px) {
     .insta-grid { grid-template-columns: repeat(5, 1fr); }
   }
 
-  /* Thumbnail Kotak Sempurna */
+  /* Thumbnail Kotak (Cropped) */
   .insta-item {
     display: block;
     aspect-ratio: 1 / 1;
     overflow: hidden;
     background: #111;
-    cursor: zoom-in;
     position: relative;
+    cursor: zoom-in;
   }
   .insta-item img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Crop rapi jadi kotak */
-    transition: transform 0.3s ease, filter 0.3s;
+    object-fit: cover; /* Crop jadi kotak sempurna */
+    transition: opacity 0.3s;
   }
   .insta-item:hover img {
-    transform: scale(1.05); /* Efek zoom dikit pas hover */
-    filter: brightness(1.1);
-  }
-
-  /* --- PENTING: FIX TAMPILAN LIGHTBOX BIAR GAK GEPENG --- */
-  .pswp__img {
-    object-fit: contain !important; /* Foto zoom menyesuaikan bentuk asli */
-    width: auto !important;
-    height: auto !important;
+    opacity: 0.9;
   }
 </style>
 
@@ -76,36 +72,39 @@
   import PhotoSwipeLightbox from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe-lightbox.esm.js';
   import PhotoSwipe from 'https://unpkg.com/photoswipe@5.4.2/dist/photoswipe.esm.js';
 
-  // 1. DETEKSI UKURAN ASLI FOTO OTOMATIS
-  // Biar pas dibuka zoom-nya presisi sesuai bentuk aslinya
-  const links = document.querySelectorAll('.insta-item');
-  links.forEach((link) => {
-    const img = new Image();
-    img.src = link.href;
-    
-    // Pas gambar aslinya berhasil dimuat di background...
-    img.onload = function() {
-      // ...Kita kasih tau Lightbox ukuran aslinya berapa
-      link.setAttribute('data-pswp-width', img.naturalWidth);
-      link.setAttribute('data-pswp-height', img.naturalHeight);
-    };
-  });
-
-  // 2. SETUP LIGHTBOX
   const lightbox = new PhotoSwipeLightbox({
     gallery: '.insta-grid',
     children: 'a',
     pswpModule: PhotoSwipe,
     
-    // Fitur User Experience
-    zoom: true,                 // Pinch to zoom
-    imageClickAction: 'zoom',   // Klik foto = zoom/unzoom
-    tapAction: 'zoom',          // Tap di HP = zoom
-    doubleTapAction: 'zoom',    // Double tap = zoom
-    bgOpacity: 0.95,            // Background gelap pekat biar fokus
-    
-    // Padding biar gak nabrak tepi layar HP
-    padding: { top: 0, bottom: 0, left: 0, right: 0 } 
+    // Konfigurasi UX
+    zoom: true,
+    tapAction: 'close',        // Sekali tap tutup (biar cepet)
+    doubleTapAction: 'zoom',   // Double tap buat zoom
+    bgOpacity: 0.9,            // Background gelap
+    padding: { top: 0, bottom: 0, left: 0, right: 0 }
+  });
+
+  // --- LOGIKA PENTING: DETEKSI UKURAN ASLI ---
+  // Ini yang bikin foto gak gepeng. Dia ngecek ukuran asli pas foto mau dibuka.
+  lightbox.on('uiRegister', function() {
+    lightbox.pswp.on('contentLoad', (e) => {
+      const { content, isLazy } = e;
+
+      // Jika ukuran foto belum diketahui (masih 0), kita cek dulu
+      if (content.data.width < 1 || content.data.height < 1) {
+        const img = new Image();
+        img.onload = () => {
+          // Update ukuran di PhotoSwipe sesuai aslinya
+          content.data.w = img.width;
+          content.data.h = img.height;
+          content.data.width = img.width;
+          content.data.height = img.height;
+          content.update(img.width, img.height);
+        };
+        img.src = content.data.src;
+      }
+    });
   });
 
   lightbox.init();
