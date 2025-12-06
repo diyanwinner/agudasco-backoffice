@@ -1,0 +1,61 @@
+<main>
+  <div class="container admin-wrap">
+
+    <div style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+      <div>
+        <a href="/admin/galeri" style="color: var(--muted); font-size: 14px; text-decoration: none;">&larr; Kembali ke Daftar Album</a>
+        <h1 style="margin-top: 8px; margin-bottom: 4px;"><%= album.title %></h1>
+        <p class="muted" style="margin:0;">Upload dokumentasi acara di sini.</p>
+      </div>
+      <div style="text-align: right;">
+        <span class="btn ghost" style="pointer-events: none;"><%= photos.length %> Foto Tersimpan</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 30px; background: rgba(43, 114, 255, 0.05); border: 1px dashed var(--blue);">
+      <div class="pad" style="text-align: center; padding: 30px;">
+        
+        <form action="/admin/galeri/<%= album.id %>/upload" method="POST" enctype="multipart/form-data">
+          
+          <svg width="48" height="48" fill="none" stroke="#2b72ff" viewBox="0 0 24 24" style="margin-bottom: 12px; opacity: 0.8;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          
+          <h3 style="margin: 0 0 8px;">Upload Foto Baru</h3>
+          <p class="muted" style="margin-bottom: 16px;">Pilih banyak foto sekaligus (JPG/PNG)</p>
+          
+          <input type="file" name="photos" multiple required 
+                 style="display: block; margin: 0 auto 16px; color: var(--text); background: var(--navy); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
+          
+          <button type="submit" class="btn" style="padding: 10px 30px;">
+            Mulai Upload 🚀
+          </button>
+          
+        </form>
+      </div>
+    </div>
+
+    <div class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">
+      
+      <% if (photos.length === 0) { %>
+        <div style="grid-column: 1/-1; text-align: center; color: var(--muted); padding: 40px;">
+          Belum ada foto di album ini.
+        </div>
+      <% } %>
+
+      <% photos.forEach(photo => { %>
+        <div style="position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); group">
+          <img src="<%= photo.image_url %>" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;">
+          
+          <a href="/admin/galeri/photo/delete/<%= photo.id %>" 
+             onclick="return confirm('Hapus foto ini?')"
+             style="position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; background: rgba(220, 38, 38, 0.8); color: #fff; display: flex; align-items: center; justify-content: center; border-radius: 50%; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+             &times;
+          </a>
+        </div>
+      <% }) %>
+
+    </div>
+
+  </div>
+</main>
