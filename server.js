@@ -39,114 +39,6 @@ const pool = new Pool({
 const q  = async (sql, params = []) => (await pool.query(sql, params)).rows;
 const q1 = async (sql, params = []) => (await pool.query(sql, params)).rows[0] || null;
 
-// ensure tables
-async function ensureTables() {
-  await pool.query(`
-    -- Articles
-    CREATE TABLE IF NOT EXISTS articles (
-      id BIGSERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      content TEXT,
-      image TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-    CREATE INDEX IF NOT EXISTS idx_articles_created_at ON articles (created_at DESC);
-
-    -- Banners
-    CREATE TABLE IF NOT EXISTS banners (
-      id BIGSERIAL PRIMARY KEY,
-      image TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-
-    -- Settings (legacy key-value)
-    CREATE TABLE IF NOT EXISTS site_settings (
-      key TEXT PRIMARY KEY,
-      value TEXT
-    );
-
-    -- Reports
-    CREATE TABLE IF NOT EXISTS reports (
-      id BIGSERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      cover TEXT,
-      pdf_url TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-
-    -- AD/ART
-    CREATE TABLE IF NOT EXISTS adarts (
-      id BIGSERIAL PRIMARY KEY,
-      title TEXT NOT NULL,
-      cover TEXT,
-      pdf_url TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-
-    -- Members
-    CREATE TABLE IF NOT EXISTS members (
-      id BIGSERIAL PRIMARY KEY,
-      name TEXT NOT NULL,
-      avatar TEXT,
-      bio TEXT,
-      birthdate DATE,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-    CREATE INDEX IF NOT EXISTS idx_members_name ON members (name);
-
-    -- Member Families
-    CREATE TABLE IF NOT EXISTS member_families (
-      id BIGSERIAL PRIMARY KEY,
-      member_id BIGINT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-      fullname TEXT NOT NULL,
-      relation TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-
-    -- Member Photos
-    CREATE TABLE IF NOT EXISTS member_photos (
-      id BIGSERIAL PRIMARY KEY,
-      member_id BIGINT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-      image_url TEXT NOT NULL,
-      caption TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-
-    -- Legacy single-row (dibiarkan untuk kompatibilitas)
-    CREATE TABLE IF NOT EXISTS site_info (
-      id INT PRIMARY KEY DEFAULT 1,
-      org_name   TEXT,
-      email      TEXT,
-      phone      TEXT,
-      whatsapp   TEXT,
-      address    TEXT,
-      maps_url   TEXT,
-      instagram  TEXT,
-      facebook   TEXT,
-      x_handle   TEXT,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-    INSERT INTO site_info (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
-
-    -- New canonical table for contact (dipakai publik/admin)
-    CREATE TABLE IF NOT EXISTS site_contact (
-      id INT PRIMARY KEY DEFAULT 1,
-      org_name   TEXT,
-      email      TEXT,
-      phone      TEXT,
-      whatsapp   TEXT,
-      address    TEXT,
-      maps_url   TEXT,
-      instagram  TEXT,
-      facebook   TEXT,
-      x_handle   TEXT,
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    );
-    INSERT INTO site_contact (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
-  `);
-}
-// ensureTables().catch(err => console.error("ensureTables error:", err));
-
 /* ------------------------------------------------------------
    CLOUDINARY + MULTER (image only)
 ------------------------------------------------------------ */
@@ -211,7 +103,7 @@ app.use((req, res, next) => {
   next();
 });
 
-/* === Floating WhatsApp locals (tampil di semua halaman publik) === */
+/* === Floating WhatsApp locals === */
 app.use((req, res, next) => {
   res.locals.showWhatsAppFloat = !req.path.startsWith("/admin");
   res.locals.waNumber = (process.env.WHATSAPP_NUMBER || "62895340169646").replace(/\D/g, "");
@@ -220,7 +112,7 @@ app.use((req, res, next) => {
   next();
 });
 
-/* === SATU-SATUNYA CSP (mengizinkan PDF.js worker & blob) === */
+/* === CSP === */
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
@@ -273,8 +165,134 @@ function adminAuth(req, res, next) {
   }
 }
 
+/* ============================================================
+   [BARU] ROUTES GALERI (DISISIPKAN DI SINI)
+   Biar aman dan langsung jalan sebelum masuk ke route lain
+============================================================ */
+
+// 1. DAFTAR ALBUM (Halaman Utama Admin Galeri)
+app.get("/admin/galeri", adminAuth, async (req, res) => {
+  try {
+    // Ambil semua album, urutkan tanggal acara terbaru
+    // Sekalian hitung jumlah foto per album (pake subquery simpel)
+    const sql = `
+      SELECT a.*, 
+      (SELECT COUNT(*) FROM gallery_photos WHERE album_id = a.id) as photo_count
+      FROM albums a 
+      ORDER BY event_date DESC
+    `;
+    const albums = await q(sql);
+    
+    // Render view: views/admin/galeri/index.ejs
+    res.render("admin/galeri/index", { 
+      title: "Kelola Galeri",
+      albums 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Gagal memuat galeri.");
+  }
+});
+
+// 2. CREATE ALBUM BARU
+// Disini kita gabung: kalau GET tampilin form (opsional), 
+// kalau POST langsung proses buat album.
+// Kita pakai POST aja biar simpel (formnya di index.ejs)
+app.post("/admin/galeri/create", adminAuth, uploadImage.single("cover"), async (req, res) => {
+  try {
+    const { title, event_date, description } = req.body;
+    const cover = req.file ? req.file.path : null; // Ambil url gambar dari Cloudinary
+
+    await pool.query(
+      `INSERT INTO albums (title, event_date, description, cover_image) 
+       VALUES ($1, $2, $3, $4)`,
+      [title, event_date, description, cover]
+    );
+
+    res.redirect("/admin/galeri");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Gagal membuat album.");
+  }
+});
+
+// 3. HAPUS ALBUM
+app.get("/admin/galeri/delete/:id", adminAuth, async (req, res) => {
+  try {
+    await pool.query("DELETE FROM albums WHERE id = $1", [req.params.id]);
+    res.redirect("/admin/galeri");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Gagal menghapus album.");
+  }
+});
+
+// 4. BUKA ALBUM (Lihat & Upload Foto)
+app.get("/admin/galeri/:id/photos", adminAuth, async (req, res) => {
+  try {
+    const albumId = req.params.id;
+    // Ambil info album
+    const album = await q1("SELECT * FROM albums WHERE id = $1", [albumId]);
+    // Ambil foto-foto di dalamnya
+    const photos = await q("SELECT * FROM gallery_photos WHERE album_id = $1 ORDER BY id DESC", [albumId]);
+
+    if (!album) return res.status(404).send("Album tidak ditemukan");
+
+    // Render view: views/admin/galeri/photos.ejs
+    res.render("admin/galeri/photos", { 
+      title: `Foto: ${album.title}`,
+      album, 
+      photos 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error membuka album.");
+  }
+});
+
+// 5. UPLOAD FOTO KE ALBUM (Bisa Banyak Sekaligus/Multiple)
+app.post("/admin/galeri/:id/upload", adminAuth, uploadImage.array("photos"), async (req, res) => {
+  try {
+    const albumId = req.params.id;
+    
+    // Loop semua file yang diupload dan masukkan ke database
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        await pool.query(
+          "INSERT INTO gallery_photos (album_id, image_url) VALUES ($1, $2)",
+          [albumId, file.path]
+        );
+      }
+    }
+    
+    // Balik lagi ke halaman foto tadi
+    res.redirect(`/admin/galeri/${albumId}/photos`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Gagal upload foto.");
+  }
+});
+
+// 6. HAPUS FOTO
+app.get("/admin/galeri/photo/delete/:id", adminAuth, async (req, res) => {
+  try {
+    // Cek dulu foto ini punya album mana (buat redirect balik)
+    const photo = await q1("SELECT album_id FROM gallery_photos WHERE id = $1", [req.params.id]);
+    
+    if (photo) {
+      await pool.query("DELETE FROM gallery_photos WHERE id = $1", [req.params.id]);
+      res.redirect(`/admin/galeri/${photo.album_id}/photos`);
+    } else {
+      res.redirect("/admin/galeri");
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Gagal hapus foto.");
+  }
+});
+
 /* ------------------------------------------------------------
-   ROUTES
+   ROUTES BAWAAN (LOADER)
 ------------------------------------------------------------ */
 import publicRoutes from "./routes/public.js";
 import adminRoutes  from "./routes/admin.js";
@@ -282,6 +300,7 @@ import adminRoutes  from "./routes/admin.js";
 // healthcheck
 app.get("/health", (_req, res) => res.status(200).send("OK"));
 
+// Pasang route
 app.use("/",      publicRoutes(q, q1));
 app.use("/admin", adminAuth, adminRoutes(q, q1, uploadImage, pool));
 
