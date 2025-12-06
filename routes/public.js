@@ -1,4 +1,3 @@
-// routes/public.js
 import express from "express";
 
 export default function (q, q1) {
@@ -10,8 +9,7 @@ export default function (q, q1) {
       const info = await q1(
         "SELECT org_name, address, email, phone, whatsapp FROM site_contact WHERE id = 1"
       );
-
-      // disimpan di res.locals supaya otomatis kebawa ke semua render
+      // Simpan di res.locals supaya otomatis kebawa ke semua render
       res.locals.footerContact = info || {};
     } catch (e) {
       console.error("footerContact load err:", e);
@@ -20,22 +18,26 @@ export default function (q, q1) {
     next();
   });
 
-  // ========= Beranda =========
+  // ========= 1. BERANDA (HOME) =========
   router.get("/", async (_req, res) => {
-    const banners = await q("SELECT * FROM banners ORDER BY id DESC LIMIT 10");
-    const arts    = await q("SELECT * FROM articles ORDER BY id DESC LIMIT 6");
+    try {
+      const banners = await q("SELECT * FROM banners ORDER BY id DESC LIMIT 10");
+      const arts    = await q("SELECT * FROM articles ORDER BY id DESC LIMIT 6");
 
-    res.render("home", {
-      title: "AGUDASCO – Beranda",
-      active: "home",
-      banners,
-      arts,
-      // optional: kalau mau tetap eksplisit
-      footerContact: res.locals.footerContact
-    });
+      res.render("home", {
+        title: "AGUDASCO – Beranda",
+        active: "home",
+        banners,
+        arts,
+        footerContact: res.locals.footerContact
+      });
+    } catch (err) {
+      console.error(err);
+      res.render("home", { title: "Beranda", active: "home", banners:[], arts:[] });
+    }
   });
 
-  // ========= Artikel =========
+  // ========= 2. ARTIKEL =========
   router.get("/artikel", async (_req, res) => {
     const articles = await q("SELECT * FROM articles ORDER BY id DESC");
     res.render("articles", {
@@ -58,28 +60,20 @@ export default function (q, q1) {
     });
   });
 
-  // ===== Laporan (langsung flipbook) =====
-router.get("/laporan", (req, res) => {
-  // langsung arahkan ke halaman flipbook
-  res.redirect("/laporan/book");
-});
-
-router.get("/laporan/book", (req, res) => {
-  res.render("report_book", {
-    title: "Laporan Keuangan (Flipbook)",
-    active: "laporan",
+  // ========= 3. LAPORAN KEUANGAN (Flipbook) =========
+  router.get("/laporan", (req, res) => {
+    res.redirect("/laporan/book");
   });
-});
 
-  // Laporan Keuangan (Flipbook)
-  router.get("/laporan/book", (_req, res) => {
+  router.get("/laporan/book", (req, res) => {
     res.render("report_book", {
-      title: "Laporan Keuangan 2025 (Flipbook)",
+      title: "Laporan Keuangan (Flipbook)",
       active: "laporan",
+      footerContact: res.locals.footerContact
     });
   });
   
-  /* ===== AD/ART ===== */
+  // ========= 4. AD/ART (Flipbook) =========
   router.get("/adart", (_req, res) => res.redirect("/adart/book"));
 
   router.get("/adart/book", (_req, res) => {
@@ -90,7 +84,7 @@ router.get("/laporan/book", (req, res) => {
     });
   });
 
-  // ========= Anggota =========
+  // ========= 5. ANGGOTA =========
   router.get("/anggota", async (_req, res) => {
     const members = await q("SELECT id, name, avatar FROM members ORDER BY name ASC");
     res.render("members", {
@@ -105,27 +99,31 @@ router.get("/laporan/book", (req, res) => {
     const member = await q1("SELECT * FROM members WHERE id=$1", [req.params.id]);
     if (!member) return res.status(404).send("Anggota tidak ditemukan");
 
+    // Ambil data tambahan (keluarga & foto) jika diperlukan
+    const family = await q("SELECT * FROM member_families WHERE member_id=$1", [member.id]);
+    const photos = await q("SELECT * FROM member_photos WHERE member_id=$1", [member.id]);
+
     res.render("member_view", {
       title: member.name,
       active: "anggota",
       member,
+      family,
+      photos,
       footerContact: res.locals.footerContact
     });
   });
 
-  // ========= Kontak publik =========
+  // ========= 6. KONTAK & TENTANG =========
   router.get("/kontak", (_req, res) => {
     const info = res.locals.footerContact || {};
-
     res.render("kontak", {
       title: "Kontak",
       active: "kontak",
-      contact: info,               // buat kartu di halaman kontak
-      footerContact: info          // buat footer kolom kontak
+      contact: info,
+      footerContact: info
     });
   });
 
-  // ========= Halaman lain =========
   router.get("/tentang", (_req, res) =>
     res.render("tentang", {
       title: "Tentang",
@@ -134,7 +132,11 @@ router.get("/laporan/book", (req, res) => {
     })
   );
 
-  // 1. Halaman Depan Galeri (List Album)
+  // ============================================
+  // 7. GALERI (Update Terbaru)
+  // ============================================
+  
+  // Halaman Depan Galeri (List Album)
   router.get("/galeri", async (req, res) => {
     try {
       // Ambil semua album, urutkan dari yg terbaru
@@ -142,16 +144,22 @@ router.get("/laporan/book", (req, res) => {
       
       res.render("galeri", {
         title: "Galeri Kegiatan",
-        active: "galeri", // Biar menu navbar nyala
-        albums: albums // Lempar data album ke EJS
+        active: "galeri", 
+        albums: albums,
+        footerContact: res.locals.footerContact
       });
     } catch (err) {
-      console.error(err);
-      res.status(500).send("Gagal memuat galeri");
+      console.error("Error Galeri:", err);
+      res.render("galeri", { 
+        title: "Galeri", 
+        active: "galeri", 
+        albums: [],
+        footerContact: res.locals.footerContact 
+      });
     }
   });
 
-  // 2. Halaman Detail Album (Isi Foto)
+  // Halaman Detail Album (Isi Foto)
   router.get("/galeri/:id", async (req, res) => {
     try {
       const albumId = req.params.id;
@@ -160,7 +168,7 @@ router.get("/laporan/book", (req, res) => {
       const album = await q1("SELECT * FROM albums WHERE id = $1", [albumId]);
       
       if (!album) {
-        return res.status(404).render("404", { title: "Album Tidak Ditemukan" }); // Atau redirect
+        return res.redirect("/galeri");
       }
 
       // Ambil foto-foto di dalem album itu
@@ -170,11 +178,14 @@ router.get("/laporan/book", (req, res) => {
         title: album.title,
         active: "galeri",
         album: album,
-        photos: photos
+        photos: photos,
+        footerContact: res.locals.footerContact
       });
     } catch (err) {
       console.error(err);
-      res.status(500).send("Gagal memuat detail album");
+      res.redirect("/galeri");
     }
   });
-  
+
+  return router;
+}
