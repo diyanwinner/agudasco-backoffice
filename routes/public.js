@@ -134,13 +134,47 @@ router.get("/laporan/book", (req, res) => {
     })
   );
 
-  router.get("/galeri", (_req, res) =>
-    res.render("galeri", {
-      title: "Galeri",
-      active: "galeri",
-      footerContact: res.locals.footerContact
-    })
-  );
+  // 1. Halaman Depan Galeri (List Album)
+  router.get("/galeri", async (req, res) => {
+    try {
+      // Ambil semua album, urutkan dari yg terbaru
+      const albums = await q("SELECT * FROM albums ORDER BY event_date DESC");
+      
+      res.render("galeri", {
+        title: "Galeri Kegiatan",
+        active: "galeri", // Biar menu navbar nyala
+        albums: albums // Lempar data album ke EJS
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Gagal memuat galeri");
+    }
+  });
 
-  return router;
-}
+  // 2. Halaman Detail Album (Isi Foto)
+  router.get("/galeri/:id", async (req, res) => {
+    try {
+      const albumId = req.params.id;
+      
+      // Ambil data albumnya dulu
+      const album = await q1("SELECT * FROM albums WHERE id = $1", [albumId]);
+      
+      if (!album) {
+        return res.status(404).render("404", { title: "Album Tidak Ditemukan" }); // Atau redirect
+      }
+
+      // Ambil foto-foto di dalem album itu
+      const photos = await q("SELECT * FROM gallery_photos WHERE album_id = $1 ORDER BY id DESC", [albumId]);
+
+      res.render("galeri_detail", {
+        title: album.title,
+        active: "galeri",
+        album: album,
+        photos: photos
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Gagal memuat detail album");
+    }
+  });
+  
