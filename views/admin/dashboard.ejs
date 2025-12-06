@@ -1,4 +1,3 @@
-<!-- views/admin/dashboard.ejs -->
 <div class="admin-wrap">
   <div class="admin-head">
     <h1 class="admin-title">Dashboard Admin</h1>
@@ -102,10 +101,14 @@
       <div class="card">
         <div class="pad">
           <h3>Galeri</h3>
-          <p class="meta">Tautan ke halaman galeri publik.</p>
-          <a class="btn" href="/galeri">Lihat Publik</a>
+          <p class="meta">Kelola album foto dan dokumentasi kegiatan.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn" href="/admin/galeri">Buka</a>
+            <a class="btn ghost" href="/galeri" target="_blank">Lihat Web</a>
+          </div>
         </div>
       </div>
+
     </div>
   </section>
 </div>
