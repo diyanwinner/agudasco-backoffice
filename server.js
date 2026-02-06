@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -9,7 +8,7 @@ import { CloudinaryStorage } from "multer-storage-cloudinary";
 import pkg from "pg";
 const { Pool } = pkg;
 
-// Tangkap error global biar yang di-print cuma pesannya
+// Tangkap error global biar server gak gampang crash
 process.on("uncaughtException", (err) => {
   console.error("Uncaught:", err?.message || String(err));
 });
@@ -65,7 +64,7 @@ const uploadImage = multer({ storage: imageStorage });
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(express.json({ limit: "5mb" }));
 
-// static assets (cache; cache-busting via buildId)
+// static assets
 app.use(
   "/public",
   express.static(path.join(__dirname, "public"), {
@@ -74,7 +73,7 @@ app.use(
   })
 );
 
-// alias lebih singkat untuk dokumen (PDF, dsb)
+// alias docs
 app.use(
   "/docs",
   express.static(path.join(__dirname, "public", "docs"), {
@@ -129,7 +128,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---- Footer contact loader (NO CACHE) ----
+// ---- Footer contact loader ----
 app.use(async (_req, res, next) => {
   try {
     res.locals.footerContact = await q1("SELECT * FROM site_info WHERE id=1") || {};
@@ -140,32 +139,45 @@ app.use(async (_req, res, next) => {
   next();
 });
 
-/* ------------------------------------------------------------
-   BASIC AUTH UNTUK /admin/*
------------------------------------------------------------- */
+/* ============================================================
+   AUTHENTICATION (LOGIN SYSTEM)
+   "Si Satpam" kita taruh sini biar dikenal
+============================================================ */
+
+// 1. Fungsi Pengecekan (Middleware)
+function checkAuth(req, res, next) {
+  const cookie = req.headers.cookie || "";
+  // Cek apakah ada cookie "admin_session=true"
+  if (cookie.includes("admin_session=true")) {
+    return next();
+  }
+  // Kalau gak ada, tendang ke login
+  return res.redirect("/login");
+}
+
+// 2. Halaman Login
 app.get("/login", (req, res) => {
   const cookie = req.headers.cookie || "";
+  // Kalau udah login, langsung ke admin
   if (cookie.includes("admin_session=true")) return res.redirect("/admin/galeri");
 
   res.render("login", { 
     title: "Login Admin", 
-    layout: "layout", // Pastikan punya layout.ejs, atau set 'false'
+    layout: "layout", // Pastikan file views/layout.ejs ada
     error: null 
   });
 });
 
-// Proses Login
+// 3. Proses Login
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
-  // Cek Credential (tetap ambil dari ENV)
+  // Cek Credential dari ENV
   const validUser = process.env.ADMIN_USERNAME || "admin";
   const validPass = process.env.ADMIN_PASSWORD || "admin";
 
   if (username === validUser && password === validPass) {
-    // SUKSES: Kirim perintah ke browser buat simpan Cookie
-    // HttpOnly = Biar gak bisa diakses JS (lebih aman dikit)
-    // Max-Age = 86400 detik (1 hari)
+    // SUKSES: Set Cookie manual (Tahan 1 Hari)
     res.setHeader("Set-Cookie", "admin_session=true; HttpOnly; Path=/; Max-Age=86400");
     return res.redirect("/admin/galeri");
   } else {
@@ -178,23 +190,22 @@ app.post("/login", (req, res) => {
   }
 });
 
-// Logout
+// 4. Logout
 app.get("/logout", (req, res) => {
-  // Hapus cookie dengan cara set tanggal kadaluarsa masa lalu (Max-Age=0)
+  // Hapus cookie (Max-Age=0)
   res.setHeader("Set-Cookie", "admin_session=; HttpOnly; Path=/; Max-Age=0");
   res.redirect("/login");
 });
 
+
 /* ============================================================
-   [BARU] ROUTES GALERI (DISISIPKAN DI SINI)
-   Biar aman dan langsung jalan sebelum masuk ke route lain
+   ROUTES GALERI ADMIN
+   Pastikan pakai checkAuth semua!
 ============================================================ */
 
-// 1. DAFTAR ALBUM (Halaman Utama Admin Galeri)
+// 1. DAFTAR ALBUM
 app.get("/admin/galeri", checkAuth, async (req, res) => {
   try {
-    // Ambil semua album, urutkan tanggal acara terbaru
-    // Sekalian hitung jumlah foto per album (pake subquery simpel)
     const sql = `
       SELECT a.*, 
       (SELECT COUNT(*) FROM gallery_photos WHERE album_id = a.id) as photo_count
@@ -203,7 +214,6 @@ app.get("/admin/galeri", checkAuth, async (req, res) => {
     `;
     const albums = await q(sql);
     
-    // Render view: views/admin/galeri/index.ejs
     res.render("admin/galeri/index", { 
       title: "Kelola Galeri",
       albums 
@@ -214,14 +224,11 @@ app.get("/admin/galeri", checkAuth, async (req, res) => {
   }
 });
 
-// 2. CREATE ALBUM BARU
-// Disini kita gabung: kalau GET tampilin form (opsional), 
-// kalau POST langsung proses buat album.
-// Kita pakai POST aja biar simpel (formnya di index.ejs)
+// 2. CREATE ALBUM
 app.post("/admin/galeri/create", checkAuth, uploadImage.single("cover"), async (req, res) => {
   try {
     const { title, event_date, description } = req.body;
-    const cover = req.file ? req.file.path : null; // Ambil url gambar dari Cloudinary
+    const cover = req.file ? req.file.path : null;
 
     await pool.query(
       `INSERT INTO albums (title, event_date, description, cover_image) 
@@ -247,18 +254,15 @@ app.get("/admin/galeri/delete/:id", checkAuth, async (req, res) => {
   }
 });
 
-// 4. BUKA ALBUM (Lihat & Upload Foto)
+// 4. BUKA ALBUM
 app.get("/admin/galeri/:id/photos", checkAuth, async (req, res) => {
   try {
     const albumId = req.params.id;
-    // Ambil info album
     const album = await q1("SELECT * FROM albums WHERE id = $1", [albumId]);
-    // Ambil foto-foto di dalamnya
     const photos = await q("SELECT * FROM gallery_photos WHERE album_id = $1 ORDER BY id DESC", [albumId]);
 
     if (!album) return res.status(404).send("Album tidak ditemukan");
 
-    // Render view: views/admin/galeri/photos.ejs
     res.render("admin/galeri/photos", { 
       title: `Foto: ${album.title}`,
       album, 
@@ -270,12 +274,10 @@ app.get("/admin/galeri/:id/photos", checkAuth, async (req, res) => {
   }
 });
 
-// 5. UPLOAD FOTO KE ALBUM (Bisa Banyak Sekaligus/Multiple)
+// 5. UPLOAD FOTO MULTIPLE
 app.post("/admin/galeri/:id/upload", checkAuth, uploadImage.array("photos"), async (req, res) => {
   try {
     const albumId = req.params.id;
-    
-    // Loop semua file yang diupload dan masukkan ke database
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
         await pool.query(
@@ -284,8 +286,6 @@ app.post("/admin/galeri/:id/upload", checkAuth, uploadImage.array("photos"), asy
         );
       }
     }
-    
-    // Balik lagi ke halaman foto tadi
     res.redirect(`/admin/galeri/${albumId}/photos`);
   } catch (err) {
     console.error(err);
@@ -296,9 +296,7 @@ app.post("/admin/galeri/:id/upload", checkAuth, uploadImage.array("photos"), asy
 // 6. HAPUS FOTO
 app.get("/admin/galeri/photo/delete/:id", checkAuth, async (req, res) => {
   try {
-    // Cek dulu foto ini punya album mana (buat redirect balik)
     const photo = await q1("SELECT album_id FROM gallery_photos WHERE id = $1", [req.params.id]);
-    
     if (photo) {
       await pool.query("DELETE FROM gallery_photos WHERE id = $1", [req.params.id]);
       res.redirect(`/admin/galeri/${photo.album_id}/photos`);
@@ -322,6 +320,7 @@ app.get("/health", (_req, res) => res.status(200).send("OK"));
 
 // Pasang route
 app.use("/",      publicRoutes(q, q1));
+// Route Admin Utama juga diproteksi checkAuth
 app.use("/admin", checkAuth, adminRoutes(q, q1, uploadImage, pool));
 
 /* ------------------------------------------------------------
