@@ -138,31 +138,60 @@ app.get("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-/* ============================================================
-   ROUTE DASHBOARD UTAMA
-   (Ini yang tadinya gak ada, makanya dashboard gak muncul)
-============================================================ */
+/* === ROUTE DASHBOARD (VERSI PASTI JALAN) === */
 app.get("/admin", checkAuth, async (req, res) => {
   try {
-    // Cari member ultah 7 hari kedepan (kalau tabel ada)
-    let upcomingBirthdays = [];
-    try {
-      upcomingBirthdays = await q(`
-        SELECT * FROM members 
-        WHERE TO_CHAR(birthdate, 'MM-DD') BETWEEN TO_CHAR(CURRENT_DATE, 'MM-DD') 
-          AND TO_CHAR(CURRENT_DATE + INTERVAL '7 days', 'MM-DD')
-      `);
-    } catch (e) { /* abaikan kalau error */ }
+    // 1. Ambil semua data member dulu (biar server yang pilih-pilih)
+    const allMembers = await q("SELECT * FROM members");
+    
+    // 2. Kita filter pake Javascript aja (Lebih aman dari error SQL)
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
 
-    // Render file views/dashboard.ejs
+    const upcomingBirthdays = allMembers.filter(member => {
+      if (!member.birthdate) return false;
+
+      // Konversi tanggal lahir member
+      const bdate = new Date(member.birthdate);
+      const thisYearBirthday = new Date(today.getFullYear(), bdate.getMonth(), bdate.getDate());
+
+      // Cek apakah ulang tahunnya antara hari ini sampai 7 hari kedepan
+      // (Kita handle juga kalo ulang tahunnya nyebrang tahun, misal 31 Des ke 1 Jan)
+      if (thisYearBirthday < today) {
+         thisYearBirthday.setFullYear(today.getFullYear() + 1);
+      }
+      
+      // Hitung selisih waktu
+      const diffTime = thisYearBirthday - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+      // Tambahin label 'is_today' biar di dashboard muncul label merahnya
+      if (diffDays === 0) {
+        member.is_today = true;
+        return true;
+      } else if (diffDays > 0 && diffDays <= 7) {
+        member.is_today = false;
+        return true;
+      }
+      return false;
+    });
+
+    // 3. Render Dashboard
     res.render("dashboard", { 
       title: "Dashboard Admin",
-      upcomingBirthdays,
+      upcomingBirthdays: upcomingBirthdays,
       layout: "layout" 
     });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Gagal memuat dashboard");
+    console.error("Dashboard Error:", err);
+    // Kalau masih error parah, tampilin dashboard kosong aja daripada crash
+    res.render("dashboard", { 
+      title: "Dashboard Admin",
+      upcomingBirthdays: [],
+      layout: "layout" 
+    });
   }
 });
 
