@@ -143,27 +143,47 @@ app.use(async (_req, res, next) => {
 /* ------------------------------------------------------------
    BASIC AUTH UNTUK /admin/*
 ------------------------------------------------------------ */
-function adminAuth(req, res, next) {
-  try {
-    const header = req.headers.authorization || "";
-    if (!header.startsWith("Basic ")) throw new Error("no basic");
+app.get("/login", (req, res) => {
+  const cookie = req.headers.cookie || "";
+  if (cookie.includes("admin_session=true")) return res.redirect("/admin/galeri");
 
-    const decoded = Buffer.from(header.slice(6), "base64").toString("utf8");
-    const sep = decoded.indexOf(":");
-    const user = decoded.slice(0, sep);
-    const pass = decoded.slice(sep + 1);
+  res.render("login", { 
+    title: "Login Admin", 
+    layout: "layout", // Pastikan punya layout.ejs, atau set 'false'
+    error: null 
+  });
+});
 
-    const ok =
-      user === (process.env.ADMIN_USERNAME || "") &&
-      pass === (process.env.ADMIN_PASSWORD || "");
+// Proses Login
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
 
-    if (!ok) throw new Error("bad cred");
-    return next();
-  } catch {
-    res.set("WWW-Authenticate", 'Basic realm="Admin Area"');
-    return res.status(401).send("Unauthorized");
+  // Cek Credential (tetap ambil dari ENV)
+  const validUser = process.env.ADMIN_USERNAME || "admin";
+  const validPass = process.env.ADMIN_PASSWORD || "admin";
+
+  if (username === validUser && password === validPass) {
+    // SUKSES: Kirim perintah ke browser buat simpan Cookie
+    // HttpOnly = Biar gak bisa diakses JS (lebih aman dikit)
+    // Max-Age = 86400 detik (1 hari)
+    res.setHeader("Set-Cookie", "admin_session=true; HttpOnly; Path=/; Max-Age=86400");
+    return res.redirect("/admin/galeri");
+  } else {
+    // GAGAL
+    res.render("login", { 
+      title: "Login Admin", 
+      error: "Username atau Password salah!",
+      layout: "layout"
+    });
   }
-}
+});
+
+// Logout
+app.get("/logout", (req, res) => {
+  // Hapus cookie dengan cara set tanggal kadaluarsa masa lalu (Max-Age=0)
+  res.setHeader("Set-Cookie", "admin_session=; HttpOnly; Path=/; Max-Age=0");
+  res.redirect("/login");
+});
 
 /* ============================================================
    [BARU] ROUTES GALERI (DISISIPKAN DI SINI)
@@ -171,7 +191,7 @@ function adminAuth(req, res, next) {
 ============================================================ */
 
 // 1. DAFTAR ALBUM (Halaman Utama Admin Galeri)
-app.get("/admin/galeri", adminAuth, async (req, res) => {
+app.get("/admin/galeri", checkAuth, async (req, res) => {
   try {
     // Ambil semua album, urutkan tanggal acara terbaru
     // Sekalian hitung jumlah foto per album (pake subquery simpel)
@@ -198,7 +218,7 @@ app.get("/admin/galeri", adminAuth, async (req, res) => {
 // Disini kita gabung: kalau GET tampilin form (opsional), 
 // kalau POST langsung proses buat album.
 // Kita pakai POST aja biar simpel (formnya di index.ejs)
-app.post("/admin/galeri/create", adminAuth, uploadImage.single("cover"), async (req, res) => {
+app.post("/admin/galeri/create", checkAuth, uploadImage.single("cover"), async (req, res) => {
   try {
     const { title, event_date, description } = req.body;
     const cover = req.file ? req.file.path : null; // Ambil url gambar dari Cloudinary
@@ -217,7 +237,7 @@ app.post("/admin/galeri/create", adminAuth, uploadImage.single("cover"), async (
 });
 
 // 3. HAPUS ALBUM
-app.get("/admin/galeri/delete/:id", adminAuth, async (req, res) => {
+app.get("/admin/galeri/delete/:id", checkAuth, async (req, res) => {
   try {
     await pool.query("DELETE FROM albums WHERE id = $1", [req.params.id]);
     res.redirect("/admin/galeri");
@@ -228,7 +248,7 @@ app.get("/admin/galeri/delete/:id", adminAuth, async (req, res) => {
 });
 
 // 4. BUKA ALBUM (Lihat & Upload Foto)
-app.get("/admin/galeri/:id/photos", adminAuth, async (req, res) => {
+app.get("/admin/galeri/:id/photos", checkAuth, async (req, res) => {
   try {
     const albumId = req.params.id;
     // Ambil info album
@@ -251,7 +271,7 @@ app.get("/admin/galeri/:id/photos", adminAuth, async (req, res) => {
 });
 
 // 5. UPLOAD FOTO KE ALBUM (Bisa Banyak Sekaligus/Multiple)
-app.post("/admin/galeri/:id/upload", adminAuth, uploadImage.array("photos"), async (req, res) => {
+app.post("/admin/galeri/:id/upload", checkAuth, uploadImage.array("photos"), async (req, res) => {
   try {
     const albumId = req.params.id;
     
@@ -274,7 +294,7 @@ app.post("/admin/galeri/:id/upload", adminAuth, uploadImage.array("photos"), asy
 });
 
 // 6. HAPUS FOTO
-app.get("/admin/galeri/photo/delete/:id", adminAuth, async (req, res) => {
+app.get("/admin/galeri/photo/delete/:id", checkAuth, async (req, res) => {
   try {
     // Cek dulu foto ini punya album mana (buat redirect balik)
     const photo = await q1("SELECT album_id FROM gallery_photos WHERE id = $1", [req.params.id]);
@@ -302,7 +322,7 @@ app.get("/health", (_req, res) => res.status(200).send("OK"));
 
 // Pasang route
 app.use("/",      publicRoutes(q, q1));
-app.use("/admin", adminAuth, adminRoutes(q, q1, uploadImage, pool));
+app.use("/admin", checkAuth, adminRoutes(q, q1, uploadImage, pool));
 
 /* ------------------------------------------------------------
    ERROR HANDLERS
