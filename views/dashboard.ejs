@@ -51,7 +51,7 @@
     </div>
   </div>
 
-  <% /* ===== BAGIAN 1: ULANG TAHUN (ANTI ERROR) ===== */ %>
+  <% /* ===== BAGIAN 1: ULANG TAHUN ===== */ %>
   <% if (typeof upcomingBirthdays !== 'undefined' && upcomingBirthdays.length > 0) { %>
     <section class="section">
       <div class="section-head">
@@ -59,7 +59,6 @@
       </div>
       <div class="grid cards">
         <% upcomingBirthdays.forEach(function(b){ 
-             // Format Tanggal
              const d = b.birthdate ? new Date(b.birthdate) : null;
              const tgl = d ? d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long' }) : '-';
         %>
@@ -80,7 +79,7 @@
     </section>
   <% } %>
 
-  <% /* ===== BAGIAN 2: MENU ADMIN ===== */ %>
+  <% /* ===== BAGIAN 2: MENU ADMIN LENGKAP ===== */ %>
   <section class="section">
     <div class="section-head">
       <h2>🚀 Menu Utama</h2>
@@ -91,7 +90,7 @@
       <div class="card">
         <div class="pad">
           <h3>👥 Anggota</h3>
-          <p class="meta">Database anggota & keluarga.</p>
+          <p class="meta">Database data anggota utama.</p>
           <div style="display:flex; gap:8px;">
             <a class="btn" href="/admin/members">Kelola</a>
             <a class="btn ghost" href="/admin/members/new">+Baru</a>
@@ -101,8 +100,16 @@
 
       <div class="card">
         <div class="pad">
+          <h3>👨‍👩‍👧‍👦 Keluarga</h3>
+          <p class="meta">Data istri/suami & anak anggota.</p>
+          <a class="btn" href="/admin/family">Buka Data Keluarga</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="pad">
           <h3>📸 Galeri</h3>
-          <p class="meta">Foto kegiatan & album.</p>
+          <p class="meta">Album foto & dokumentasi.</p>
           <a class="btn" href="/admin/galeri">Buka Galeri</a>
         </div>
       </div>
@@ -126,7 +133,7 @@
       <div class="card">
         <div class="pad">
           <h3>🖼️ Banner Depan</h3>
-          <p class="meta">Ganti gambar slider home.</p>
+          <p class="meta">Slider gambar halaman home.</p>
           <a class="btn" href="/admin/banners">Atur Banner</a>
         </div>
       </div>
