@@ -1,17 +1,17 @@
-<%- include('layout-top', { title: 'AD/ART (Flipbook)', active: 'ad/art' }) %>
-
-<div style="padding-top: 10px; min-height: 85vh;">
+<div style="padding-top: 20px; min-height: 85vh;">
   
-  <div class="d-flex align-items-center gap-2 mb-3">
-    <h1 class="h4 mb-0">AD/ART</h1>
-    <a href="/docs/adart.pdf" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm ms-auto">
-      Mode Zoom
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <h1 class="h4 mb-0" style="color: #fff; font-weight: 700;">AD/ART</h1>
+    <a href="/docs/adart.pdf" target="_blank" rel="noopener" 
+       class="btn btn-outline-light btn-sm ms-auto"
+       style="border-radius: 50px; padding: 5px 15px;">
+       Mode Zoom 🔍
     </a>
   </div>
 
-  <div id="flipbook" class="mx-auto" style="width:920px;max-width:100%;height:620px"></div>
+  <div id="flipbook" class="mx-auto" style="width:920px; max-width:100%; height:620px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);"></div>
 
-  <div id="hint" class="text-secondary small mt-3">
+  <div id="hint" class="text-secondary small mt-3 text-center">
     Pratinjau cepat dimuat untuk performa. Tekan tombol <strong>Mode Zoom</strong> untuk baca super tajam.
   </div>
   <div id="errBox" class="text-danger small mt-2" style="display:none;"></div>
@@ -27,13 +27,11 @@
   .stf__wrapper{position:relative;width:100%;height:100%;box-sizing:border-box}
   .stf__block{position:absolute;inset:0;box-sizing:border-box}
   .stf__item{position:absolute;inset:0;display:block;box-sizing:border-box;transform-style:preserve-3d}
-  .stf__outerShadow,.stf__innerShadow,.stf__hardShadow{position:absolute;left:0;top:0}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script>
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 </script>
 <script src="/public/vendor/page-flip.browser.min.js"></script>
 <script>
@@ -132,7 +130,6 @@
   #flipbook .page { background:#0f172a; }
   #flipbook .page img{ width:100%; height:100%; object-fit:contain; image-rendering:auto; }
   @media (max-width:576px){
-    .container{ padding-left:.25rem; padding-right:.25rem; }
     #flipbook{ height:74vh !important; }
   }
 </style>
