@@ -1,88 +1,251 @@
-<section class="hero">
-  <h1 class="hero-title">Selamat datang di AGUDASCO</h1>
+<style>
+  /* --- JURUS JEBOL TEMBOK CONTAINER (Tetap Full Screen) --- */
+  .hero-modern {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    
+    height: 80vh; /* Aku kurangin dikit tingginya biar footer lebih cepet kelihatan */
+    min-height: 500px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    margin-bottom: 4rem;
+    margin-top: -50px;
+    z-index: 1;
+  }
 
-  <!-- SLIDER: auto jalan kiri, pause saat hover -->
-  <div class="banner-wrapper">
-    <div class="banner-track">
+  /* Slider Background */
+  .hero-slider-bg {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0;
+  }
+  
+  .banner-track-modern { display: flex; height: 100%; }
+  
+  .banner-slide-modern {
+    min-width: 100vw;
+    height: 100%;
+    position: relative;
+  }
+  
+  .banner-slide-modern img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center;
+    filter: brightness(0.5); 
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Konten Teks di Tengah */
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    max-width: 800px; /* Lebar area teks dikecilin dikit biar fokus */
+    padding: 0 20px;
+    animation: fadeInUp 1s ease-out;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* --- INI YANG DIUBAH (UKURAN TEKS) --- */
+  .hero-title-modern {
+    /* Ukuran font responsif: Minimal 2rem, Ideal 4%, Maksimal 3.5rem */
+    font-size: clamp(2rem, 4vw, 3.5rem); 
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px; /* Jarak antar huruf ditambah dikit biar elegan */
+  }
+  
+  .hero-caption-modern {
+    /* Caption juga disesuaikan biar imbang */
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    color: #f1f1f1;
+    margin-bottom: 2rem;
+    font-weight: 400;
+    max-width: 650px;
+    margin-left: auto;
+    margin-right: auto;
+    text-shadow: 1px 1px 8px rgba(0,0,0,0.8);
+    line-height: 1.6;
+  }
+  
+  .btn-hero-modern {
+    display: inline-block;
+    padding: 0.9rem 2.5rem; /* Padding tombol dirapiin */
+    background: #007bff;
+    color: white;
+    font-size: 0.95rem; /* Ukuran teks tombol */
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    border: 2px solid #007bff;
+    box-shadow: 0 5px 20px rgba(0,123,255,0.4);
+    letter-spacing: 0.5px;
+  }
+  
+  .btn-hero-modern:hover {
+    background: transparent;
+    color: white;
+    box-shadow: 0 8px 25px rgba(0,123,255,0.6);
+    transform: translateY(-3px);
+  }
+
+  /* --- STYLE CARD ARTIKEL --- */
+  .section-content-limit {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .section-head-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .section-head-modern h2 {
+    font-size: 2rem; /* Judul section dikecilin dikit juga biar harmonis */
+    font-weight: 700;
+    color: #fff; 
+    margin: 0;
+  }
+  .link-more-modern { color: #007bff; text-decoration: none; font-weight: 600; }
+
+  .grid.cards-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem; /* Jarak antar kartu dirapetin dikit */
+  }
+  .card-modern {
+    background: #1e293b;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    text-decoration: none;
+    color: white;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .card-modern:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+  .card-image-wrap { height: 200px; overflow: hidden; } /* Tinggi gambar card pas */
+  .card-modern img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+  .card-modern:hover img { transform: scale(1.08); }
+  
+  .card-pad-modern { padding: 1.25rem; }
+  .card-meta-modern { color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .card-title-modern { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.8rem; line-height: 1.4; color: #f8fafc; }
+  .read-more-text { color: #38bdf8; font-size: 0.85rem; font-weight: 600; }
+</style>
+
+<section class="hero-modern">
+  <div class="hero-slider-bg banner-wrapper">
+    <div class="banner-track-modern banner-track">
       <% (banners || []).forEach(b => { %>
-        <div class="banner-slide"><img src="<%= b.image %>" alt="Banner"></div>
+        <div class="banner-slide-modern banner-slide"><img src="<%= b.image %>" alt="Banner AGUDASCO"></div>
       <% }) %>
-      <% (banners || []).forEach(b => { %> <!-- duplikasi buat loop mulus -->
-        <div class="banner-slide"><img src="<%= b.image %>" alt="Banner"></div>
+      <% (banners || []).forEach(b => { %>
+        <div class="banner-slide-modern banner-slide"><img src="<%= b.image %>" alt="Banner AGUDASCO"></div>
       <% }) %>
     </div>
+  </div>
+  
+  <div class="hero-content">
+    <h1 class="hero-title-modern">Selamat Datang di AGUDASCO</h1>
+    <p class="hero-caption-modern">Wadah aspirasi, informasi, dan kolaborasi untuk masa depan yang lebih baik.</p>
+    <a href="/artikel" class="btn-hero-modern">Jelajahi Sekarang</a>
+  </div>
+</section>
 
-    <!-- tombol opsional -->
-    <button class="nav prev" aria-label="Sebelumnya">‹</button>
-    <button class="nav next" aria-label="Berikutnya">›</button>
+<section class="section" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+  <div class="section-head-modern">
+    <h2>Artikel Terbaru</h2>
+    <a class="link-more-modern" href="/artikel">Lihat Semua Artikel →</a>
   </div>
 
-  <p class="hero-caption">Kabar terbaru dan kegiatan terkini.</p>
+  <div class="grid cards-modern">
+    <% (arts || []).slice(0,6).forEach(a => { %>
+      <a href="/artikel/<%= a.id %>" class="card-modern">
+        <div class="card-image-wrap">
+          <img src="<%= a.image || 'https://via.placeholder.com/640x360?text=AGUDASCO' %>" alt="<%= a.title %>" loading="lazy">
+        </div>
+        <div class="card-pad-modern">
+          <p class="card-meta-modern">
+            📅 <%= new Date(a.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+          </p>
+          <h3 class="card-title-modern"><%= a.title %></h3>
+          <span class="read-more-text">Baca selengkapnya</span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+
+  <% if(!(arts && arts.length)){ %>
+    <div style="text-align: center; padding: 3rem; color: #888;">
+      <img src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png" width="80" style="opacity: 0.5; margin-bottom: 1rem;">
+      <p>Belum ada artikel terbaru saat ini.</p>
+    </div>
+  <% } %>
 </section>
 
 <script>
 (function(){
+  [cite_start]// Script slider asli kamu [cite: 16, 17, 18, 19, 20, 21, 22, 23, 24]
+  // Hanya class nav button yang dihapus karena kita tidak pakai lagi
   const wrap  = document.querySelector('.banner-wrapper');
   const track = wrap?.querySelector('.banner-track');
   if(!track) return;
 
   const slides = track.querySelectorAll('.banner-slide');
-  const realCount = slides.length / 2;       // karena diduplikasi
+  const realCount = slides.length / 2; 
   let index = 0;
-  const INTERVAL = 4000;
+  const INTERVAL = 5000; // Ganti jadi 5 detik biar lebih santai
 
   const apply = () => { track.style.transform = `translateX(-${index * 100}%)`; };
-
   function jump(to){
     const old = track.style.transition;
     track.style.transition = 'none';
     index = to; apply();
-    track.offsetHeight;                       // reflow
-    track.style.transition = old || 'transform .55s ease-in-out';
+    track.offsetHeight; 
+    track.style.transition = old || 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)'; // Transisi lebih smooth
   }
   function next(){
-    index++; apply();
+    index++;
+    apply();
     if(index === realCount){
       track.addEventListener('transitionend', () => jump(0), { once:true });
     }
   }
-  function prev(){
-    index = (index - 1 + realCount) % realCount;
-    apply();
-  }
-
-  const btnPrev = wrap.querySelector('.prev');
-  const btnNext = wrap.querySelector('.next');
-  btnPrev?.addEventListener('click', prev);
-  btnNext?.addEventListener('click', next);
+  
+  // Tombol prev/next dihapus biar modern & clean
 
   jump(0);
   let timer = setInterval(next, INTERVAL);
+  [cite_start]// Pause saat hover [cite: 24]
   wrap.addEventListener('mouseenter', () => clearInterval(timer));
   wrap.addEventListener('mouseleave', () => timer = setInterval(next, INTERVAL));
 })();
 </script>
-
-<!-- ARTIKEL TERBARU -->
-<section class="section">
-  <div class="section-head">
-    <h2>Artikel Terbaru</h2>
-    <a class="link-more" href="/artikel">Lihat semua →</a>
-  </div>
-
-  <div class="grid cards">
-    <% (arts || []).slice(0,6).forEach(a => { %>
-      <article class="card">
-        <img src="<%= a.image || 'https://via.placeholder.com/640x360?text=Artikel' %>" alt="<%= a.title %>">
-        <div class="pad">
-          <h3><a href="/artikel/<%= a.id %>"><%= a.title %></a></h3>
-          <p class="meta"><%= new Date(a.created_at).toLocaleDateString('id-ID') %></p>
-          <a class="btn" href="/artikel/<%= a.id %>">Baca</a>
-        </div>
-      </article>
-    <% }) %>
-    <% if(!(arts && arts.length)){ %>
-      <p class="muted">Belum ada artikel.</p>
-    <% } %>
-  </div>
-</section>
