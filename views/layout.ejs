@@ -6,77 +6,116 @@
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
   <link rel="icon" href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png" />
-
   <link rel="stylesheet" href="/public/styles.css?v=<%= buildId %>" />
 
   <style>
     :root{
-      --header-h: 64px;
+      --header-h: 70px; /* Tinggi header ditambah dikit biar lega */
       --bg: #0b1220;
-      --border: #223241;
       --text: #fff;
-      --gutter: clamp(12px, 3vw, 24px); /* Samakan dengan styles.css */
+      --gutter: clamp(16px, 4vw, 32px); 
     }
     
     body{ padding-top: var(--header-h); background: var(--bg); color: var(--text); }
     
-    .site-header{
-      position: fixed; inset: 0 0 auto 0; height: var(--header-h);
-      z-index: 3000; background: var(--bg); border-bottom: 1px solid var(--border);
+    /* --- HEADER MODERN (GLASSMORPHISM) --- */
+    .site-header {
+      position: fixed; inset: 0 0 auto 0; 
+      height: var(--header-h);
+      z-index: 3000; 
+      
+      /* EFEK KACA BURAM */
+      background: rgba(11, 18, 32, 0.75); /* Transparan gelap */
+      backdrop-filter: blur(12px);         /* Blur background di belakangnya */
+      -webkit-backdrop-filter: blur(12px); /* Support Safari */
+      
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Garis batas super tipis */
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Bayangan halus */
+      transition: all 0.3s ease;
     }
 
-    /* [FIX] Header Wrap Full Width (Hapus .container) */
     .header-wrap { 
-      height: 100%; 
-      width: 100%;
-      display: flex; 
-      align-items: center;
-      padding: 0 var(--gutter);
-      position: relative; 
-      justify-content: space-between; /* Default Mobile */
+      height: 100%; width: 100%; display: flex; align-items: center;
+      padding: 0 var(--gutter); position: relative; justify-content: space-between;
     }
 
+    /* LOGO */
     .brand { 
       color: inherit; text-decoration:none; font-weight:700; 
-      display: flex; align-items: center; gap: 10px;
-      z-index: 10;
+      display: flex; align-items: center; gap: 12px; z-index: 10;
+      font-size: 1.1rem; letter-spacing: 0.5px;
     }
-    .brand img { display: block; }
+    .brand img { display: block; transition: transform 0.3s; }
+    .brand:hover img { transform: rotate(-5deg) scale(1.1); } /* Logo goyang dikit pas hover */
+
+    /* MENU DESKTOP MODERN (PILL SHAPE) */
+    .nav-desktop {
+      display: flex;
+      gap: 5px; /* Jarak antar menu */
+      background: rgba(255, 255, 255, 0.03); /* Wadah menu tipis */
+      padding: 5px;
+      border-radius: 50px; /* Wadah menu bulat */
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
 
     .nav-desktop a { 
-      color:#fff; text-decoration:none; padding:10px 12px; display:inline-block; 
-      transition: color .2s;
-    }
-    .nav-desktop a.active, .nav-desktop a:hover { 
-      color: #9ec1ff; font-weight:700; 
+      color: #cbd5e1; /* Warna teks agak abu biar soft */
+      text-decoration: none; 
+      padding: 8px 20px; /* Padding lega */
+      display: inline-block; 
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border-radius: 30px; /* Bentuk Kapsul/Pill */
     }
 
-    /* [LOGIC DESKTOP] Menu Center, Logo Kiri Absolute */
+    /* Efek Hover */
+    .nav-desktop a:hover { 
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1); /* Putih transparan */
+      transform: translateY(-1px);
+    }
+
+    /* Efek Aktif (Menu yang lagi dibuka) */
+    .nav-desktop a.active { 
+      color: #fff;
+      background: #2563eb; /* Biru Menyala */
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); /* Glow biru */
+    }
+
     @media (min-width: 993px) {
-      .header-wrap {
-        justify-content: center; /* Menu otomatis ke tengah */
-      }
-      .brand {
-        position: absolute; /* Lepas dari flow */
-        left: var(--gutter); /* Tempel kiri */
-      }
+      .header-wrap { justify-content: center; }
+      .brand { position: absolute; left: var(--gutter); }
     }
 
-    /* Hamburger & Mobile Nav */
+    /* TOMBOL HAMBURGER MOBILE */
     .nav-toggle{ display:none; border:0; background:transparent; padding:10px; cursor:pointer; }
-    .nav-toggle span{ width:22px; height:2px; background:#fff; display:block; margin:4px 0; transition:.18s; }
-    .nav-toggle.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
-    .nav-toggle.is-open span:nth-child(2){ opacity:0; }
-    .nav-toggle.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
+    .nav-toggle span{ width:24px; height:2px; background:#fff; display:block; margin:5px 0; transition:.2s; border-radius: 2px; }
+    .nav-toggle.is-open span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+    .nav-toggle.is-open span:nth-child(2){ opacity:0; transform: translateX(10px); }
+    .nav-toggle.is-open span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
 
-    .mobile-nav{ position: fixed; inset: 0; z-index: 9999; background: var(--bg); padding-top: var(--header-h); overflow:auto; display:none; }
-    .mobile-nav.active{ display:block; }
-    .mobile-nav__list{ list-style:none; padding:12px; margin:0; display:grid; gap:8px; }
-    .mobile-nav__list a{
-      display:block; padding:14px 16px; border:1px solid var(--border);
-      border-radius:12px; text-decoration:none; color:#fff; background: rgba(255,255,255,.04);
+    /* MOBILE NAV */
+    .mobile-nav{ position: fixed; inset: 0; z-index: 9999; background: #0b1220; padding-top: var(--header-h); overflow:auto; display:none; }
+    .mobile-nav.active{ display:block; animation: fadeIn 0.3s; }
+    .mobile-nav__list{ list-style:none; padding:20px; margin:0; display:grid; gap:10px; }
+    .mobile-nav__list a{ 
+      display:block; padding:15px 20px; 
+      border:1px solid rgba(255,255,255,0.05); 
+      border-radius:12px; text-decoration:none; color:#fff; 
+      background: rgba(255,255,255,0.02);
+      font-weight: 500;
     }
-    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.4); display:none; }
+    .mobile-nav__list a.active {
+      background: rgba(37, 99, 235, 0.1);
+      border-color: #2563eb;
+      color: #60a5fa;
+    }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.6); backdrop-filter: blur(5px); display:none; }
     .nav-backdrop.active{ display:block; }
     .body--lock{ overflow:hidden; height:100vh; }
 
@@ -94,26 +133,24 @@
 
 <body class="page-<%= (typeof active !== 'undefined' ? active : '') %>">
   <header class="site-header">
-    <div class="header-wrap"> <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
+    <div class="header-wrap"> 
+      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
         <img class="logo"
           src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png"
-          srcset="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png 1x,
-                  https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_88/v1760066670/AgudascoLogo_resize_injtq2.png 2x"
           alt="Logo AGUDASCO" 
-          width="44" height="44" loading="eager" decoding="async"/>
+          width="40" height="40" />
         <div class="title">AGUDASCO</div>
       </a>
 
       <nav class="nav-desktop" aria-label="Navigasi utama">
-        <a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a>
-        <a href="/artikel" class="<%= active==='artikel'  ? 'active' : '' %>">Artikel</a>
-        <a href="/laporan" class="<%= active==='laporan'  ? 'active' : '' %>">Laporan</a>
-        <a href="/adart"   class="<%= active==='adart'    ? 'active' : '' %>">AD/ART</a>
-        <a href="/anggota" class="<%= active==='anggota'  ? 'active' : '' %>">Anggota</a>
-        <a href="/galeri"  class="<%= active==='galeri'   ? 'active' : '' %>">Galeri</a>
-        <a href="/tentang" class="<%= active==='tentang'  ? 'active' : '' %>">Tentang</a>
-        <a href="/kontak"  class="<%= active==='kontak'   ? 'active' : '' %>">Kontak</a>
-        <a href="/admin"   class="<%= active==='admin'    ? 'active' : '' %>">Admin</a>
+        <a href="/"        class="<%= active==='home'?'active':'' %>">Beranda</a>
+        <a href="/artikel" class="<%= active==='artikel'?'active':'' %>">Artikel</a>
+        <a href="/laporan" class="<%= active==='laporan'?'active':'' %>">Laporan</a>
+        <a href="/adart"   class="<%= active==='adart'?'active':'' %>">AD/ART</a>
+        <a href="/anggota" class="<%= active==='anggota'?'active':'' %>">Anggota</a>
+        <a href="/galeri"  class="<%= active==='galeri'?'active':'' %>">Galeri</a>
+        <a href="/#contact-section">Kontak</a>
+        <a href="/admin"   class="<%= active==='admin'?'active':'' %>">Admin</a>
       </nav>
 
       <button id="navToggle" class="nav-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Buka navigasi">
@@ -124,15 +161,14 @@
 
   <nav id="mobileNav" class="mobile-nav" aria-label="Navigasi utama (mobile)">
     <ul class="mobile-nav__list">
-      <li><a href="/"        class="<%= active==='home'     ? 'active' : '' %>">Beranda</a></li>
-      <li><a href="/artikel" class="<%= active==='artikel'  ? 'active' : '' %>">Artikel</a></li>
-      <li><a href="/laporan" class="<%= active==='laporan'  ? 'active' : '' %>">Laporan</a></li>
-      <li><a href="/adart"   class="<%= active==='adart'    ? 'active' : '' %>">AD/ART</a></li>
-      <li><a href="/anggota" class="<%= active==='anggota'  ? 'active' : '' %>">Anggota</a></li>
-      <li><a href="/galeri"  class="<%= active==='galeri'   ? 'active' : '' %>">Galeri</a></li>
-      <li><a href="/tentang" class="<%= active==='tentang'  ? 'active' : '' %>">Tentang</a></li>
-      <li><a href="/kontak"  class="<%= active==='kontak'   ? 'active' : '' %>">Kontak</a></li>
-      <li><a href="/admin"   class="<%= active==='admin'    ? 'active' : '' %>">Admin</a></li>
+      <li><a href="/"        class="<%= active==='home'?'active':'' %>">Beranda</a></li>
+      <li><a href="/artikel" class="<%= active==='artikel'?'active':'' %>">Artikel</a></li>
+      <li><a href="/laporan" class="<%= active==='laporan'?'active':'' %>">Laporan</a></li>
+      <li><a href="/adart"   class="<%= active==='adart'?'active':'' %>">AD/ART</a></li>
+      <li><a href="/anggota" class="<%= active==='anggota'?'active':'' %>">Anggota</a></li>
+      <li><a href="/galeri"  class="<%= active==='galeri'?'active':'' %>">Galeri</a></li>
+      <li><a href="/#contact-section">Kontak</a></li>
+      <li><a href="/admin"   class="<%= active==='admin'?'active':'' %>">Admin</a></li>
     </ul>
   </nav>
   <div id="navBackdrop" class="nav-backdrop"></div>
@@ -191,6 +227,11 @@
       });
       backdrop.addEventListener('click', closeMenu);
       document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
+
+      const mobileLinks = panel.querySelectorAll('a');
+      mobileLinks.forEach(link => {
+        link.addEventListener('click', closeMenu);
+      });
     })();
   </script>
 </body>
