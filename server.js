@@ -8,6 +8,8 @@ import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import pkg from "pg";
 const { Pool } = pkg;
+import cron from "node-cron";
+import axios from "axios";
 
 // Tangkap error global biar server gak gampang crash/mati
 process.on("uncaughtException", (err) => {
@@ -360,6 +362,66 @@ app.use((req, res) => res.status(404).send("Not Found"));
 app.use((err, req, res, _next) => {
   console.error("Unhandled error:", err);
   res.status(500).send(err?.message || "Server Error");
+});
+
+/* ============================================================
+   CRON JOB: NOTIFIKASI ULANG TAHUN VIA WA (FONNTE)
+============================================================ */
+cron.schedule('0 7 * * *', async () => {
+  console.log("⏰ CRON JOB: Mengecek ulang tahun hari ini...");
+
+  try {
+    // 1. Cari Member yang Ulang Tahun HARI INI
+    // Kita filter pakai SQL biar cepat
+    const sql = `
+      SELECT name, phone, birthdate 
+      FROM members 
+      WHERE 
+        EXTRACT(MONTH FROM birthdate) = EXTRACT(MONTH FROM CURRENT_DATE) AND 
+        EXTRACT(DAY FROM birthdate) = EXTRACT(DAY FROM CURRENT_DATE)
+    `;
+    const birthdayMembers = await q(sql);
+
+    // Kalau gak ada yang ultah, stop aja
+    if (!birthdayMembers || birthdayMembers.length === 0) {
+      console.log("✅ Tidak ada yang ulang tahun hari ini.");
+      return;
+    }
+
+    // 2. Siapkan Pesan WA
+    let message = `🎂 *PENGINGAT ULANG TAHUN*\n\nHalo Admin, hari ini ada ${birthdayMembers.length} anggota yang ulang tahun:\n`;
+    
+    birthdayMembers.forEach((m, index) => {
+      const dob = new Date(m.birthdate);
+      const age = new Date().getFullYear() - dob.getFullYear();
+      const hp = m.phone ? m.phone : '-';
+      message += `\n${index + 1}. *${m.name}* (Ke-${age})\n   No HP: ${hp}`;
+    });
+
+    message += `\n\nJangan lupa ucapin ya sayang! 😘`;
+
+    // 3. Kirim ke WA Admin pakai Fonnte
+    const token = process.env.WA_API_TOKEN; 
+    const target = process.env.WA_ADMIN_NUMBER; // Nomor WA Admin
+
+    if (token && target) {
+      await axios.post('https://api.fonnte.com/send', {
+        target: target,
+        message: message,
+      }, {
+        headers: { 'Authorization': token }
+      });
+      console.log(`✅ Sukses kirim WA ke Admin.`);
+    } else {
+      console.log("⚠️ Token Fonnte atau Nomor Admin belum diset di .env");
+    }
+
+  } catch (err) {
+    console.error("❌ Gagal kirim notif WA:", err.message);
+  }
+}, {
+  scheduled: true,
+  timezone: "Asia/Jakarta" // Wajib set ini biar pas jam 7 pagi WIB
 });
 
 /* ------------------------------------------------------------
