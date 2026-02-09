@@ -1,193 +1,246 @@
 <style>
-  /* --- JURUS JEBOL TEMBOK CONTAINER (Tetap Full Screen) --- */
+  /* --- HERO SECTION: SPLIT SCREEN (Floating Card Style) --- */
   .hero-modern {
     width: 100vw;
     position: relative;
-    left: 50%;
-    right: 50%;
-    margin-left: -50vw;
-    margin-right: -50vw;
+    left: 50%; right: 50%;
+    margin-left: -50vw; margin-right: -50vw;
     
-    height: 80vh; /* Aku kurangin dikit tingginya biar footer lebih cepet kelihatan */
-    min-height: 500px;
-    overflow: hidden;
+    min-height: 90vh; /* Sedikit lebih tinggi biar lega */
+    background: #020617; /* Biru Gelap Premium */
+    
     display: flex;
     align-items: center;
     justify-content: center;
-    text-align: center;
-    color: white;
-    margin-bottom: 4rem;
-    margin-top: -50px;
-    z-index: 1;
+    overflow: hidden;
+    margin-top: -64px; /* Tarik ke atas nembus navbar */
+    padding-top: 64px; /* Kompensasi isi */
+    
+    /* INI KUNCINYA: Kasih jarak kanan kiri biar gak mepet tembok */
+    padding-right: 5vw; 
+    padding-left: 0;
   }
 
-  /* Slider Background */
-  .hero-slider-bg {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: 0;
+  /* --- KOLOM KIRI (TEKS) --- */
+  .hero-text-side {
+    flex: 1; 
+    max-width: 550px;
+    padding: 3rem 4rem 3rem 6rem; /* Padding kiri lebih gede biar seimbang */
+    z-index: 2;
+    color: white;
+    animation: slideInLeft 1s ease-out;
   }
-  
-  .banner-track-modern { display: flex; height: 100%; }
+
+  /* --- KOLOM KANAN (FOTO PENGURUS) --- */
+  .hero-image-side {
+    flex: 1.4; /* Porsi gambar lebih besar */
+    height: 75vh; /* Tinggi gambar dibatesin biar gak full layar banget */
+    position: relative;
+    
+    /* BIKIN KARTUNYA UTUH & MELAYANG */
+    border-radius: 30px; /* Semua sudut tumpul */
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Bayangan dramatis */
+    border: 2px solid rgba(255, 255, 255, 0.1); /* Garis border tipis di luar */
+    background: #000;
+  }
+
+  .banner-track-modern { display: flex; height: 100%; width: 100%; }
   
   .banner-slide-modern {
-    min-width: 100vw;
+    min-width: 100%; 
     height: 100%;
     position: relative;
   }
   
+  /* SETTING GAMBAR BIAR GARIS PUTIH GAK KEPOTONG */
   .banner-slide-modern img {
-    width: 100%; height: 100%;
-    object-fit: cover;
-    object-position: center;
-    filter: brightness(0.5); 
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
+    width: 100%; 
+    height: 100%;
+    /* Gunakan COVER biar rapi, tapi karena wadahnya udah dikasih jarak, 
+       bagian pinggir aman gak kepotong layar */
+    object-fit: cover; 
+    object-position: center; 
   }
 
-  /* Konten Teks di Tengah */
-  .hero-content {
-    position: relative;
-    z-index: 10;
-    max-width: 800px; /* Lebar area teks dikecilin dikit biar fokus */
-    padding: 0 20px;
-    animation: fadeInUp 1s ease-out;
+  /* TIPOGRAFI KEREN */
+  .hero-label {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    background: rgba(14, 165, 233, 0.1); /* Biru muda transparan */
+    color: #38bdf8; /* Teks biru cyan */
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    letter-spacing: 1.5px;
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* --- INI YANG DIUBAH (UKURAN TEKS) --- */
   .hero-title-modern {
-    /* Ukuran font responsif: Minimal 2rem, Ideal 4%, Maksimal 3.5rem */
-    font-size: clamp(2rem, 4vw, 3.5rem); 
-    font-weight: 800;
-    line-height: 1.2;
-    margin-bottom: 1rem;
-    text-shadow: 2px 2px 15px rgba(0,0,0,0.7);
+    font-size: clamp(2.5rem, 4.5vw, 4.5rem); 
+    font-weight: 800; 
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
     color: #ffffff;
-    text-transform: uppercase;
-    letter-spacing: 1px; /* Jarak antar huruf ditambah dikit biar elegan */
   }
   
   .hero-caption-modern {
-    /* Caption juga disesuaikan biar imbang */
-    font-size: clamp(1rem, 2vw, 1.25rem);
-    color: #f1f1f1;
-    margin-bottom: 2rem;
-    font-weight: 400;
-    max-width: 650px;
-    margin-left: auto;
-    margin-right: auto;
-    text-shadow: 1px 1px 8px rgba(0,0,0,0.8);
-    line-height: 1.6;
+    font-size: 1.15rem; 
+    color: #94a3b8; /* Abu-abu terang */
+    margin-bottom: 3rem;
+    line-height: 1.8;
+    max-width: 90%;
   }
   
   .btn-hero-modern {
-    display: inline-block;
-    padding: 0.9rem 2.5rem; /* Padding tombol dirapiin */
-    background: #007bff;
+    display: inline-block; padding: 1rem 3rem; 
+    background: #2563eb; /* Biru royal */
     color: white;
-    font-size: 0.95rem; /* Ukuran teks tombol */
-    font-weight: 700;
-    text-transform: uppercase;
-    text-decoration: none;
-    border-radius: 50px;
-    transition: all 0.3s ease;
-    border: 2px solid #007bff;
-    box-shadow: 0 5px 20px rgba(0,123,255,0.4);
-    letter-spacing: 0.5px;
+    font-size: 1rem; font-weight: 700; text-transform: uppercase; text-decoration: none;
+    border-radius: 50px; transition: all 0.3s ease;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
   }
-  
   .btn-hero-modern:hover {
-    background: transparent;
-    color: white;
-    box-shadow: 0 8px 25px rgba(0,123,255,0.6);
-    transform: translateY(-3px);
+    background: #1d4ed8; 
+    transform: translateY(-4px);
+    box-shadow: 0 15px 35px rgba(37, 99, 235, 0.6);
   }
 
-  /* --- STYLE CARD ARTIKEL --- */
-  .section-content-limit {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
+  /* Animasi Masuk */
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-50px); }
+    to { opacity: 1; transform: translateX(0); }
   }
 
-  .section-head-modern {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+  /* --- RESPONSIF TABLET & HP --- */
+  @media (max-width: 992px) {
+    .hero-modern { 
+      flex-direction: column-reverse; /* Foto di ATAS */
+      height: auto;
+      padding: 80px 20px 40px; /* Reset padding kanan */
+    }
+    
+    .hero-image-side {
+      width: 100%;
+      height: 45vh; /* Tinggi foto di HP */
+      flex: none;
+      border-radius: 20px;
+      margin-bottom: 2rem;
+    }
+    
+    .hero-text-side {
+      width: 100%;
+      padding: 0;
+      text-align: center;
+    }
+    
+    .hero-label { margin: 0 auto 1.5rem; }
+    .hero-caption-modern { margin-left: auto; margin-right: auto; }
   }
-  .section-head-modern h2 {
-    font-size: 2rem; /* Judul section dikecilin dikit juga biar harmonis */
-    font-weight: 700;
-    color: #fff; 
-    margin: 0;
-  }
-  .link-more-modern { color: #007bff; text-decoration: none; font-weight: 600; }
 
-  .grid.cards-modern {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem; /* Jarak antar kartu dirapetin dikit */
-  }
-  .card-modern {
-    background: #1e293b;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-    text-decoration: none;
-    color: white;
-    border: 1px solid rgba(255,255,255,0.05);
-  }
-  .card-modern:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-  }
-  .card-image-wrap { height: 200px; overflow: hidden; } /* Tinggi gambar card pas */
+  /* --- STYLE SECTION LAINNYA --- */
+  .section-modern { padding: 5rem 20px; max-width: 1200px; margin: 0 auto; }
+  .section-head-center { text-align: center; margin-bottom: 3rem; }
+  .section-head-center h2 { font-size: 2.5rem; font-weight: 800; color: #fff; margin-bottom: 1rem; display: inline-block; position: relative; }
+  .section-head-center h2::after { content: ''; display: block; width: 60px; height: 4px; background: #2563eb; margin: 10px auto 0; border-radius: 2px; }
+  .section-head-center p { color: #94a3b8; max-width: 600px; margin: 0 auto; }
+
+  /* ABOUT & CONTACT STYLES */
+  .about-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+  .about-img-box { position: relative; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); transform: rotate(-2deg); transition: transform 0.3s; }
+  .about-img-box:hover { transform: rotate(0deg) scale(1.02); }
+  .about-img-box img { width: 100%; display: block; }
+  .about-text h3 { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+  .about-text p { color: #cbd5e1; line-height: 1.8; margin-bottom: 1.5rem; font-size: 1.05rem; }
+  .check-list { list-style: none; padding: 0; margin-bottom: 2rem; }
+  .check-list li { position: relative; padding-left: 30px; margin-bottom: 10px; color: #cbd5e1; }
+  .check-list li::before { content: '✔'; position: absolute; left: 0; top: 0; color: #2563eb; font-weight: bold; }
+
+  /* CARD STYLE */
+  .grid.cards-modern { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2rem; }
+  .card-modern { background: #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transition: transform 0.3s ease; text-decoration: none; color: white; border: 1px solid rgba(255,255,255,0.05); }
+  .card-modern:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+  .card-image-wrap { height: 200px; overflow: hidden; }
   .card-modern img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
   .card-modern:hover img { transform: scale(1.08); }
-  
-  .card-pad-modern { padding: 1.25rem; }
+  .card-pad-modern { padding: 1.5rem; }
   .card-meta-modern { color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem; }
   .card-title-modern { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.8rem; line-height: 1.4; color: #f8fafc; }
   .read-more-text { color: #38bdf8; font-size: 0.85rem; font-weight: 600; }
+
+  /* CONTACT */
+  .contact-bg { background: #0f172a; width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; padding: 5rem 0; }
+  .contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+  .contact-card { background: #1e293b; padding: 2rem; border-radius: 16px; text-align: center; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+  .contact-card:hover { transform: translateY(-5px); border-color: #2563eb; }
+  .icon-box { width: 60px; height: 60px; background: rgba(37, 99, 235, 0.1); color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1.5rem; }
+  .contact-card h4 { color: white; margin-bottom: 0.5rem; font-size: 1.2rem; }
+  .contact-card p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 1rem; }
+  .btn-contact-small { color: #38bdf8; font-weight: 600; text-decoration: none; font-size: 0.9rem; }
+  
+  @media (max-width: 768px) { .about-wrap { grid-template-columns: 1fr; } }
 </style>
 
 <section class="hero-modern">
-  <div class="hero-slider-bg banner-wrapper">
+  
+  <div class="hero-text-side">
+    <span class="hero-label">Website Resmi</span>
+    <h1 class="hero-title-modern">Selamat Datang di AGUDASCO</h1>
+    <p class="hero-caption-modern">
+      Wadah aspirasi, informasi, dan kolaborasi untuk menciptakan masa depan yang lebih baik bagi seluruh anggota.
+    </p>
+    <div>
+      <a href="#about-us" class="btn-hero-modern">Tentang Kami</a>
+    </div>
+  </div>
+
+  <div class="hero-image-side banner-wrapper">
     <div class="banner-track-modern banner-track">
       <% (banners || []).forEach(b => { %>
-        <div class="banner-slide-modern banner-slide"><img src="<%= b.image %>" alt="Banner AGUDASCO"></div>
+        <div class="banner-slide-modern banner-slide">
+          <img src="<%= b.image %>" alt="Banner AGUDASCO">
+        </div>
       <% }) %>
       <% (banners || []).forEach(b => { %>
-        <div class="banner-slide-modern banner-slide"><img src="<%= b.image %>" alt="Banner AGUDASCO"></div>
+        <div class="banner-slide-modern banner-slide">
+          <img src="<%= b.image %>" alt="Banner AGUDASCO">
+        </div>
       <% }) %>
     </div>
   </div>
-  
-  <div class="hero-content">
-    <h1 class="hero-title-modern">Selamat Datang di AGUDASCO</h1>
-    <p class="hero-caption-modern">Wadah aspirasi, informasi, dan kolaborasi untuk masa depan yang lebih baik.</p>
-    <a href="/artikel" class="btn-hero-modern">Jelajahi Sekarang</a>
+
+</section>
+
+<section id="about-us" class="section-modern">
+  <div class="section-head-center">
+    <h2>Tentang Kami</h2>
+    <p>Mengenal lebih dalam siapa kami dan apa misi besar kami.</p>
+  </div>
+  <div class="about-wrap">
+    <div class="about-text">
+      <h3>Bersatu Membangun Masa Depan</h3>
+      <p>AGUDASCO bukan sekadar organisasi, tapi rumah bagi ide-ide besar. Kami hadir sebagai wadah yang menghubungkan aspirasi anggota dengan aksi nyata di lapangan.</p>
+      <ul class="check-list">
+        <li>Menjunjung tinggi transparansi dan integritas.</li>
+        <li>Fokus pada pengembangan komunitas yang berkelanjutan.</li>
+        <li>Wadah kolaborasi lintas bidang dan keahlian.</li>
+      </ul>
+      <a href="/adart" class="link-more-modern">Baca AD/ART Lengkap →</a>
+    </div>
+    <div class="about-img-box">
+      <img src="https://res.cloudinary.com/dsyo0e3fu/image/upload/v1764997293/agudasco/images/ujfyonwsplg2seawzvep.jpg" alt="Tentang AGUDASCO">
+    </div>
   </div>
 </section>
 
-<section class="section" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
-  <div class="section-head-modern">
-    <h2>Artikel Terbaru</h2>
-    <a class="link-more-modern" href="/artikel">Lihat Semua Artikel →</a>
+<section class="section-modern">
+  <div class="section-head-center">
+    <h2>Kabar Terbaru</h2>
+    <p>Informasi dan kegiatan terkini dari AGUDASCO.</p>
   </div>
-
   <div class="grid cards-modern">
-    <% (arts || []).slice(0,6).forEach(a => { %>
+    <% (arts || []).slice(0,3).forEach(a => { %>
       <a href="/artikel/<%= a.id %>" class="card-modern">
         <div class="card-image-wrap">
           <img src="<%= a.image || 'https://via.placeholder.com/640x360?text=AGUDASCO' %>" alt="<%= a.title %>" loading="lazy">
@@ -202,35 +255,53 @@
       </a>
     <% }) %>
   </div>
-
-  <% if(!(arts && arts.length)){ %>
-    <div style="text-align: center; padding: 3rem; color: #888;">
-      <img src="https://cdn-icons-png.flaticon.com/512/7486/7486754.png" width="80" style="opacity: 0.5; margin-bottom: 1rem;">
-      <p>Belum ada artikel terbaru saat ini.</p>
-    </div>
-  <% } %>
+  <div style="text-align: center; margin-top: 2rem;">
+     <a href="/artikel" class="btn-hero-modern" style="background: transparent; border: 1px solid #2563eb; font-size: 0.9rem; padding: 0.8rem 2rem;">Lihat Semua Artikel</a>
+  </div>
 </section>
+
+<div id="contact-section" class="contact-bg"> <div class="section-head-center">
+    <h2>Hubungi Kami</h2>
+    <p>Jangan ragu untuk menyapa atau bertanya kepada kami.</p>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-card">
+      <div class="icon-box">📍</div>
+      <h4>Lokasi Markas</h4>
+      <p>Jl. Kamal Muara VII no. 1,<br>Penjaringan, Jakarta Utara</p>
+      <a href="https://maps.google.com/?q=Jl.+Kamal+Muara+VII+no.+1,+Penjaringan+Jakarta+Utara" target="_blank" class="btn-contact-small">Lihat di Peta</a>
+    </div>
+    <div class="contact-card">
+      <div class="icon-box">💬</div>
+      <h4>WhatsApp Admin</h4>
+      <p>Siap membantu untuk<br>pertanyaan seputar AGUDASCO.</p>
+      <a href="https://wa.me/62895340169646" target="_blank" class="btn-contact-small">Chat: +62 895-3401-69646</a>
+    </div>
+    <div class="contact-card">
+      <div class="icon-box">✉️</div>
+      <h4>Email Resmi</h4>
+      <p>Kirim Kritik dan Saran<br>ke email kami.</p>
+      <a href="mailto:agudasco18@gmail.com" class="btn-contact-small">agudasco18@gmail.com</a>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
-  [cite_start]// Script slider asli kamu [cite: 16, 17, 18, 19, 20, 21, 22, 23, 24]
-  // Hanya class nav button yang dihapus karena kita tidak pakai lagi
   const wrap  = document.querySelector('.banner-wrapper');
   const track = wrap?.querySelector('.banner-track');
   if(!track) return;
-
   const slides = track.querySelectorAll('.banner-slide');
   const realCount = slides.length / 2; 
   let index = 0;
-  const INTERVAL = 5000; // Ganti jadi 5 detik biar lebih santai
-
+  const INTERVAL = 5000; 
   const apply = () => { track.style.transform = `translateX(-${index * 100}%)`; };
   function jump(to){
     const old = track.style.transition;
     track.style.transition = 'none';
     index = to; apply();
     track.offsetHeight; 
-    track.style.transition = old || 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)'; // Transisi lebih smooth
+    track.style.transition = old || 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
   }
   function next(){
     index++;
@@ -239,12 +310,8 @@
       track.addEventListener('transitionend', () => jump(0), { once:true });
     }
   }
-  
-  // Tombol prev/next dihapus biar modern & clean
-
   jump(0);
   let timer = setInterval(next, INTERVAL);
-  [cite_start]// Pause saat hover [cite: 24]
   wrap.addEventListener('mouseenter', () => clearInterval(timer));
   wrap.addEventListener('mouseleave', () => timer = setInterval(next, INTERVAL));
 })();
