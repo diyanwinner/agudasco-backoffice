@@ -112,26 +112,7 @@ export default function (q, q1) {
       footerContact: res.locals.footerContact
     });
   });
-
-  // ========= 6. KONTAK & TENTANG =========
-  router.get("/kontak", (_req, res) => {
-    const info = res.locals.footerContact || {};
-    res.render("kontak", {
-      title: "Kontak",
-      active: "kontak",
-      contact: info,
-      footerContact: info
-    });
-  });
-
-  router.get("/tentang", (_req, res) =>
-    res.render("tentang", {
-      title: "Tentang",
-      active: "tentang",
-      footerContact: res.locals.footerContact
-    })
-  );
-
+  
   // ============================================
   // 7. GALERI (Update Terbaru)
   // ============================================
