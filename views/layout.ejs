@@ -2,237 +2,265 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title><%= typeof title !== 'undefined' ? title : 'AGUDASCO' %></title>
 
   <link rel="icon" href="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_64/v1760066670/AgudascoLogo_resize_injtq2.png" />
+  
   <link rel="stylesheet" href="/public/styles.css?v=<%= buildId %>" />
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --header-h: 70px; /* Tinggi header ditambah dikit biar lega */
-      --bg: #0b1220;
-      --text: #fff;
-      --gutter: clamp(16px, 4vw, 32px); 
+    :root {
+      --header-h: 70px;
+      --bg: #020617; /* Slate-950 (Lebih gelap & elegan) */
+      --text: #f8fafc;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --glass: rgba(15, 23, 42, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --gutter: clamp(20px, 5vw, 40px);
     }
     
-    body{ padding-top: var(--header-h); background: var(--bg); color: var(--text); }
+    body {
+      padding-top: var(--header-h);
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden; /* Anti scroll samping */
+    }
     
-    /* --- HEADER MODERN (GLASSMORPHISM) --- */
+    /* --- HEADER GLASSMORPHISM --- */
     .site-header {
-      position: fixed; inset: 0 0 auto 0; 
+      position: fixed; inset: 0 0 auto 0;
       height: var(--header-h);
-      z-index: 3000; 
-      
-      /* EFEK KACA BURAM */
-      background: rgba(11, 18, 32, 0.75); /* Transparan gelap */
-      backdrop-filter: blur(12px);         /* Blur background di belakangnya */
-      -webkit-backdrop-filter: blur(12px); /* Support Safari */
-      
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Garis batas super tipis */
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Bayangan halus */
+      z-index: 9999;
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
       transition: all 0.3s ease;
     }
 
-    .header-wrap { 
-      height: 100%; width: 100%; display: flex; align-items: center;
-      padding: 0 var(--gutter); position: relative; justify-content: space-between;
+    .header-wrap {
+      max-width: 1280px; margin: 0 auto; height: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 var(--gutter);
     }
 
-    /* LOGO */
-    .brand { 
-      color: inherit; text-decoration:none; font-weight:700; 
-      display: flex; align-items: center; gap: 12px; z-index: 10;
-      font-size: 1.1rem; letter-spacing: 0.5px;
+    /* LOGO KEREN */
+    .brand {
+      text-decoration: none; display: flex; align-items: center; gap: 10px;
+      color: white; font-weight: 700; font-size: 1.25rem; letter-spacing: -0.5px;
     }
-    .brand img { display: block; transition: transform 0.3s; }
-    .brand:hover img { transform: rotate(-5deg) scale(1.1); } /* Logo goyang dikit pas hover */
-
-    /* MENU DESKTOP MODERN (PILL SHAPE) */
-    .nav-desktop {
-      display: flex;
-      gap: 5px; /* Jarak antar menu */
-      background: rgba(255, 255, 255, 0.03); /* Wadah menu tipis */
-      padding: 5px;
-      border-radius: 50px; /* Wadah menu bulat */
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .nav-desktop a { 
-      color: #cbd5e1; /* Warna teks agak abu biar soft */
-      text-decoration: none; 
-      padding: 8px 20px; /* Padding lega */
-      display: inline-block; 
-      transition: all 0.3s ease;
-      font-size: 0.9rem;
-      font-weight: 500;
-      border-radius: 30px; /* Bentuk Kapsul/Pill */
-    }
-
-    /* Efek Hover */
-    .nav-desktop a:hover { 
-      color: #fff;
-      background: rgba(255, 255, 255, 0.1); /* Putih transparan */
-      transform: translateY(-1px);
-    }
-
-    /* Efek Aktif (Menu yang lagi dibuka) */
-    .nav-desktop a.active { 
-      color: #fff;
-      background: #2563eb; /* Biru Menyala */
-      font-weight: 600;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); /* Glow biru */
-    }
-
-    @media (min-width: 993px) {
-      .header-wrap { justify-content: center; }
-      .brand { position: absolute; left: var(--gutter); }
-    }
-
-    /* TOMBOL HAMBURGER MOBILE */
-    .nav-toggle{ display:none; border:0; background:transparent; padding:10px; cursor:pointer; }
-    .nav-toggle span{ width:24px; height:2px; background:#fff; display:block; margin:5px 0; transition:.2s; border-radius: 2px; }
-    .nav-toggle.is-open span:nth-child(1){ transform: translateY(7px) rotate(45deg); }
-    .nav-toggle.is-open span:nth-child(2){ opacity:0; transform: translateX(10px); }
-    .nav-toggle.is-open span:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
-
-    /* MOBILE NAV */
-    .mobile-nav{ position: fixed; inset: 0; z-index: 9999; background: #0b1220; padding-top: var(--header-h); overflow:auto; display:none; }
-    .mobile-nav.active{ display:block; animation: fadeIn 0.3s; }
-    .mobile-nav__list{ list-style:none; padding:20px; margin:0; display:grid; gap:10px; }
-    .mobile-nav__list a{ 
-      display:block; padding:15px 20px; 
-      border:1px solid rgba(255,255,255,0.05); 
-      border-radius:12px; text-decoration:none; color:#fff; 
-      background: rgba(255,255,255,0.02);
-      font-weight: 500;
-    }
-    .mobile-nav__list a.active {
-      background: rgba(37, 99, 235, 0.1);
-      border-color: #2563eb;
-      color: #60a5fa;
-    }
+    .brand img { transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .brand:hover img { transform: rotate(-10deg) scale(1.1); }
     
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-
-    .nav-backdrop{ position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.6); backdrop-filter: blur(5px); display:none; }
-    .nav-backdrop.active{ display:block; }
-    .body--lock{ overflow:hidden; height:100vh; }
-
-    @media (max-width: 992px){
-      .nav-desktop{ display:none; }
-      .nav-toggle{ display:inline-flex; flex-direction:column; }
+    /* NAVIGASI DESKTOP (KAPSUL) */
+    .nav-desktop {
+      display: flex; gap: 4px;
+      background: rgba(255,255,255,0.03);
+      padding: 4px; border-radius: 50px;
+      border: 1px solid var(--border);
     }
-    @media (min-width: 993px){
-      .mobile-nav, .nav-backdrop{ display:none !important; }
-      .nav-toggle{ display:none; }
+    .nav-desktop a {
+      color: #94a3b8; text-decoration: none;
+      padding: 8px 18px; border-radius: 30px;
+      font-size: 0.85rem; font-weight: 500;
+      transition: all 0.2s ease;
     }
-    main, .container, .admin-wrap, .card, .page-wrap{ overflow:visible !important; }
+    .nav-desktop a:hover { color: white; background: rgba(255,255,255,0.06); }
+    .nav-desktop a.active-menu {
+      background: var(--primary); color: white; font-weight: 600;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    /* NAVIGASI MOBILE */
+    .nav-toggle {
+      display: none; background: transparent; border: none; cursor: pointer; padding: 10px;
+    }
+    .nav-toggle span {
+      display: block; width: 24px; height: 2px; background: white;
+      margin: 5px 0; transition: 0.3s; border-radius: 2px;
+    }
+    /* Animasi Hamburger jadi X */
+    .nav-toggle.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle.is-open span:nth-child(2) { opacity: 0; transform: translateX(-10px); }
+    .nav-toggle.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-menu-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px); z-index: 9998;
+      opacity: 0; pointer-events: none; transition: 0.3s;
+    }
+    .mobile-menu-overlay.active { opacity: 1; pointer-events: all; }
+
+    .mobile-menu {
+      position: fixed; top: 0; right: 0; width: 280px; height: 100vh;
+      background: #0f172a; z-index: 9999;
+      padding: 80px 20px 20px;
+      transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+      border-left: 1px solid var(--border);
+    }
+    .mobile-menu.active { transform: translateX(0); }
+    
+    .mobile-link {
+      display: block; padding: 12px 16px; margin-bottom: 8px;
+      color: #cbd5e1; text-decoration: none; font-weight: 500;
+      border-radius: 12px; transition: 0.2s;
+    }
+    .mobile-link:hover { background: rgba(255,255,255,0.05); color: white; }
+    .mobile-link.active-menu { background: rgba(37, 99, 235, 0.15); color: #60a5fa; border: 1px solid rgba(37, 99, 235, 0.3); }
+
+    /* LIGHTBOX GAMBAR */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0,0,0,0.9);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: 0.3s;
+    }
+    .lightbox.active { opacity: 1; pointer-events: all; }
+    .lightbox img {
+      max-width: 90vw; max-height: 80vh; border-radius: 8px;
+      box-shadow: 0 0 50px rgba(0,0,0,0.5);
+      transform: scale(0.9); transition: 0.3s;
+    }
+    .lightbox.active img { transform: scale(1); }
+    .lightbox-caption { color: #ccc; margin-top: 15px; text-align: center; font-size: 0.9rem; }
+    .lightbox-close {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.1); color: white;
+      border: none; width: 40px; height: 40px; border-radius: 50%;
+      font-size: 1.5rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+
+    @media (max-width: 992px) {
+      .nav-desktop { display: none; }
+      .nav-toggle { display: block; }
+    }
   </style>
 </head>
 
-<body class="page-<%= (typeof active !== 'undefined' ? active : '') %>">
+<body>
+  
   <header class="site-header">
-    <div class="header-wrap"> 
-      <a href="/" class="brand" aria-label="Halaman beranda AGUDASCO">
-        <img class="logo"
-          src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png"
-          alt="Logo AGUDASCO" 
-          width="40" height="40" />
-        <div class="title">AGUDASCO</div>
+    <div class="header-wrap">
+      
+      <a href="/" class="brand">
+        <img src="https://res.cloudinary.com/dsyo0e3fu/image/upload/f_auto,q_auto,c_scale,w_44/v1760066670/AgudascoLogo_resize_injtq2.png" 
+             alt="Logo AGUDASCO" width="40" height="40" />
+        <span>AGUDASCO</span>
       </a>
 
-      <nav class="nav-desktop" aria-label="Navigasi utama">
-        <a href="/"        class="<%= active==='home'?'active':'' %>">Beranda</a>
-        <a href="/artikel" class="<%= active==='artikel'?'active':'' %>">Artikel</a>
-        <a href="/laporan" class="<%= active==='laporan'?'active':'' %>">Laporan</a>
-        <a href="/adart"   class="<%= active==='adart'?'active':'' %>">AD/ART</a>
-        <a href="/anggota" class="<%= active==='anggota'?'active':'' %>">Anggota</a>
-        <a href="/galeri"  class="<%= active==='galeri'?'active':'' %>">Galeri</a>
+      <nav class="nav-desktop">
+        <a href="/"        class="<%= active==='home'?'active-menu':'' %>">Beranda</a>
+        <a href="/artikel" class="<%= active==='artikel'?'active-menu':'' %>">Artikel</a>
+        <a href="/dokumen" class="<%= active==='dokumen'?'active-menu':'' %>">Dokumen</a>
+        <a href="/anggota" class="<%= active==='anggota'?'active-menu':'' %>">Anggota</a>
+        <a href="/galeri"  class="<%= active==='galeri'?'active-menu':'' %>">Galeri</a>
         <a href="/#contact-section">Kontak</a>
-        <a href="/admin"   class="<%= active==='admin'?'active':'' %>">Admin</a>
+        <% if (user) { %>
+          <a href="/admin" class="active-menu" style="background: #ef4444;">Admin Panel</a>
+        <% } else { %>
+          <a href="/login">Login</a>
+        <% } %>
       </nav>
 
-      <button id="navToggle" class="nav-toggle" aria-controls="mobileNav" aria-expanded="false" aria-label="Buka navigasi">
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">
         <span></span><span></span><span></span>
       </button>
+
     </div>
   </header>
 
-  <nav id="mobileNav" class="mobile-nav" aria-label="Navigasi utama (mobile)">
-    <ul class="mobile-nav__list">
-      <li><a href="/"        class="<%= active==='home'?'active':'' %>">Beranda</a></li>
-      <li><a href="/artikel" class="<%= active==='artikel'?'active':'' %>">Artikel</a></li>
-      <li><a href="/laporan" class="<%= active==='laporan'?'active':'' %>">Laporan</a></li>
-      <li><a href="/adart"   class="<%= active==='adart'?'active':'' %>">AD/ART</a></li>
-      <li><a href="/anggota" class="<%= active==='anggota'?'active':'' %>">Anggota</a></li>
-      <li><a href="/galeri"  class="<%= active==='galeri'?'active':'' %>">Galeri</a></li>
-      <li><a href="/#contact-section">Kontak</a></li>
-      <li><a href="/admin"   class="<%= active==='admin'?'active':'' %>">Admin</a></li>
-    </ul>
+  <div class="mobile-menu-overlay" id="mobileOverlay"></div>
+  <nav class="mobile-menu" id="mobileMenu">
+    <div style="margin-bottom: 30px; opacity: 0.5; font-size: 0.8rem; letter-spacing: 1px;">MENU UTAMA</div>
+    
+    <a href="/"        class="mobile-link <%= active==='home'?'active-menu':'' %>">🏠 Beranda</a>
+    <a href="/artikel" class="mobile-link <%= active==='artikel'?'active-menu':'' %>">📝 Artikel</a>
+    <a href="/dokumen" class="mobile-link <%= active==='dokumen'?'active-menu':'' %>">📂 Dokumen Resmi</a>
+    <a href="/anggota" class="mobile-link <%= active==='anggota'?'active-menu':'' %>">👥 Anggota</a>
+    <a href="/galeri"  class="mobile-link <%= active==='galeri'?'active-menu':'' %>">📸 Galeri Foto</a>
+    <a href="/#contact-section" class="mobile-link">📞 Kontak Kami</a>
+    
+    <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+    
+    <% if (user) { %>
+      <a href="/admin" class="mobile-link" style="color: #ef4444;">🔐 Admin Panel</a>
+    <% } else { %>
+      <a href="/login" class="mobile-link">🔐 Login Pengurus</a>
+    <% } %>
   </nav>
-  <div id="navBackdrop" class="nav-backdrop"></div>
 
   <main>
-    <div class="container">
-      <%- body %>
-    </div>
+    <%- body %>
   </main>
 
   <%- include('partials/footer') %>
 
-  <div id="lightbox" class="lightbox-backdrop" onclick="closeLightbox(event)">
-    <div>
-      <img id="lightbox-img" class="lightbox-img" src="" alt=""/>
-      <div id="lightbox-cap" class="lightbox-caption"></div>
-    </div>
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <img id="lightbox-img" src="" alt="Preview">
+    <div class="lightbox-caption" id="lightbox-cap"></div>
   </div>
 
   <script>
-    function openLightbox(src, cap){
-      const b = document.getElementById('lightbox');
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('lightbox-cap').textContent = cap || '';
-      b.classList.add('active');
-    }
-    function closeLightbox(e){
-      if (e.target.id === 'lightbox') {
-        document.getElementById('lightbox').classList.remove('active');
+    // 1. Logic Menu Mobile
+    const toggle = document.getElementById('navToggle');
+    const menu = document.getElementById('mobileMenu');
+    const overlay = document.getElementById('mobileOverlay');
+
+    function toggleMenu() {
+      const isOpen = menu.classList.contains('active');
+      if (isOpen) {
+        menu.classList.remove('active');
+        overlay.classList.remove('active');
+        toggle.classList.remove('is-open');
+        document.body.style.overflow = ''; // Balikin scroll
+      } else {
+        menu.classList.add('active');
+        overlay.classList.add('active');
+        toggle.classList.add('is-open');
+        document.body.style.overflow = 'hidden'; // Kunci scroll biar fokus menu
       }
     }
 
-    (function(){
-      const btn = document.getElementById('navToggle');
-      const panel = document.getElementById('mobileNav');
-      const backdrop = document.getElementById('navBackdrop');
-      if(!btn || !panel || !backdrop) return;
+    toggle.addEventListener('click', toggleMenu);
+    overlay.addEventListener('click', toggleMenu);
 
-      function openMenu(){
-        btn.classList.add('is-open');
-        btn.setAttribute('aria-expanded','true');
-        panel.classList.add('active');
-        backdrop.classList.add('active');
-        document.body.classList.add('body--lock');
+    // 2. Logic Lightbox (Buat Galeri)
+    function openLightbox(src, caption) {
+      const lb = document.getElementById('lightbox');
+      const img = document.getElementById('lightbox-img');
+      const cap = document.getElementById('lightbox-cap');
+      
+      img.src = src;
+      cap.textContent = caption || '';
+      lb.classList.add('active');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+    }
+
+    // Tutup lightbox kalau klik area gelap (bukan gambarnya)
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+      if(e.target === this) closeLightbox();
+    });
+
+    // Tutup pakai tombol ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeLightbox();
+        if (menu.classList.contains('active')) toggleMenu();
       }
-      function closeMenu(){
-        btn.classList.remove('is-open');
-        btn.setAttribute('aria-expanded','false');
-        panel.classList.remove('active');
-        backdrop.classList.remove('active');
-        document.body.classList.remove('body--lock');
-      }
-
-      btn.addEventListener('click', () => {
-        panel.classList.contains('active') ? closeMenu() : openMenu();
-      });
-      backdrop.addEventListener('click', closeMenu);
-      document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
-
-      const mobileLinks = panel.querySelectorAll('a');
-      mobileLinks.forEach(link => {
-        link.addEventListener('click', closeMenu);
-      });
-    })();
+    });
   </script>
+
 </body>
 </html>
