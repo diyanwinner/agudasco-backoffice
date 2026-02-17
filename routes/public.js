@@ -60,29 +60,24 @@ export default function (q, q1) {
     });
   });
 
-  // ========= 3. LAPORAN KEUANGAN (Flipbook) =========
-  router.get("/laporan", (req, res) => {
-    res.redirect("/laporan/book");
-  });
-
-  router.get("/laporan/book", (req, res) => {
-    res.render("report_book", {
-      title: "Laporan Keuangan (Flipbook)",
-      active: "laporan",
-      footerContact: res.locals.footerContact
-    });
-  });
+  /* ========================================================
+     3. DOKUMEN (AD/ART & LAPORAN JADI SATU)
+     ======================================================== */
   
-  // ========= 4. AD/ART (Flipbook) =========
-  router.get("/adart", (_req, res) => res.redirect("/adart/book"));
-
-  router.get("/adart/book", (_req, res) => {
-    res.render("adart_book", {
-      title: "AD/ART (Flipbook)",
-      active: "adart",
+  // Kalau orang akses /dokumen -> Tampilkan halaman gabungan
+  router.get("/dokumen", (_req, res) => {
+    res.render("documents", {
+      title: "Arsip Dokumen",
+      active: "dokumen", // Nanti kita update menu navigasi biar ini nyala
       footerContact: res.locals.footerContact
     });
   });
+
+  // Redirect link lama biar gak error (SEO Friendly)
+  router.get("/adart", (_req, res) => res.redirect("/dokumen"));
+  router.get("/adart/book", (_req, res) => res.redirect("/dokumen"));
+  router.get("/laporan", (_req, res) => res.redirect("/dokumen"));
+  router.get("/laporan/book", (_req, res) => res.redirect("/dokumen"));
 
   // ========= 5. ANGGOTA =========
   router.get("/anggota", async (_req, res) => {
