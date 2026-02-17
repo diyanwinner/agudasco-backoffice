@@ -9,11 +9,11 @@
 
     <div class="d-inline-flex p-1 rounded-pill mb-4" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);">
       <button class="tab-btn active" 
-              onclick="switchTab(this, '/docs/adart.pdf', 'AD/ART Organisasi')">
+              onclick="switchTab(this, '/public/docs/adart.pdf', 'AD/ART Organisasi')">
         📜 AD/ART
       </button>
       <button class="tab-btn" 
-              onclick="switchTab(this, '/docs/laporankeuangantahun2025.pdf', 'Laporan Keuangan')">
+              onclick="switchTab(this, '/public/docs/laporankeuangantahun2025.pdf', 'Laporan Keuangan')">
         💰 Laporan
       </button>
     </div>
@@ -22,18 +22,24 @@
       
       <div class="book-header d-flex justify-content-between align-items-center mb-2 px-3">
         <span id="bookTitle" style="color: #60a5fa; font-weight: 600; font-size: 0.9rem;">AD/ART Organisasi</span>
-        <a id="btnZoom" href="/docs/adart.pdf" target="_blank" class="btn-tiny">
-          🔍 Full Screen
+        <a id="btnZoom" href="/public/docs/adart.pdf" target="_blank" class="btn-tiny">
+          🔍 Download / Full Screen
         </a>
       </div>
 
       <div id="flipbookStage" class="stage">
+        <div id="loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white;">
+          Memuat Dokumen...
+        </div>
         <div id="flipbook" class="flipbook"></div>
       </div>
 
-      <div id="errorMsg" style="display:none; padding: 20px; color: #f87171;">
-        <p>⚠️ Gagal memuat dokumen.</p>
-        <a id="fallbackLink" href="#" class="btn-tiny">Download PDF Manual</a>
+      <div id="errorMsg" style="display:none; padding: 30px; color: #f87171; text-align: center;">
+        <h3 style="margin-bottom: 10px;">⚠️ Gagal Memuat Dokumen</h3>
+        <p id="errorText" style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 20px;">Error tidak diketahui.</p>
+        <a id="fallbackLink" href="#" target="_blank" class="btn-tiny" style="background: #ef4444; border: none;">
+          Download PDF Manual
+        </a>
       </div>
 
     </div>
@@ -46,86 +52,79 @@
 </div>
 
 <style>
-  /* Tab Button Keren */
   .tab-btn {
     background: transparent; border: none; color: #94a3b8;
     padding: 8px 24px; border-radius: 50px; font-size: 0.85rem; font-weight: 500;
     transition: all 0.3s; cursor: pointer;
   }
-  .tab-btn.active {
-    background: #2563eb; color: white; shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-  }
+  .tab-btn.active { background: #2563eb; color: white; }
   .tab-btn:hover:not(.active) { color: white; }
 
-  /* Container Buku */
   .book-container {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 10px;
-    max-width: 900px;
-    margin: 0 auto;
+    border-radius: 16px; padding: 10px;
+    max-width: 900px; margin: 0 auto;
     backdrop-filter: blur(10px);
+    position: relative;
+    min-height: 400px;
   }
 
   .btn-tiny {
     font-size: 0.75rem; padding: 4px 12px; border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: white; text-decoration: none; transition: 0.2s;
+    border: 1px solid rgba(255,255,255,0.2); color: white; text-decoration: none;
   }
   .btn-tiny:hover { background: white; color: black; }
 
-  /* Ukuran Buku */
-  .stage { width: 100%; height: 600px; overflow: hidden; position: relative; }
-  
-  @media (max-width: 768px) {
-    .stage { height: 500px; }
-  }
+  .stage { width: 100%; height: 650px; overflow: hidden; position: relative; }
+  @media (max-width: 768px) { .stage { height: 500px; } }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
 
 <script>
-  // Set Worker PDF.js (Wajib biar gak error)
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
   let bookInstance = null;
   const container = document.getElementById('flipbook');
-  const errorMsg = document.getElementById('errorMsg');
   const stage = document.getElementById('flipbookStage');
+  const errorMsg = document.getElementById('errorMsg');
+  const errorText = document.getElementById('errorText');
+  const loader = document.getElementById('loader');
 
-  // Fungsi Render PDF
   async function loadPDF(url) {
     try {
-      // 1. Bersihkan buku lama
-      if (bookInstance) { bookInstance.destroy(); }
+      // Reset UI
+      if (bookInstance) bookInstance.destroy();
       container.innerHTML = '';
-      errorMsg.style.display = 'none';
       stage.style.display = 'block';
+      errorMsg.style.display = 'none';
+      loader.style.display = 'block';
 
-      // 2. Load File PDF
+      // 1. Cek File Ada/Tidak (Fetch Header)
+      const check = await fetch(url, { method: 'HEAD' });
+      if (!check.ok) throw new Error(`File tidak ditemukan (Status: ${check.status})`);
+
+      // 2. Load PDF
       const loadingTask = pdfjsLib.getDocument(url);
       const pdf = await loadingTask.promise;
       
       const images = [];
-      const scale = window.innerWidth < 600 ? 1 : 1.5; // Skala render
+      const scale = window.innerWidth < 600 ? 1 : 1.5;
 
-      // 3. Convert tiap halaman jadi gambar (Canvas)
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: scale });
-        
         const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d');
         canvas.width = viewport.width;
         canvas.height = viewport.height;
-
-        await page.render({ canvasContext: context, viewport: viewport }).promise;
-        images.push(canvas.toDataURL('image/jpeg')); // Simpan gambar
+        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        images.push(canvas.toDataURL('image/jpeg'));
       }
 
-      // 4. Bikin Flipbook Baru
+      // 3. Init Flipbook
       const PageFlip = window.PageFlip;
       const width = window.innerWidth < 600 ? 350 : 550;
       const height = window.innerWidth < 600 ? 500 : 750;
@@ -139,30 +138,27 @@
       });
 
       bookInstance.loadFromImages(images);
+      loader.style.display = 'none';
 
     } catch (err) {
-      console.error("Gagal load PDF:", err);
+      console.error(err);
+      loader.style.display = 'none';
       stage.style.display = 'none';
       errorMsg.style.display = 'block';
+      errorText.textContent = err.message; // Tampilkan pesan error spesifik
       document.getElementById('fallbackLink').href = url;
     }
   }
 
-  // Fungsi Ganti Tab
   window.switchTab = function(btn, pdfUrl, title) {
-    // Reset tombol active
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-
-    // Ganti Judul & Link
     document.getElementById('bookTitle').innerText = title;
     document.getElementById('btnZoom').href = pdfUrl;
-
-    // Load Buku
     loadPDF(pdfUrl);
   }
 
-  // Load Pertama kali
-  loadPDF('/docs/adart.pdf');
+  // Load Awal (Perhatikan path-nya: /public/docs/...)
+  loadPDF('/public/docs/adart.pdf');
 
 </script>
