@@ -28,14 +28,19 @@
       </div>
 
       <div id="flipbookStage" class="stage">
-        <div id="loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white;">
+        
+        <div id="loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; z-index: 10;">
           <div class="spinner-border text-primary" role="status"></div>
           <div style="font-size:0.8rem; margin-top:10px;">Memuat Dokumen...</div>
         </div>
-        <div id="flipbook" class="flipbook"></div>
+
+        <div id="flipbook-wrapper">
+          <div id="flipbook" class="flipbook"></div>
+        </div>
+
       </div>
 
-      <div id="errorMsg" style="display:none; padding: 30px; color: #f87171; text-align: center;">
+      <div id="errorMsg" style="display:none; padding: 40px 20px; color: #f87171; text-align: center;">
         <h3 style="margin-bottom: 10px;">⚠️ Gagal Memuat Dokumen</h3>
         <p id="errorText" style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 20px;">Error tidak diketahui.</p>
         <a id="fallbackLink" href="#" target="_blank" class="btn-tiny" style="background: #ef4444; border: none;">
@@ -78,9 +83,6 @@
   .btn-tiny:hover { background: white; color: black; }
 
   .stage { width: 100%; height: 650px; overflow: hidden; position: relative; }
-  /* Styling khusus halaman flipbook biar pas di tengah */
-  .stf__wrapper { margin: 0 auto; }
-  
   @media (max-width: 768px) { .stage { height: 500px; } }
 </style>
 
@@ -91,34 +93,38 @@
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
   let bookInstance = null;
-  const container = document.getElementById('flipbook');
+  const wrapper = document.getElementById('flipbook-wrapper');
   const stage = document.getElementById('flipbookStage');
   const errorMsg = document.getElementById('errorMsg');
-  const errorText = document.getElementById('errorText');
   const loader = document.getElementById('loader');
+  
+  // Status biar gak tabrakan kalau user klik gonta-ganti cepet
+  let isLoading = false;
 
   async function loadPDF(url) {
+    if (isLoading) return; // Cegah double klik
+    isLoading = true;
+
     try {
-      // Reset UI
+      // 1. BERSIH-BERSIH TOTAL (HARD RESET)
       if (bookInstance) {
-        bookInstance.destroy(); // Hancurkan buku lama
+        bookInstance.destroy();
         bookInstance = null;
       }
-      container.innerHTML = ''; // Bersihkan container HTML
+      // Kita hapus elemen div lama, dan bikin div baru yang fresh
+      wrapper.innerHTML = '<div id="flipbook"></div>';
+      const container = document.getElementById('flipbook'); // Ambil elemen baru
+
+      // Reset UI
       stage.style.display = 'block';
       errorMsg.style.display = 'none';
       loader.style.display = 'block';
-
-      // 1. Cek File Ada/Tidak
-      const check = await fetch(url, { method: 'HEAD' });
-      if (!check.ok) throw new Error(`File PDF tidak ditemukan (Status: ${check.status})`);
 
       // 2. Load PDF
       const loadingTask = pdfjsLib.getDocument(url);
       const pdf = await loadingTask.promise;
       
       const images = [];
-      // Skala lebih besar biar tajam, kecilin kalau di HP biar ringan
       const scale = window.innerWidth < 600 ? 1.0 : 1.5;
 
       for (let i = 1; i <= pdf.numPages; i++) {
@@ -132,13 +138,9 @@
         images.push(canvas.toDataURL('image/jpeg'));
       }
 
-      // 3. Init Flipbook (INI PERBAIKANNYA SAYANG!)
-      // Kita cari class PageFlip, kadang dia ada di window.PageFlip atau window.St.PageFlip
+      // 3. Init Flipbook
       const PageFlip = window.St?.PageFlip || window.PageFlip;
-      
-      if (!PageFlip) {
-        throw new Error("Library Flipbook gagal dimuat. Coba refresh halaman.");
-      }
+      if (!PageFlip) throw new Error("Library Flipbook belum siap.");
 
       const width = window.innerWidth < 600 ? 350 : 550;
       const height = window.innerWidth < 600 ? 500 : 750;
@@ -152,28 +154,35 @@
       });
 
       bookInstance.loadFromImages(images);
-      loader.style.display = 'none';
-
+      
     } catch (err) {
       console.error(err);
-      loader.style.display = 'none';
       stage.style.display = 'none';
       errorMsg.style.display = 'block';
-      errorText.textContent = err.message;
+      document.getElementById('errorText').textContent = "Dokumen tidak dapat dimuat atau tidak ditemukan.";
       document.getElementById('fallbackLink').href = url;
+    } finally {
+      loader.style.display = 'none';
+      isLoading = false; // Buka kunci biar bisa klik lagi
     }
   }
 
   window.switchTab = function(btn, pdfUrl, title) {
+    if (isLoading) return; // Jangan respon kalau lagi loading
+    
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    
     document.getElementById('bookTitle').innerText = title;
     document.getElementById('btnZoom').href = pdfUrl;
-    loadPDF(pdfUrl);
+    
+    // Kasih napas dikit 100ms sebelum load
+    setTimeout(() => {
+      loadPDF(pdfUrl);
+    }, 100);
   }
 
   // Load Awal
-  // Kita kasih timeout dikit biar library-nya napas dulu
   setTimeout(() => {
     loadPDF('/public/docs/adart.pdf');
   }, 500);
