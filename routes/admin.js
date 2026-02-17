@@ -4,11 +4,28 @@ import express from "express";
 export default function (q, q1, uploadImage, pool) {
   const router = express.Router();
 
-  /* ===================================================
-     ⛔ DASHBOARD LAMA SUDAH DIHAPUS
-     Sekarang Dashboard dihandle langsung oleh server.js
-     biar tampilannya keren! 😎
-     =================================================== */
+  /* ==================== DASHBOARD (FIXED) ==================== */
+  // Ini rute dashboard yang benar, mengarah ke tampilan baru
+  router.get("/", async (_req, res) => {
+    try {
+      // Logic Ulang Tahun
+      const upcomingBirthdays = await q(`
+        WITH next_7 AS (
+          SELECT to_char((CURRENT_DATE + offs)::date, 'MM-DD') AS md
+          FROM generate_series(0, 7) AS offs
+        )
+        SELECT m.id, m.name, m.birthdate,
+          (to_char(m.birthdate, 'MM-DD') = to_char(CURRENT_DATE, 'MM-DD')) AS is_today
+        FROM members m
+        JOIN next_7 n ON m.birthdate IS NOT NULL AND to_char(m.birthdate, 'MM-DD') = n.md
+      `);
+      
+      // Render file 'dashboard.ejs' yang ada di folder views utama (yg bagus)
+      res.render("dashboard", { title: "Dashboard Admin", active: "admin", upcomingBirthdays });
+    } catch (e) {
+      res.render("dashboard", { title: "Dashboard Admin", active: "admin", upcomingBirthdays: [] });
+    }
+  });
 
   /* ==================== ARTIKEL ====================== */
   router.get("/articles", async (_req, res) => {
