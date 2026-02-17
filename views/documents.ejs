@@ -1,0 +1,205 @@
+<div class="container py-4" style="min-height: 85vh;">
+
+  <div class="d-flex flex-column flex-md-row align-items-center justify-content-between mb-4 gap-3">
+    
+    <div>
+      <h1 class="h3 mb-1 fw-bold text-white">Arsip Dokumen Resmi</h1>
+      <p class="text-secondary small mb-0">Silakan pilih dokumen yang ingin dibaca.</p>
+    </div>
+
+    <div class="nav nav-pills bg-dark p-1 rounded-pill border border-secondary" id="docTabs" role="tablist">
+      <button class="nav-link active rounded-pill px-4 text-white" 
+              id="tab-adart" 
+              data-pdf="/docs/adart.pdf"
+              data-title="AD/ART Organisasi"
+              style="font-size: 0.9rem;">
+        📜 AD/ART
+      </button>
+      <button class="nav-link rounded-pill px-4 text-secondary" 
+              id="tab-laporan" 
+              data-pdf="/docs/laporankeuangantahun2025.pdf"
+              data-title="Laporan Keuangan 2025"
+              style="font-size: 0.9rem;">
+        💰 Laporan Keuangan
+      </button>
+    </div>
+
+  </div>
+
+  <div class="position-relative">
+    
+    <div class="d-flex align-items-center justify-content-between mb-2 px-2">
+      <h2 id="bookTitle" class="h6 mb-0 text-info fw-bold">AD/ART Organisasi</h2>
+      <a id="btnZoom" href="/docs/adart.pdf" target="_blank" class="btn btn-sm btn-outline-info rounded-pill px-3">
+        🔍 Mode Zoom (Full HD)
+      </a>
+    </div>
+
+    <div id="flipbookContainer" class="position-relative mx-auto" style="width: 100%; max-width: 960px; height: 650px;">
+      <div id="loader" class="position-absolute top-50 start-50 translate-middle text-center">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <div class="small text-secondary">Memuat Dokumen...</div>
+      </div>
+      
+      <div id="flipbook"></div>
+    </div>
+
+    <div id="errBox" class="alert alert-danger mt-3 text-center" style="display:none;"></div>
+    
+    <p class="text-center small text-secondary mt-3">
+      Gunakan tombol panah keyboard (← / →) atau usap layar untuk membalik halaman.
+    </p>
+
+  </div>
+
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<style>
+  /* CSS Tab Aktif */
+  .nav-pills .nav-link.active {
+    background-color: #2563eb !important;
+    color: white !important;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+  }
+  .nav-pills .nav-link:not(.active):hover {
+    background-color: rgba(255,255,255,0.05);
+    color: white !important;
+  }
+  
+  /* Styling Flipbook */
+  .stf__parent { position:relative; display:block; box-sizing:border-box; transform:translateZ(0); }
+  .stf__wrapper { position:relative; width:100%; height:100%; box-sizing:border-box; }
+  .stf__block { position:absolute; inset:0; box-sizing:border-box; }
+  .stf__item { position:absolute; inset:0; display:block; box-sizing:border-box; transform-style:preserve-3d; }
+  
+  #flipbook .page { background-color: #0f172a; }
+  
+  @media (max-width: 576px) {
+    #flipbookContainer { height: 75vh !important; }
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+</script>
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+
+<script>
+(function() {
+  const container = document.getElementById('flipbook');
+  const loader = document.getElementById('loader');
+  const errBox = document.getElementById('errBox');
+  const titleEl = document.getElementById('bookTitle');
+  const zoomBtn = document.getElementById('btnZoom');
+  
+  let flipInstance = null; // Simpan instance flipbook biar bisa dihancurkan & dibuat ulang
+  
+  // Konfigurasi Responsif
+  const isPhone = matchMedia('(max-width: 576px)').matches;
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  const H_PREVIEW = isPhone ? 1000 : 1200; // Resolusi render
+  
+  // --- FUNGSI RENDER PDF KE GAMBAR ---
+  async function renderPdfToImages(url) {
+    try {
+      const loadingTask = pdfjsLib.getDocument(url);
+      const pdf = await loadingTask.promise;
+      
+      const imgs = [];
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const page = await pdf.getPage(p);
+        const baseVp = page.getViewport({ scale: 1 });
+        const scale = (H_PREVIEW / baseVp.height) * DPR; // Hitung skala biar tajem
+        const vp = page.getViewport({ scale });
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = Math.ceil(vp.width);
+        canvas.height = Math.ceil(vp.height);
+        
+        await page.render({ canvasContext: ctx, viewport: vp }).promise;
+        imgs.push(canvas.toDataURL('image/jpeg', 0.85)); // Kompres dikit biar enteng
+      }
+      return imgs;
+    } catch (e) {
+      console.error(e);
+      throw new Error("Gagal memuat file PDF. Pastikan file tersedia.");
+    }
+  }
+
+  // --- FUNGSI UTAMA LOAD BUKU ---
+  async function loadBook(pdfUrl) {
+    // 1. Reset Tampilan
+    if (flipInstance) {
+      flipInstance.destroy(); // Hancurkan buku lama
+      container.innerHTML = ''; // Bersihkan container
+    }
+    loader.style.display = 'block';
+    errBox.style.display = 'none';
+    
+    try {
+      // 2. Render PDF jadi Gambar (Proses Berat di sini)
+      const images = await renderPdfToImages(pdfUrl);
+      
+      // 3. Inisialisasi Flipbook Baru
+      const PageFlip = window.PageFlip;
+      if (!PageFlip) throw new Error("Library PageFlip belum siap.");
+
+      const width = isPhone ? 500 : 600;
+      const height = isPhone ? 800 : 850;
+
+      flipInstance = new PageFlip(container, {
+        width: width, 
+        height: height,
+        size: 'stretch',
+        minWidth: 300, minHeight: 400,
+        showCover: true,
+        maxShadowOpacity: 0.3,
+        mobileScrollSupport: true // Penting buat HP
+      });
+
+      // 4. Masukkan Gambar ke Buku
+      flipInstance.loadFromImages(images);
+      
+      // Selesai
+      loader.style.display = 'none';
+
+    } catch (err) {
+      loader.style.display = 'none';
+      errBox.style.display = 'block';
+      errBox.textContent = err.message || "Terjadi kesalahan saat memuat dokumen.";
+    }
+  }
+
+  // --- LOGIC GANTI TAB ---
+  const tabs = document.querySelectorAll('.nav-link');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', function() {
+      // Update UI Tab Aktif
+      tabs.forEach(t => {
+        t.classList.remove('active', 'text-white');
+        t.classList.add('text-secondary');
+      });
+      this.classList.add('active', 'text-white');
+      this.classList.remove('text-secondary');
+
+      // Update Judul & Link Zoom
+      const newTitle = this.getAttribute('data-title');
+      const newPdf = this.getAttribute('data-pdf');
+      
+      titleEl.textContent = newTitle;
+      zoomBtn.href = newPdf;
+
+      // Load Buku Baru
+      loadBook(newPdf);
+    });
+  });
+
+  // --- LOAD AWAL (AD/ART) ---
+  // Kita trigger klik di tab pertama biar otomatis load
+  document.getElementById('tab-adart').click();
+
+})();
+</script>
