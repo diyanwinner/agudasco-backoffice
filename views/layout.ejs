@@ -157,14 +157,20 @@
       </a>
 
       <nav class="nav-desktop">
-        <a href="/"        class="<%= active==='home'?'active-menu':'' %>">Beranda</a>
-        <a href="/artikel" class="<%= active==='artikel'?'active-menu':'' %>">Artikel</a>
-        <a href="/dokumen" class="<%= active==='dokumen'?'active-menu':'' %>">Dokumen</a>
-        <a href="/anggota" class="<%= active==='anggota'?'active-menu':'' %>">Anggota</a>
-        <a href="/galeri"  class="<%= active==='galeri'?'active-menu':'' %>">Galeri</a>
+        <a href="/"        class="<%= (typeof active!='undefined' && active==='home')?'active-menu':'' %>">Beranda</a>
+        <a href="/artikel" class="<%= (typeof active!='undefined' && active==='artikel')?'active-menu':'' %>">Artikel</a>
+        <a href="/dokumen" class="<%= (typeof active!='undefined' && active==='dokumen')?'active-menu':'' %>">Dokumen</a>
+        <a href="/anggota" class="<%= (typeof active!='undefined' && active==='anggota')?'active-menu':'' %>">Anggota</a>
+        <a href="/galeri"  class="<%= (typeof active!='undefined' && active==='galeri')?'active-menu':'' %>">Galeri</a>
         <a href="/#contact-section">Kontak</a>
-        <% if (user) { %>
-          <a href="/admin" class="active-menu" style="background: #ef4444;">Admin Panel</a>
+        
+        <% if (typeof user !== 'undefined' && user) { %>
+          <div style="display: flex; gap: 5px; margin-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); padding-left: 10px;">
+            <a href="/admin" class="active-menu" style="background: #ef4444; border-color: #ef4444;">Admin Panel</a>
+            <a href="/logout" style="color: #f87171;" title="Keluar">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </a>
+          </div>
         <% } else { %>
           <a href="/login">Login</a>
         <% } %>
