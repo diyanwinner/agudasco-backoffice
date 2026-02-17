@@ -29,14 +29,14 @@ export default function (q, q1, uploadImage, pool) {
         ORDER BY birthdate_this_year ASC, name ASC
       `);
 
-      res.render("admin/dashboard", {
+      res.render("dashboard", {
         title: "Dashboard",
         active: "admin",
         upcomingBirthdays
       });
     } catch (e) {
       console.error("dashboard birthdays error:", e);
-      res.render("admin/dashboard", {
+      res.render("dashboard", {
         title: "Dashboard",
         active: "admin",
         upcomingBirthdays: []
