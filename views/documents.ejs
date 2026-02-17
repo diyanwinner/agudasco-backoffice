@@ -29,7 +29,8 @@
 
       <div id="flipbookStage" class="stage">
         <div id="loader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white;">
-          Memuat Dokumen...
+          <div class="spinner-border text-primary" role="status"></div>
+          <div style="font-size:0.8rem; margin-top:10px;">Memuat Dokumen...</div>
         </div>
         <div id="flipbook" class="flipbook"></div>
       </div>
@@ -77,6 +78,9 @@
   .btn-tiny:hover { background: white; color: black; }
 
   .stage { width: 100%; height: 650px; overflow: hidden; position: relative; }
+  /* Styling khusus halaman flipbook biar pas di tengah */
+  .stf__wrapper { margin: 0 auto; }
+  
   @media (max-width: 768px) { .stage { height: 500px; } }
 </style>
 
@@ -96,22 +100,26 @@
   async function loadPDF(url) {
     try {
       // Reset UI
-      if (bookInstance) bookInstance.destroy();
-      container.innerHTML = '';
+      if (bookInstance) {
+        bookInstance.destroy(); // Hancurkan buku lama
+        bookInstance = null;
+      }
+      container.innerHTML = ''; // Bersihkan container HTML
       stage.style.display = 'block';
       errorMsg.style.display = 'none';
       loader.style.display = 'block';
 
-      // 1. Cek File Ada/Tidak (Fetch Header)
+      // 1. Cek File Ada/Tidak
       const check = await fetch(url, { method: 'HEAD' });
-      if (!check.ok) throw new Error(`File tidak ditemukan (Status: ${check.status})`);
+      if (!check.ok) throw new Error(`File PDF tidak ditemukan (Status: ${check.status})`);
 
       // 2. Load PDF
       const loadingTask = pdfjsLib.getDocument(url);
       const pdf = await loadingTask.promise;
       
       const images = [];
-      const scale = window.innerWidth < 600 ? 1 : 1.5;
+      // Skala lebih besar biar tajam, kecilin kalau di HP biar ringan
+      const scale = window.innerWidth < 600 ? 1.0 : 1.5;
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
@@ -124,8 +132,14 @@
         images.push(canvas.toDataURL('image/jpeg'));
       }
 
-      // 3. Init Flipbook
-      const PageFlip = window.PageFlip;
+      // 3. Init Flipbook (INI PERBAIKANNYA SAYANG!)
+      // Kita cari class PageFlip, kadang dia ada di window.PageFlip atau window.St.PageFlip
+      const PageFlip = window.St?.PageFlip || window.PageFlip;
+      
+      if (!PageFlip) {
+        throw new Error("Library Flipbook gagal dimuat. Coba refresh halaman.");
+      }
+
       const width = window.innerWidth < 600 ? 350 : 550;
       const height = window.innerWidth < 600 ? 500 : 750;
 
@@ -145,7 +159,7 @@
       loader.style.display = 'none';
       stage.style.display = 'none';
       errorMsg.style.display = 'block';
-      errorText.textContent = err.message; // Tampilkan pesan error spesifik
+      errorText.textContent = err.message;
       document.getElementById('fallbackLink').href = url;
     }
   }
@@ -158,7 +172,10 @@
     loadPDF(pdfUrl);
   }
 
-  // Load Awal (Perhatikan path-nya: /public/docs/...)
-  loadPDF('/public/docs/adart.pdf');
+  // Load Awal
+  // Kita kasih timeout dikit biar library-nya napas dulu
+  setTimeout(() => {
+    loadPDF('/public/docs/adart.pdf');
+  }, 500);
 
 </script>
