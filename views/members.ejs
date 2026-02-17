@@ -10,13 +10,16 @@
 
       <div class="row justify-content-center mb-5" data-aos="fade-up">
         <div class="col-md-6">
-          <input type="text" id="searchMember" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Cari nama anggota..." style="border-radius: 50px; padding: 15px 30px; backdrop-filter: blur(5px); background: rgba(15, 23, 42, 0.6) !important;">
+          <input type="text" id="searchMember" class="form-control form-control-lg bg-dark text-white border-secondary" 
+                 placeholder="Cari nama anggota..." 
+                 style="border-radius: 50px; padding: 15px 30px; backdrop-filter: blur(5px); background: rgba(15, 23, 42, 0.6) !important;">
         </div>
       </div>
 
-      <div class="row g-4" id="memberGrid">
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4" id="memberGrid">
+        
         <% members.forEach(m => { %>
-          <div class="col-6 col-md-4 member-item" data-aos="zoom-in" data-aos-delay="100">
+          <div class="col member-item" data-aos="zoom-in" data-aos-delay="100">
             <div class="card h-100 member-card-elegant">
               
               <div class="member-img-wrap-elegant">
@@ -27,20 +30,26 @@
                 <% } %>
               </div>
               
-              <div class="card-body text-center p-0">
-                <h5 class="card-title text-white mb-2 fw-bold" style="font-size: 1.1rem;"><%= m.name %></h5>
-                <span class="badge bg-primary bg-opacity-25 text-primary fw-normal px-3 py-2 rounded-pill" style="font-size: 0.8rem; letter-spacing: 0.5px;">
-                  Anggota Aktif
-                </span>
+              <div class="card-body text-center p-0 d-flex flex-column justify-content-center">
+                <h5 class="card-title text-white mb-2 fw-bold text-uppercase name-text" style="font-size: 1rem; letter-spacing: 1px;">
+                  <%= m.name %>
+                </h5>
+                <div>
+                  <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-3 py-2 rounded-pill fw-normal" style="font-size: 0.75rem;">
+                    Anggota Aktif
+                  </span>
+                </div>
               </div>
 
             </div>
           </div>
         <% }) %>
+
       </div>
 
       <div id="noResults" class="text-center text-secondary mt-5" style="display:none;">
-        <p class="fs-5">😔 Anggota tidak ditemukan.</p>
+        <div style="font-size: 3rem;">🔍</div>
+        <p class="fs-5 mt-2">Anggota tidak ditemukan.</p>
       </div>
 
     <% } else { %>
@@ -53,7 +62,7 @@
         <p class="text-secondary mb-4" style="max-width: 500px; margin: 0 auto; line-height: 1.6;">
           Data anggota bersifat rahasia. Silakan login sebagai pengurus untuk mengakses informasi lengkap.
         </p>
-        <a href="/login" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold" style="box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.5);">
+        <a href="/login" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold shadow-lg">
           Masuk ke Sistem
         </a>
       </div>
@@ -64,96 +73,93 @@
 </div>
 
 <style>
-  /* --- Style Kartu Anggota Baru (Glassmorphism) --- */
+  /* KARTU ELEGAN */
   .member-card-elegant {
-    background: rgba(30, 41, 59, 0.4); /* Latar belakang transparan gelap */
-    border: 1px solid rgba(255, 255, 255, 0.08); /* Border tipis */
-    border-radius: 20px; /* Sudut membulat */
-    padding: 30px 20px; /* Jarak dalam */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    backdrop-filter: blur(12px); /* Efek blur di belakangnya */
-    text-align: center;
-    overflow: hidden;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 25px 15px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
     position: relative;
-  }
-
-  /* Efek Hover Keren */
-  .member-card-elegant:hover {
-    transform: translateY(-7px);
-    background: rgba(30, 41, 59, 0.6);
-    border-color: rgba(37, 99, 235, 0.4); /* Border jadi biru */
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
   }
   
-  .member-img-wrap-elegant {
-    width: 100px; height: 100px; margin: 0 auto 20px;
-    border-radius: 50%; overflow: hidden;
-    border: 3px solid rgba(255,255,255,0.1);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    background: #0f172a;
-    transition: 0.3s;
+  /* Efek Hover: Naik dikit + Glow Biru */
+  .member-card-elegant:hover {
+    transform: translateY(-5px);
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.4);
   }
+
+  /* FOTO BULAT DI TENGAH */
+  .member-img-wrap-elegant {
+    width: 90px; height: 90px; 
+    margin: 0 auto 15px; /* Tengah horizontal */
+    border-radius: 50%; 
+    overflow: hidden;
+    border: 3px solid rgba(255,255,255,0.08);
+    background: #0f172a;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s;
+  }
+  
+  /* Foto nge-zoom dikit pas di hover */
   .member-card-elegant:hover .member-img-wrap-elegant {
-    border-color: rgba(37, 99, 235, 0.8); /* Lingkaran foto jadi biru pas hover */
-    transform: scale(1.05);
+    transform: scale(1.1);
+    border-color: #3b82f6;
   }
 
   .member-img-wrap-elegant img { width: 100%; height: 100%; object-fit: cover; }
+  
+  /* Inisial Nama (Kalau gak ada foto) */
   .no-avatar-elegant {
-    width: 100%; height: 100%; display: flex;
-    align-items: center; justify-content: center;
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    font-size: 2rem; font-weight: bold; color: white;
+    width: 100%; height: 100%; 
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    font-size: 1.8rem; font-weight: bold; color: #94a3b8;
   }
 
-  /* --- Style Khusus Locked State 🔒 --- */
+  /* STYLE UNTUK LOCKED STATE */
   .locked-state {
     background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 24px;
-    padding: 80px 30px;
-    text-align: center;
-    margin: 40px auto;
-    max-width: 600px;
+    border-radius: 24px; padding: 60px 20px;
+    text-align: center; margin: 40px auto; max-width: 600px;
     backdrop-filter: blur(16px);
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-    position: relative;
-    overflow: hidden;
   }
-  /* Hiasan background samar */
-  .locked-state::before {
-    content: '🔒';
-    position: absolute; top: -10%; right: -10%;
-    font-size: 15rem; opacity: 0.03; transform: rotate(-15deg);
-  }
-
   .lock-icon-wrap {
-    margin-bottom: 25px; display: inline-block;
+    margin-bottom: 20px; display: inline-block;
     padding: 15px; border-radius: 50%;
     background: rgba(37, 99, 235, 0.1);
     border: 1px solid rgba(37, 99, 235, 0.2);
   }
-  .lock-icon { font-size: 3rem; }
+  .lock-icon { font-size: 2.5rem; }
 </style>
 
 <% if (typeof user !== 'undefined' && user) { %>
 <script>
   const searchInput = document.getElementById('searchMember');
-  const items = document.querySelectorAll('.member-item');
   const noRes = document.getElementById('noResults');
-
+  
   if(searchInput){
     searchInput.addEventListener('keyup', function(e){
       const term = e.target.value.toLowerCase();
+      const items = document.querySelectorAll('.member-item');
       let count = 0;
+      
       items.forEach(item => {
-        const name = item.querySelector('h5').textContent.toLowerCase();
+        const name = item.querySelector('.name-text').textContent.toLowerCase();
+        // Cek nama
         if(name.includes(term)){
-          item.style.display = 'block'; count++;
+          item.style.display = ''; // Reset display (biar balik ke grid)
+          count++;
         } else {
-          item.style.display = 'none';
+          item.style.display = 'none'; // Sembunyikan
         }
       });
+      
       noRes.style.display = (count === 0) ? 'block' : 'none';
     });
   }
