@@ -1,30 +1,131 @@
-<main>
-  <div class="container members-page">
-    <header class="section-head">
-      <div class="title-wrapper">
-        <h1>Anggota</h1>
-        <span class="count-badge">
-          <%= (members || []).length %> Members
-        </span>
-      </div>
-      <div class="muted">Klik nama untuk lihat detail.</div>
-    </header>
+<div class="page-wrap">
+  <div class="container">
+    
+    <div class="text-center mb-5" data-aos="fade-down">
+      <h1 class="display-5 fw-bold text-white">Anggota Organisasi</h1>
+      <p class="text-secondary">Daftar profil dan peran anggota AGUDASCO.</p>
+    </div>
 
-    <ol class="members-grid">
-      <% (members || []).forEach(function (m, idx) { %>
-        <li class="members-grid-item">
-          <a class="member-link" href="/anggota/<%= m.id %>">
-            <span class="member-index"><%= idx + 1 %>.</span>
-            <img
-              loading="lazy"
-              class="avatar avatar--sm"
-              src="<%= m.avatar || 'https://via.placeholder.com/96x96?text=%20' %>"
-              alt="<%= m.name %>"
-            />
-            <span class="member-name"><%= m.name %></span>
-          </a>
-        </li>
-      <% }) %>
-    </ol>
+    <% if (typeof user !== 'undefined' && user) { %>
+
+      <div class="row justify-content-center mb-5" data-aos="fade-up">
+        <div class="col-md-6">
+          <input type="text" id="searchMember" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Cari nama anggota..." style="border-radius: 50px; padding: 15px 30px;">
+        </div>
+      </div>
+
+      <div class="row g-4" id="memberGrid">
+        <% members.forEach(m => { %>
+          <div class="col-6 col-md-4 col-lg-3 member-item" data-aos="zoom-in" data-aos-delay="100">
+            <div class="card h-100 bg-transparent border-0 member-card">
+              <div class="member-img-wrap">
+                <% if(m.avatar){ %>
+                  <img src="<%= m.avatar %>" alt="<%= m.name %>" loading="lazy">
+                <% } else { %>
+                  <div class="no-avatar"><%= m.name.charAt(0) %></div>
+                <% } %>
+              </div>
+              <div class="card-body text-center p-0 mt-3">
+                <h5 class="card-title text-white mb-1 name-text"><%= m.name %></h5>
+                <small class="text-info role-badge">Anggota Aktif</small>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <div id="noResults" class="text-center text-secondary mt-5" style="display:none;">
+        <p>Anggota tidak ditemukan.</p>
+      </div>
+
+    <% } else { %>
+
+      <div class="locked-state" data-aos="zoom-in">
+        <div class="lock-icon">
+          🔒
+        </div>
+        <h2 class="text-white fw-bold mb-3">Halaman Khusus Pengurus</h2>
+        <p class="text-secondary mb-4" style="max-width: 500px; margin: 0 auto;">
+          Maaf, data anggota bersifat privat dan hanya dapat diakses oleh pengurus aktif AGUDASCO. Silakan login untuk melihat data.
+        </p>
+        <a href="/login" class="btn btn-primary btn-lg rounded-pill px-5">
+          Login Pengurus
+        </a>
+      </div>
+
+    <% } %>
+
   </div>
-</main>
+</div>
+
+<style>
+  /* Style Kartu Anggota (Sama kayak sebelumnya) */
+  .member-card { transition: transform 0.3s; cursor: default; }
+  .member-card:hover { transform: translateY(-5px); }
+  
+  .member-img-wrap {
+    width: 120px; height: 120px; margin: 0 auto;
+    border-radius: 50%; overflow: hidden;
+    border: 3px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    position: relative;
+    background: #1e293b;
+  }
+  .member-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+  .no-avatar {
+    width: 100%; height: 100%; display: flex;
+    align-items: center; justify-content: center;
+    background: linear-gradient(45deg, #2563eb, #1d4ed8);
+    font-size: 2.5rem; font-weight: bold; color: white;
+  }
+
+  /* --- STYLE KHUSUS LOCKED STATE 🔒 --- */
+  .locked-state {
+    background: rgba(30, 41, 59, 0.5); /* Semi transparan */
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 20px;
+    padding: 60px 20px;
+    text-align: center;
+    margin: 20px auto;
+    max-width: 700px;
+    backdrop-filter: blur(10px); /* Efek kaca */
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  }
+
+  .lock-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.05);
+    width: 100px; height: 100px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+</style>
+
+<% if (typeof user !== 'undefined' && user) { %>
+<script>
+  const searchInput = document.getElementById('searchMember');
+  const items = document.querySelectorAll('.member-item');
+  const noRes = document.getElementById('noResults');
+
+  if(searchInput){
+    searchInput.addEventListener('keyup', function(e){
+      const term = e.target.value.toLowerCase();
+      let count = 0;
+      
+      items.forEach(item => {
+        const name = item.querySelector('.name-text').textContent.toLowerCase();
+        if(name.includes(term)){
+          item.style.display = 'block';
+          count++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+      
+      noRes.style.display = (count === 0) ? 'block' : 'none';
+    });
+  }
+</script>
+<% } %>
