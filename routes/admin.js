@@ -1,48 +1,14 @@
-// routes/admin.js
+// routes/admin.js - FINAL CLEAN VERSION
 import express from "express";
 
 export default function (q, q1, uploadImage, pool) {
   const router = express.Router();
 
-  /* ==================== DASHBOARD ==================== */
-  router.get("/", async (_req, res) => {
-    try {
-      const upcomingBirthdays = await q(`
-        WITH next_7 AS (
-          SELECT to_char((CURRENT_DATE + offs)::date, 'MM-DD') AS md
-          FROM generate_series(0, 7) AS offs
-        )
-        SELECT
-          m.id,
-          m.name,
-          m.birthdate,
-          make_date(
-            EXTRACT(year FROM CURRENT_DATE)::int,
-            EXTRACT(month FROM m.birthdate)::int,
-            EXTRACT(day   FROM m.birthdate)::int
-          ) AS birthdate_this_year,
-          (to_char(m.birthdate, 'MM-DD') = to_char(CURRENT_DATE, 'MM-DD')) AS is_today
-        FROM members m
-        JOIN next_7 n
-          ON m.birthdate IS NOT NULL
-         AND to_char(m.birthdate, 'MM-DD') = n.md
-        ORDER BY birthdate_this_year ASC, name ASC
-      `);
-
-      res.render("dashboard", {
-        title: "Dashboard",
-        active: "admin",
-        upcomingBirthdays
-      });
-    } catch (e) {
-      console.error("dashboard birthdays error:", e);
-      res.render("dashboard", {
-        title: "Dashboard",
-        active: "admin",
-        upcomingBirthdays: []
-      });
-    }
-  });
+  /* ===================================================
+     ⛔ DASHBOARD LAMA SUDAH DIHAPUS
+     Sekarang Dashboard dihandle langsung oleh server.js
+     biar tampilannya keren! 😎
+     =================================================== */
 
   /* ==================== ARTIKEL ====================== */
   router.get("/articles", async (_req, res) => {
@@ -106,7 +72,7 @@ export default function (q, q1, uploadImage, pool) {
     });
   });
 
-  // SIMPAN TAMBAH (fix Multer: 'avatar' via fields)
+  // SIMPAN TAMBAH
   router.post(
     "/members",
     uploadImage.fields([{ name: "avatar", maxCount: 1 }]),
@@ -145,7 +111,7 @@ export default function (q, q1, uploadImage, pool) {
     });
   });
 
-  // SIMPAN EDIT (fix Multer: 'avatar' via fields)
+  // SIMPAN EDIT
   router.post(
     "/members/:id/update",
     uploadImage.fields([{ name: "avatar", maxCount: 1 }]),
@@ -229,7 +195,7 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect(`/admin/members/${memberId}`);
   });
 
-  // TAMBAH FOTO (tetap single 'photo')
+  // TAMBAH FOTO
   router.post("/members/:id/photo", uploadImage.single("photo"), async (req, res) => {
     const memberId = Number(req.params.id);
     const { caption = "" } = req.body;
@@ -367,6 +333,52 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect("/admin/adarts");
   });
 
-  /* ==================== END ========================== */
+  /* ==================== USER MANAGEMENT ================== */
+  // 1. LIST USER
+  router.get("/users", async (_req, res) => {
+    try {
+      const users = await q("SELECT * FROM users ORDER BY id ASC");
+      res.render("admin/users/index", { 
+        title: "Kelola Pengguna", 
+        active: "admin", 
+        rows: users 
+      });
+    } catch (e) {
+      console.error("List users err:", e);
+      res.redirect("/admin");
+    }
+  });
+
+  // 2. FORM TAMBAH
+  router.get("/users/new", (_req, res) => {
+    res.render("admin/users/new", { 
+      title: "Tambah Pengguna", 
+      active: "admin" 
+    });
+  });
+
+  // 3. SIMPAN USER BARU
+  router.post("/users", async (req, res) => {
+    try {
+      const { name, email, password, role } = req.body;
+      if (!name || !email || !password) return res.status(400).send("Wajib diisi!");
+
+      await q(
+        "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4)",
+        [name, email, password, role]
+      );
+      res.redirect("/admin/users");
+    } catch (e) {
+      console.error("Create user err:", e);
+      res.status(500).send("Gagal membuat user");
+    }
+  });
+
+  // 4. HAPUS USER
+  router.post("/users/:id/delete", async (req, res) => {
+    await q("DELETE FROM users WHERE id=$1", [Number(req.params.id)]);
+    res.redirect("/admin/users");
+  });
+
   return router;
 }
