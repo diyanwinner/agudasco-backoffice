@@ -1,33 +1,117 @@
-<main>
+<div class="page-wrap" style="padding-top: 2rem;">
   <div class="container">
 
-    <!-- Aksi halaman -->
-    <div class="page-actions" style="margin:8px 0 12px">
-      <a class="btn ghost back"
-         href="/anggota"
-         onclick="if (history.length > 1) { history.back(); return false; }">
-        ← Kembali
-      </a>
-    </div>
+    <a href="/anggota" class="btn-back" data-aos="fade-right">
+      ← Kembali ke Daftar
+    </a>
 
-    <!-- Judul -->
-    <div class="section-head">
-      <h1 style="margin:0"><%= member.name %></h1>
-      <% if ((member.bio||'').trim()) { %>
-        <div class="muted"><%= member.bio %></div>
-      <% } %>
-    </div>
+    <div class="profile-card-wrapper" data-aos="zoom-in">
+      
+      <div class="profile-banner">
+        <% if(member.avatar) { %>
+          <div class="banner-blur" style="background-image: url('<%= member.avatar %>');"></div>
+        <% } else { %>
+          <div class="banner-blur" style="background: linear-gradient(45deg, #1e293b, #0f172a);"></div>
+        <% } %>
+      </div>
 
-    <!-- Foto profil (ukuran moderat, tidak memenuhi layar) -->
-    <figure class="media-preview member" style="margin-top:12px;">
-      <img
-        class="media-fit"
-        src="<%= member.avatar || 'https://via.placeholder.com/960x540?text=Foto' %>"
-        alt="<%= member.name %>"
-        style="max-height:360px; object-fit:cover;"
-      />
-      <figcaption class="hero-caption">Anggota</figcaption>
-    </figure>
+      <div class="profile-content">
+        
+        <div class="profile-avatar-container">
+          <% if(member.avatar){ %>
+            <img src="<%= member.avatar %>" 
+                 alt="<%= member.name %>" 
+                 class="profile-avatar clickable-img"
+                 onclick="openLightbox(this.src, '<%= member.name %>')">
+            <div class="zoom-hint">🔍 Klik foto untuk memperbesar</div>
+          <% } else { %>
+            <div class="no-avatar-large"><%= member.name.charAt(0) %></div>
+          <% } %>
+        </div>
+
+        <h1 class="profile-name"><%= member.name %></h1>
+        <div class="profile-badge">Anggota AGUDASCO</div>
+
+        <hr class="divider">
+
+        <div class="profile-bio">
+          <h5 class="text-secondary mb-3">Tentang Anggota</h5>
+          <% if ((member.bio||'').trim()) { %>
+            <p class="bio-text"><%= member.bio %></p>
+          <% } else { %>
+            <p class="text-muted fst-italic">Belum ada bio yang ditambahkan.</p>
+          <% } %>
+        </div>
+
+      </div>
+    </div>
 
   </div>
-</main>
+</div>
+
+<style>
+  /* Tombol Kembali */
+  .btn-back {
+    display: inline-block; color: #94a3b8; text-decoration: none;
+    font-weight: 600; margin-bottom: 30px; padding: 10px 20px;
+    background: rgba(255,255,255,0.05); border-radius: 30px; transition: 0.3s;
+  }
+  .btn-back:hover { background: rgba(255,255,255,0.1); color: white; transform: translateX(-5px); }
+
+  /* Wrapper Kartu Utama */
+  .profile-card-wrapper {
+    background: #1e293b; border-radius: 24px; overflow: hidden;
+    max-width: 700px; margin: 0 auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+  }
+
+  /* Banner Blur di Atas */
+  .profile-banner { height: 180px; overflow: hidden; position: relative; }
+  .banner-blur {
+    width: 100%; height: 100%; background-size: cover; background-position: center;
+    filter: blur(20px) brightness(0.7); transform: scale(1.1);
+  }
+
+  /* Konten Tengah */
+  .profile-content {
+    text-align: center; padding: 0 30px 50px; position: relative; margin-top: -90px;
+  }
+
+  /* Foto Profil */
+  .profile-avatar-container {
+    width: 180px; height: 180px; margin: 0 auto 20px;
+    border-radius: 50%; border: 5px solid #1e293b;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    position: relative; overflow: hidden; background: #0f172a;
+    transition: transform 0.3s;
+  }
+  .profile-avatar-container:hover { transform: scale(1.02); border-color: #3b82f6; cursor: pointer; }
+
+  .profile-avatar { width: 100%; height: 100%; object-fit: cover; }
+  
+  .no-avatar-large {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 4rem; font-weight: bold; color: #64748b; background: #334155;
+  }
+
+  /* Hint Zoom */
+  .zoom-hint {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.6); color: white; font-size: 0.7rem;
+    padding: 5px; opacity: 0; transition: 0.3s;
+  }
+  .profile-avatar-container:hover .zoom-hint { opacity: 1; }
+
+  /* Teks */
+  .profile-name { color: white; font-weight: 800; margin-bottom: 5px; font-size: 2rem; }
+  .profile-badge {
+    display: inline-block; background: rgba(37, 99, 235, 0.2); color: #60a5fa;
+    padding: 5px 15px; border-radius: 50px; font-size: 0.9rem; font-weight: 600;
+  }
+
+  .divider { border-color: rgba(255,255,255,0.1); margin: 30px 0; }
+
+  .bio-text { color: #cbd5e1; line-height: 1.8; font-size: 1.05rem; }
+</style>
