@@ -10,46 +10,51 @@
 
       <div class="row justify-content-center mb-5" data-aos="fade-up">
         <div class="col-md-6">
-          <input type="text" id="searchMember" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Cari nama anggota..." style="border-radius: 50px; padding: 15px 30px;">
+          <input type="text" id="searchMember" class="form-control form-control-lg bg-dark text-white border-secondary" placeholder="Cari nama anggota..." style="border-radius: 50px; padding: 15px 30px; backdrop-filter: blur(5px); background: rgba(15, 23, 42, 0.6) !important;">
         </div>
       </div>
 
       <div class="row g-4" id="memberGrid">
         <% members.forEach(m => { %>
-          <div class="col-6 col-md-4 col-lg-3 member-item" data-aos="zoom-in" data-aos-delay="100">
-            <div class="card h-100 bg-transparent border-0 member-card">
-              <div class="member-img-wrap">
+          <div class="col-6 col-md-4 member-item" data-aos="zoom-in" data-aos-delay="100">
+            <div class="card h-100 member-card-elegant">
+              
+              <div class="member-img-wrap-elegant">
                 <% if(m.avatar){ %>
                   <img src="<%= m.avatar %>" alt="<%= m.name %>" loading="lazy">
                 <% } else { %>
-                  <div class="no-avatar"><%= m.name.charAt(0) %></div>
+                  <div class="no-avatar-elegant"><%= m.name.charAt(0) %></div>
                 <% } %>
               </div>
-              <div class="card-body text-center p-0 mt-3">
-                <h5 class="card-title text-white mb-1 name-text"><%= m.name %></h5>
-                <small class="text-info role-badge">Anggota Aktif</small>
+              
+              <div class="card-body text-center p-0">
+                <h5 class="card-title text-white mb-2 fw-bold" style="font-size: 1.1rem;"><%= m.name %></h5>
+                <span class="badge bg-primary bg-opacity-25 text-primary fw-normal px-3 py-2 rounded-pill" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                  Anggota Aktif
+                </span>
               </div>
+
             </div>
           </div>
         <% }) %>
       </div>
 
       <div id="noResults" class="text-center text-secondary mt-5" style="display:none;">
-        <p>Anggota tidak ditemukan.</p>
+        <p class="fs-5">😔 Anggota tidak ditemukan.</p>
       </div>
 
     <% } else { %>
 
       <div class="locked-state" data-aos="zoom-in">
-        <div class="lock-icon">
-          🔒
+        <div class="lock-icon-wrap">
+          <div class="lock-icon">🔒</div>
         </div>
         <h2 class="text-white fw-bold mb-3">Halaman Khusus Pengurus</h2>
-        <p class="text-secondary mb-4" style="max-width: 500px; margin: 0 auto;">
-          Maaf, data anggota bersifat privat dan hanya dapat diakses oleh pengurus aktif AGUDASCO. Silakan login untuk melihat data.
+        <p class="text-secondary mb-4" style="max-width: 500px; margin: 0 auto; line-height: 1.6;">
+          Data anggota bersifat rahasia. Silakan login sebagai pengurus untuk mengakses informasi lengkap.
         </p>
-        <a href="/login" class="btn btn-primary btn-lg rounded-pill px-5">
-          Login Pengurus
+        <a href="/login" class="btn btn-primary btn-lg rounded-pill px-5 py-3 fw-bold" style="box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.5);">
+          Masuk ke Sistem
         </a>
       </div>
 
@@ -59,48 +64,76 @@
 </div>
 
 <style>
-  /* Style Kartu Anggota (Sama kayak sebelumnya) */
-  .member-card { transition: transform 0.3s; cursor: default; }
-  .member-card:hover { transform: translateY(-5px); }
+  /* --- Style Kartu Anggota Baru (Glassmorphism) --- */
+  .member-card-elegant {
+    background: rgba(30, 41, 59, 0.4); /* Latar belakang transparan gelap */
+    border: 1px solid rgba(255, 255, 255, 0.08); /* Border tipis */
+    border-radius: 20px; /* Sudut membulat */
+    padding: 30px 20px; /* Jarak dalam */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(12px); /* Efek blur di belakangnya */
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Efek Hover Keren */
+  .member-card-elegant:hover {
+    transform: translateY(-7px);
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(37, 99, 235, 0.4); /* Border jadi biru */
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+  }
   
-  .member-img-wrap {
-    width: 120px; height: 120px; margin: 0 auto;
+  .member-img-wrap-elegant {
+    width: 100px; height: 100px; margin: 0 auto 20px;
     border-radius: 50%; overflow: hidden;
     border: 3px solid rgba(255,255,255,0.1);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    position: relative;
-    background: #1e293b;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    background: #0f172a;
+    transition: 0.3s;
   }
-  .member-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
-  .no-avatar {
+  .member-card-elegant:hover .member-img-wrap-elegant {
+    border-color: rgba(37, 99, 235, 0.8); /* Lingkaran foto jadi biru pas hover */
+    transform: scale(1.05);
+  }
+
+  .member-img-wrap-elegant img { width: 100%; height: 100%; object-fit: cover; }
+  .no-avatar-elegant {
     width: 100%; height: 100%; display: flex;
     align-items: center; justify-content: center;
-    background: linear-gradient(45deg, #2563eb, #1d4ed8);
-    font-size: 2.5rem; font-weight: bold; color: white;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    font-size: 2rem; font-weight: bold; color: white;
   }
 
-  /* --- STYLE KHUSUS LOCKED STATE 🔒 --- */
+  /* --- Style Khusus Locked State 🔒 --- */
   .locked-state {
-    background: rgba(30, 41, 59, 0.5); /* Semi transparan */
+    background: rgba(15, 23, 42, 0.6);
     border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 20px;
-    padding: 60px 20px;
+    border-radius: 24px;
+    padding: 80px 30px;
     text-align: center;
-    margin: 20px auto;
-    max-width: 700px;
-    backdrop-filter: blur(10px); /* Efek kaca */
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    margin: 40px auto;
+    max-width: 600px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    position: relative;
+    overflow: hidden;
+  }
+  /* Hiasan background samar */
+  .locked-state::before {
+    content: '🔒';
+    position: absolute; top: -10%; right: -10%;
+    font-size: 15rem; opacity: 0.03; transform: rotate(-15deg);
   }
 
-  .lock-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    background: rgba(255,255,255,0.05);
-    width: 100px; height: 100px;
-    display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.1);
+  .lock-icon-wrap {
+    margin-bottom: 25px; display: inline-block;
+    padding: 15px; border-radius: 50%;
+    background: rgba(37, 99, 235, 0.1);
+    border: 1px solid rgba(37, 99, 235, 0.2);
   }
+  .lock-icon { font-size: 3rem; }
 </style>
 
 <% if (typeof user !== 'undefined' && user) { %>
@@ -113,17 +146,14 @@
     searchInput.addEventListener('keyup', function(e){
       const term = e.target.value.toLowerCase();
       let count = 0;
-      
       items.forEach(item => {
-        const name = item.querySelector('.name-text').textContent.toLowerCase();
+        const name = item.querySelector('h5').textContent.toLowerCase();
         if(name.includes(term)){
-          item.style.display = 'block';
-          count++;
+          item.style.display = 'block'; count++;
         } else {
           item.style.display = 'none';
         }
       });
-      
       noRes.style.display = (count === 0) ? 'block' : 'none';
     });
   }
