@@ -268,5 +268,82 @@
     });
   </script>
 
+<% if (typeof footerContact !== 'undefined' && footerContact.whatsapp) { %>
+  
+  <% let waNumber = footerContact.whatsapp.replace(/[^0-9]/g, ''); %>
+  <% if (waNumber.startsWith('0')) waNumber = '62' + waNumber.substring(1); %>
+  
+  <a href="https://wa.me/<%= waNumber %>?text=Halo%20Admin%20AGUDASCO,%20saya%20ingin%20bertanya..." 
+     class="wa-float" 
+     target="_blank" 
+     rel="noopener noreferrer"
+     title="Chat via WhatsApp">
+    
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="white">
+      <path d="M12.031 2C6.509 2 2.016 6.493 2.016 12.015c0 1.785.47 3.526 1.365 5.074L2 22l5.053-1.327a9.967 9.967 0 004.978 1.341h.004C17.553 22.014 22.047 17.52 22.047 12.015 22.047 6.493 17.553 2 12.031 2zM12.036 20.34c-1.548 0-3.072-.418-4.434-1.226l-.318-.189-3.298.866.88-3.214-.207-.329a8.318 8.318 0 01-1.277-4.233c0-4.603 3.745-8.348 8.353-8.348 4.609 0 8.354 3.745 8.354 8.348 0 4.603-3.745 8.348-8.354 8.348zm4.577-6.252c-.251-.126-1.485-.732-1.715-.816-.23-.084-.397-.126-.565.126-.168.251-.649.816-.795.984-.147.168-.293.189-.544.063-.251-.126-1.06-.391-2.02-1.246-.744-.663-1.247-1.482-1.393-1.733-.146-.251-.016-.387.11-.512.113-.112.251-.293.377-.44.126-.146.168-.251.251-.418.084-.168.042-.314-.021-.44-.063-.126-.565-1.361-.774-1.864-.203-.49-.41-.424-.565-.432-.147-.008-.314-.008-.481-.008-.168 0-.44.063-.67.314-.23.251-.88 1.005-.88 2.451 0 1.446 1.054 2.844 1.201 3.041.146.197 2.074 3.167 5.025 4.441.702.303 1.25.484 1.68.621.716.228 1.368.196 1.884.119.576-.086 1.485-.607 1.694-1.193.209-.586.209-1.089.146-1.193-.063-.105-.23-.168-.481-.293z"/>
+    </svg>
+  </a>
+<% } %>
+
+<style>
+  .wa-float {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    bottom: 30px;
+    right: 30px;
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50px;
+    text-align: center;
+    font-size: 30px;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.3); /* Bayangan standar */
+    z-index: 10000; /* Paling atas */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    
+    /* ANIMASI BERDENYUT (PULSE) */
+    animation: pulse-green 2s infinite;
+  }
+
+  .wa-float:hover {
+    background-color: #128C7E; /* Warna lebih gelap pas disentuh */
+    transform: scale(1.1); /* Membesar dikit */
+    box-shadow: 0px 5px 20px rgba(37, 211, 102, 0.6);
+  }
+
+  .wa-float svg {
+    margin-top: -2px; /* Koreksi posisi ikon */
+  }
+
+  /* Keyframes Animasi Denyut */
+  @keyframes pulse-green {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+    }
+    70% {
+      transform: scale(1);
+      box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
+    }
+    100% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+    }
+  }
+
+  /* Tampilan di HP (Dinaikin dikit biar gak ketutup tombol lain) */
+  @media (max-width: 768px) {
+    .wa-float {
+      bottom: 20px;
+      right: 20px;
+      width: 55px;
+      height: 55px;
+    }
+  }
+</style>
+
 </body>
 </html>
