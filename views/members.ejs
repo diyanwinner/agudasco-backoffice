@@ -1,30 +1,28 @@
 <div class="page-wrap">
   <div class="container">
     
-    <div class="text-center mb-5" data-aos="fade-down">
-      
-      <h1 class="display-5 fw-bold text-white mb-3">Anggota Organisasi</h1>
-      
-      <div class="d-inline-flex align-items-center gap-2 px-4 py-2 rounded-pill" 
-           style="background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3);">
-        <span class="fs-5">👥</span>
-        <span class="fw-bold text-white"><%= members.length %></span>
-        <span class="text-info" style="font-size: 0.9rem;">Anggota Terdaftar</span>
-      </div>
-
+    <div class="text-center mb-4" data-aos="fade-down">
+      <h1 class="display-5 fw-bold text-white">Anggota Organisasi</h1>
     </div>
 
     <% if (typeof user !== 'undefined' && user) { %>
 
-      <div class="row justify-content-center mb-5" data-aos="fade-up" data-aos-delay="100">
-        <div class="col-md-6 col-lg-5"> <div class="search-box-wrapper">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchMember" 
-                   class="form-control form-control-lg bg-transparent text-white border-0" 
-                   placeholder="Cari nama anggota..." 
-                   style="box-shadow: none;">
-          </div>
+      <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mb-5" data-aos="fade-up">
+        
+        <div class="modern-badge">
+          <span class="icon">👥</span>
+          <span class="count"><%= members.length %></span>
+          <span class="label">Anggota</span>
         </div>
+
+        <div class="modern-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchMember" 
+                 class="search-input" 
+                 placeholder="Cari nama..." 
+                 autocomplete="off">
+        </div>
+
       </div>
 
       <div class="custom-grid-container" id="memberGrid">
@@ -69,24 +67,55 @@
 </div>
 
 <style>
-  /* --- CSS SEARCH BAR BARU (LEBIH MODERN) --- */
-  .search-box-wrapper {
-    display: flex; align-items: center;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 50px;
-    padding: 5px 20px;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
-  }
-  .search-box-wrapper:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-    background: rgba(15, 23, 42, 0.8);
-  }
-  .search-icon { font-size: 1.2rem; margin-right: 10px; opacity: 0.7; }
+  /* --- CSS BARU: TOOLBAR MODERN --- */
   
-  /* GRID & KARTU (TETAP SAMA) */
+  /* 1. Badge Member */
+  .modern-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(37, 99, 235, 0.15); /* Biru Transparan */
+    border: 1px solid rgba(37, 99, 235, 0.4);
+    padding: 10px 20px;
+    border-radius: 50px;
+    color: white;
+    height: 50px; /* Tinggi disamain sama search bar */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    white-space: nowrap;
+  }
+  .modern-badge .count { font-weight: 800; font-size: 1.1rem; }
+  .modern-badge .label { font-size: 0.9rem; opacity: 0.8; }
+
+  /* 2. Search Bar (Anti Windows 95) */
+  .modern-search {
+    display: flex; align-items: center;
+    background: rgba(15, 23, 42, 0.6); /* Gelap Transparan */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0 20px;
+    border-radius: 50px;
+    height: 50px; /* Tinggi fix biar rapi */
+    width: 250px; /* Lebar default */
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Efek pas diklik (Focus) */
+  .modern-search:focus-within {
+    border-color: #3b82f6;
+    background: rgba(15, 23, 42, 0.9);
+    width: 300px; /* Melebar dikit pas diketik */
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+  }
+
+  .search-icon { font-size: 1rem; opacity: 0.6; margin-right: 10px; }
+  
+  .search-input {
+    background: transparent; border: none; outline: none;
+    color: white; width: 100%; height: 100%;
+    font-size: 0.95rem;
+  }
+  .search-input::placeholder { color: rgba(255,255,255,0.4); }
+
+
+  /* --- CSS GRID (TETAP SAMA) --- */
   .custom-grid-container { display: grid; grid-template-columns: 1fr; gap: 20px; padding-bottom: 50px; }
   @media (min-width: 600px) { .custom-grid-container { grid-template-columns: repeat(2, 1fr); } }
   @media (min-width: 992px) { .custom-grid-container { grid-template-columns: repeat(3, 1fr); } }
