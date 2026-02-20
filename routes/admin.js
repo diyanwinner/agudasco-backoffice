@@ -70,14 +70,14 @@ export default function (q, q1, uploadImage, pool) {
 
   /* ==================== GALERI (SISTEM ALBUM) ======================= */
   
-  // 1. Tampilkan Daftar Album (Buka file index.ejs)
+  // 1. Tampilkan Daftar Album
   router.get("/galeri", async (_req, res) => {
     try {
-      // Ambil album sekalian ngitung jumlah foto di dalamnya
+      // ✅ SUDAH DIGANTI JADI: FROM albums
       const albums = await q(`
         SELECT a.*, 
                (SELECT COUNT(*) FROM gallery_photos p WHERE p.album_id = a.id) as photo_count 
-        FROM gallery_albums a 
+        FROM albums a 
         ORDER BY a.event_date DESC, a.id DESC
       `);
       res.render("admin/galeri/index", { title: "Kelola Galeri", active: "admin", albums });
@@ -95,8 +95,9 @@ export default function (q, q1, uploadImage, pool) {
       
       if (!title || !event_date || !cover_image) return res.status(400).send("Data tidak lengkap!");
 
+      // ✅ SUDAH DIGANTI JADI: INSERT INTO albums
       await q(
-        "INSERT INTO gallery_albums (title, event_date, description, cover_image) VALUES ($1, $2, $3, $4)",
+        "INSERT INTO albums (title, event_date, description, cover_image) VALUES ($1, $2, $3, $4)",
         [title, event_date, description || "", cover_image]
       );
       res.redirect("/admin/galeri");
@@ -106,12 +107,14 @@ export default function (q, q1, uploadImage, pool) {
     }
   });
 
-  // 3. Hapus Album (Berdasarkan tombol di EJS yang pakai method GET)
+  // 3. Hapus Album
   router.get("/galeri/delete/:id", async (req, res) => {
     try {
       const id = Number(req.params.id);
       await q("DELETE FROM gallery_photos WHERE album_id = $1", [id]); // Hapus isi fotonya dulu
-      await q("DELETE FROM gallery_albums WHERE id = $1", [id]); // Baru hapus albumnya
+      
+      // ✅ SUDAH DIGANTI JADI: DELETE FROM albums
+      await q("DELETE FROM albums WHERE id = $1", [id]); 
       res.redirect("/admin/galeri");
     } catch (e) {
       console.error("Error delete album:", e);
@@ -119,11 +122,13 @@ export default function (q, q1, uploadImage, pool) {
     }
   });
 
-  // 4. Lihat Isi Foto di Dalam Album (Buka file photos.ejs)
+  // 4. Lihat Isi Foto di Dalam Album
   router.get("/galeri/:id/photos", async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const album = await q1("SELECT * FROM gallery_albums WHERE id = $1", [id]);
+      
+      // ✅ SUDAH DIGANTI JADI: FROM albums
+      const album = await q1("SELECT * FROM albums WHERE id = $1", [id]);
       if (!album) return res.status(404).send("Album tidak ditemukan");
 
       const photos = await q("SELECT * FROM gallery_photos WHERE album_id = $1 ORDER BY id DESC", [id]);
