@@ -68,6 +68,57 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect("/admin/banners");
   });
 
+  /* ==================== GALERI ======================= */
+  // 1. Tampilkan Halaman Galeri
+  router.get("/galeri", async (_req, res) => {
+    try {
+      // Ambil data foto dari database, urutkan dari yang terbaru
+      const photos = await q("SELECT * FROM galleries ORDER BY id DESC");
+      res.render("admin/galeri", { 
+        title: "Kelola Galeri", 
+        active: "admin", 
+        photos 
+      });
+    } catch (e) {
+      console.error("Error muat galeri:", e);
+      res.render("admin/galeri", { 
+        title: "Kelola Galeri", 
+        active: "admin", 
+        photos: [] 
+      });
+    }
+  });
+
+  // 2. Simpan Foto Baru
+  router.post("/galeri", uploadImage.single("image"), async (req, res) => {
+    try {
+      const { title = "" } = req.body;
+      const imageUrl = req.file ? req.file.path : null;
+      
+      if (!imageUrl) return res.status(400).send("Foto belum dipilih");
+
+      await q(
+        "INSERT INTO galleries (title, image_url) VALUES ($1, $2)",
+        [title.trim(), imageUrl]
+      );
+      res.redirect("/admin/galeri");
+    } catch (e) {
+      console.error("Error simpan foto galeri:", e);
+      res.status(500).send("Gagal menyimpan foto galeri.");
+    }
+  });
+
+  // 3. Hapus Foto
+  router.post("/galeri/:id/delete", async (req, res) => {
+    try {
+      await q("DELETE FROM galleries WHERE id=$1", [Number(req.params.id)]);
+      res.redirect("/admin/galeri");
+    } catch (e) {
+      console.error("Error hapus foto galeri:", e);
+      res.status(500).send("Gagal menghapus foto galeri.");
+    }
+  });
+
   /* ==================== ANGGOTA ====================== */
   // LIST
   router.get("/members", async (_req, res) => {
