@@ -68,54 +68,106 @@ export default function (q, q1, uploadImage, pool) {
     res.redirect("/admin/banners");
   });
 
-  /* ==================== GALERI ======================= */
-  // 1. Tampilkan Halaman Galeri
+  /* ==================== GALERI (SISTEM ALBUM) ======================= */
+  
+  // 1. Tampilkan Daftar Album (Buka file index.ejs)
   router.get("/galeri", async (_req, res) => {
     try {
-      // Ambil data foto dari database, urutkan dari yang terbaru
-      const photos = await q("SELECT * FROM galleries ORDER BY id DESC");
-      res.render("admin/galeri", { 
-        title: "Kelola Galeri", 
-        active: "admin", 
-        photos 
-      });
+      // Ambil album sekalian ngitung jumlah foto di dalamnya
+      const albums = await q(`
+        SELECT a.*, 
+               (SELECT COUNT(*) FROM gallery_photos p WHERE p.album_id = a.id) as photo_count 
+        FROM gallery_albums a 
+        ORDER BY a.event_date DESC, a.id DESC
+      `);
+      res.render("admin/galeri/index", { title: "Kelola Galeri", active: "admin", albums });
     } catch (e) {
-      console.error("Error muat galeri:", e);
-      res.render("admin/galeri", { 
-        title: "Kelola Galeri", 
-        active: "admin", 
-        photos: [] 
-      });
+      console.error("Error muat album:", e);
+      res.render("admin/galeri/index", { title: "Kelola Galeri", active: "admin", albums: [] });
     }
   });
 
-  // 2. Simpan Foto Baru
-  router.post("/galeri", uploadImage.single("image"), async (req, res) => {
+  // 2. Buat Album Baru
+  router.post("/galeri/create", uploadImage.single("cover"), async (req, res) => {
     try {
-      const { title = "" } = req.body;
-      const imageUrl = req.file ? req.file.path : null;
+      const { title, event_date, description } = req.body;
+      const cover_image = req.file ? req.file.path : null;
       
-      if (!imageUrl) return res.status(400).send("Foto belum dipilih");
+      if (!title || !event_date || !cover_image) return res.status(400).send("Data tidak lengkap!");
 
       await q(
-        "INSERT INTO galleries (title, image_url) VALUES ($1, $2)",
-        [title.trim(), imageUrl]
+        "INSERT INTO gallery_albums (title, event_date, description, cover_image) VALUES ($1, $2, $3, $4)",
+        [title, event_date, description || "", cover_image]
       );
       res.redirect("/admin/galeri");
     } catch (e) {
-      console.error("Error simpan foto galeri:", e);
-      res.status(500).send("Gagal menyimpan foto galeri.");
+      console.error("Error create album:", e);
+      res.status(500).send("Gagal membuat album");
     }
   });
 
-  // 3. Hapus Foto
-  router.post("/galeri/:id/delete", async (req, res) => {
+  // 3. Hapus Album (Berdasarkan tombol di EJS yang pakai method GET)
+  router.get("/galeri/delete/:id", async (req, res) => {
     try {
-      await q("DELETE FROM galleries WHERE id=$1", [Number(req.params.id)]);
+      const id = Number(req.params.id);
+      await q("DELETE FROM gallery_photos WHERE album_id = $1", [id]); // Hapus isi fotonya dulu
+      await q("DELETE FROM gallery_albums WHERE id = $1", [id]); // Baru hapus albumnya
       res.redirect("/admin/galeri");
     } catch (e) {
-      console.error("Error hapus foto galeri:", e);
-      res.status(500).send("Gagal menghapus foto galeri.");
+      console.error("Error delete album:", e);
+      res.redirect("/admin/galeri");
+    }
+  });
+
+  // 4. Lihat Isi Foto di Dalam Album (Buka file photos.ejs)
+  router.get("/galeri/:id/photos", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const album = await q1("SELECT * FROM gallery_albums WHERE id = $1", [id]);
+      if (!album) return res.status(404).send("Album tidak ditemukan");
+
+      const photos = await q("SELECT * FROM gallery_photos WHERE album_id = $1 ORDER BY id DESC", [id]);
+      
+      res.render("admin/galeri/photos", { title: `Foto: ${album.title}`, active: "admin", album, photos });
+    } catch (e) {
+      console.error("Error muat foto:", e);
+      res.status(500).send("Terjadi kesalahan server");
+    }
+  });
+
+  // 5. Upload Foto ke Album (Bisa Banyak Sekaligus / Multiple)
+  router.post("/galeri/:id/upload", uploadImage.array("photos", 20), async (req, res) => {
+    try {
+      const album_id = Number(req.params.id);
+      if (!req.files || req.files.length === 0) return res.status(400).send("Tidak ada foto yang diupload");
+
+      // Simpan semua foto ke database satu per satu
+      for (const file of req.files) {
+        await q("INSERT INTO gallery_photos (album_id, image_url) VALUES ($1, $2)", [album_id, file.path]);
+      }
+      
+      res.redirect(`/admin/galeri/${album_id}/photos`);
+    } catch (e) {
+      console.error("Error upload foto:", e);
+      res.status(500).send("Gagal upload foto");
+    }
+  });
+
+  // 6. Hapus Satu Foto di dalam Album
+  router.get("/galeri/photo/delete/:id", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      // Cari tau dulu foto ini dari album mana, biar baliknya bener
+      const photo = await q1("SELECT album_id FROM gallery_photos WHERE id = $1", [id]);
+      
+      if (photo) {
+        await q("DELETE FROM gallery_photos WHERE id = $1", [id]);
+        return res.redirect(`/admin/galeri/${photo.album_id}/photos`);
+      }
+      res.redirect("/admin/galeri");
+    } catch (e) {
+      console.error("Error delete foto:", e);
+      res.redirect("/admin/galeri");
     }
   });
 
