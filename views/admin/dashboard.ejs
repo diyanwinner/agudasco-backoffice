@@ -1,30 +1,46 @@
+<style>
+  /* CSS Khusus Dashboard (Tampilan Modern) */
+  .admin-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; gap: 15px; }
+  .admin-title { margin: 0; font-size: 1.8rem; color: #1f2937; }
+  .btn-logout { background-color: #dc2626; color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: background 0.2s; }
+  .btn-logout:hover { background-color: #b91c1c; }
+  .birthday-today { border: 2px solid #f87171; background-color: #fef2f2; }
+  .badge-today { background-color: #ef4444; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-left: 6px; font-weight: bold; }
+</style>
+
 <div class="admin-wrap">
   <div class="admin-head">
-    <h1 class="admin-title">Dashboard Admin</h1>
-    <a class="btn" href="/admin/members">Kelola Anggota</a>
+    <div>
+      <h1 class="admin-title">Dashboard Admin</h1>
+      <small style="color: #6b7280;">Selamat datang, Pengurus AGUDASCO!</small>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a class="btn" href="/" target="_blank">Lihat Web</a>
+      <a class="btn-logout" href="/logout">Logout</a>
+    </div>
   </div>
 
-  <% /* ===== Ulang Tahun 7 Hari ke Depan ===== */ %>
-  <% if (typeof upcomingBirthdays !== 'undefined' && upcomingBirthdays && upcomingBirthdays.length) { %>
+  <% /* ===== BAGIAN 1: ULANG TAHUN ===== */ %>
+  <% if (typeof upcomingBirthdays !== 'undefined' && upcomingBirthdays && upcomingBirthdays.length > 0) { %>
     <section class="section">
       <div class="section-head">
-        <h2>Ulang Tahun 7 Hari ke Depan</h2>
+        <h2>🎂 Ulang Tahun 7 Hari ke Depan</h2>
       </div>
       <div class="grid cards">
         <% upcomingBirthdays.forEach(function(b){ 
              const d = b.birthdate ? new Date(b.birthdate) : null;
              const tgl = d ? d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long' }) : '-';
         %>
-          <div class="card">
+          <div class="card <%= b.is_today ? 'birthday-today' : '' %>">
             <div class="pad">
               <h3 style="margin-bottom:6px">
                 <%= b.name %>
                 <% if (b.is_today) { %>
-                  <span class="btn red" style="padding:2px 8px;margin-left:8px">HARI INI</span>
+                  <span class="badge-today">HARI INI</span>
                 <% } %>
               </h3>
-              <p class="meta" style="margin-bottom:12px">Tanggal: <%= tgl %></p>
-              <a class="btn" href="/admin/members/<%= b.id %>">Lihat Anggota</a>
+              <p class="meta" style="margin-bottom:12px">📅 <%= tgl %></p>
+              <a class="btn ghost" href="/admin/members/<%= b.id %>">Lihat Detail</a>
             </div>
           </div>
         <% }) %>
@@ -32,83 +48,19 @@
     </section>
   <% } %>
 
-  <% /* ===== Menu Admin (Quick Actions) ===== */ %>
+  <% /* ===== BAGIAN 2: MENU ADMIN LENGKAP ===== */ %>
   <section class="section">
     <div class="section-head">
-      <h2>Menu Admin</h2>
+      <h2>🚀 Menu Utama</h2>
     </div>
-
     <div class="grid cards">
-      <div class="card">
-        <div class="pad">
-          <h3>Anggota</h3>
-          <p class="meta">Kelola data anggota, tanggal lahir, foto & keluarga.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn" href="/admin/members">Buka</a>
-            <a class="btn ghost" href="/admin/members/new">Tambah</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="pad">
-          <h3>Keluarga</h3>
-          <p class="meta">Grid semua data keluarga per anggota.</p>
-          <a class="btn" href="/admin/family">Buka</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="pad">
-          <h3>Artikel</h3>
-          <p class="meta">Kelola artikel untuk halaman publik.</p>
-          <a class="btn" href="/admin/articles">Buka</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="pad">
-          <h3>Banner</h3>
-          <p class="meta">Atur gambar slider/hero di beranda.</p>
-          <a class="btn" href="/admin/banners">Buka</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="pad">
-          <h3>Laporan Keuangan</h3>
-          <p class="meta">Upload cover & tautan PDF laporan.</p>
-          <a class="btn" href="/admin/reports">Buka</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="pad">
-          <h3>AD/ART</h3>
-          <p class="meta">Kelola dokumen AD/ART (cover + PDF).</p>
-          <a class="btn" href="/admin/adarts">Buka</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="pad">
-          <h3>Kontak</h3>
-          <p class="meta">Alamat, email, telepon/WA, sosmed organisasi.</p>
-          <a class="btn" href="/admin/contact">Buka</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="pad">
-          <h3>Galeri</h3>
-          <p class="meta">Kelola album foto dan dokumentasi kegiatan.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn" href="/admin/galeri">Buka</a>
-            <a class="btn ghost" href="/galeri" target="_blank">Lihat Web</a>
-          </div>
-        </div>
-      </div>
-
+      <div class="card"><div class="pad"><h3>👥 Anggota</h3><p class="meta">Database data anggota utama.</p><div style="display:flex;gap:8px;"><a class="btn" href="/admin/members">Kelola</a><a class="btn ghost" href="/admin/members/new">+Baru</a></div></div></div>
+      <div class="card"><div class="pad"><h3>👨‍👩‍👧‍👦 Keluarga</h3><p class="meta">Data istri/suami & anak anggota.</p><a class="btn" href="/admin/family">Buka Data</a></div></div>
+      <div class="card"><div class="pad"><h3>📸 Galeri</h3><p class="meta">Album foto & dokumentasi.</p><a class="btn" href="/admin/galeri">Kelola Galeri</a></div></div>
+      <div class="card"><div class="pad"><h3>📝 Artikel</h3><p class="meta">Berita & blog organisasi.</p><a class="btn" href="/admin/articles">Tulis Artikel</a></div></div>
+      <div class="card"><div class="pad"><h3>🖼️ Banner Depan</h3><p class="meta">Slider gambar halaman home.</p><a class="btn" href="/admin/banners">Atur Banner</a></div></div>      
+      <div class="card"><div class="pad"><h3>📞 Kontak</h3><p class="meta">Alamat, Sosmed & WhatsApp.</p><a class="btn" href="/admin/contact">Ubah Info</a></div></div>
+      <div class="card"><div class="pad"><h3>🔐 Akun Admin</h3><p class="meta">Kelola akses login pengurus.</p><a class="btn" href="/admin/users">Atur Admin</a></div></div>
     </div>
   </section>
 </div>
