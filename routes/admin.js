@@ -21,9 +21,9 @@ export default function (q, q1, uploadImage, pool) {
       `);
       
       // Render file 'dashboard.ejs' yang ada di folder views utama (yg bagus)
-      res.render("dashboard", { title: "Dashboard Admin", active: "admin", upcomingBirthdays });
-    } catch (e) {
-      res.render("dashboard", { title: "Dashboard Admin", active: "admin", upcomingBirthdays: [] });
+      res.render("admin/dashboard", { title: "Dashboard Admin", active: "admin", upcomingBirthdays });
+      } catch (e) {
+      res.render("admin/dashboard", { title: "Dashboard Admin", active: "admin", upcomingBirthdays: [] });
     }
   });
 
